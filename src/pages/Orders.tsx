@@ -1,0 +1,119 @@
+import { useEffect, useState } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
+import { Package } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
+import { supabase } from '@/lib/supabase';
+import { cldUrl } from '@/lib/cloudinary';
+import { formatVND } from '@/lib/money';
+import { getErrorMessage } from '@/lib/errors';
+import { ORDER_FILTERS } from '@/constants/orderStatus';
+import OrderStatusBadge from '@/components/OrderStatusBadge';
+import { Alert, PageLoader } from '@/components/ui';
+import type { Order } from '@/types';
+
+type Tab = 'buy' | 'sell';
+
+export default function Orders() {
+  const { user } = useAuth();
+  const [params, setParams] = useSearchParams();
+  const tab: Tab = params.get('tab') === 'sell' ? 'sell' : 'buy';
+  const filterId = params.get('status') ?? 'all';
+  const filter = ORDER_FILTERS.find((f) => f.id === filterId) ?? ORDER_FILTERS[0];
+
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!user) return;
+    let alive = true;
+    setLoading(true);
+    setError(null);
+    let query = supabase
+      .from('orders')
+      .select('*')
+      .eq(tab === 'buy' ? 'buyer_id' : 'seller_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(100);
+    if (filter.statuses) query = query.in('status', filter.statuses);
+    query.then(({ data, error: err }) => {
+      if (!alive) return;
+      if (err) setError(getErrorMessage(err));
+      else setOrders((data ?? []) as Order[]);
+      setLoading(false);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [user, tab, filter]);
+
+  const setParam = (key: string, value: string, fallback: string) =>
+    setParams((prev) => {
+      const next = new URLSearchParams(prev);
+      if (value === fallback) next.delete(key);
+      else next.set(key, value);
+      return next;
+    }, { replace: true });
+
+  return (
+    <div className="mx-auto max-w-3xl space-y-5">
+      <h1 className="text-2xl font-semibold tracking-tight">Đơn hàng của tôi</h1>
+
+      <div role="tablist" className="grid grid-cols-2 rounded-xl border border-slate-200 bg-white p-1">
+        {([['buy', 'Đơn mua của tôi'], ['sell', 'Đơn bán của tôi']] as const).map(([id, label]) => (
+          <button key={id} type="button" role="tab" aria-selected={tab === id} onClick={() => setParam('tab', id, 'buy')}
+            className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${tab === id ? 'bg-brand-700 text-white' : 'text-slate-600 hover:bg-slate-50'}`}>
+            {label}
+          </button>
+        ))}
+      </div>
+
+      <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0">
+        {ORDER_FILTERS.map((f) => (
+          <button key={f.id} type="button" onClick={() => setParam('status', f.id, 'all')}
+            className={`shrink-0 rounded-full border px-3 py-1 text-xs font-medium ${filter.id === f.id ? 'border-brand-600 bg-brand-50 text-brand-800' : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'}`}>
+            {f.label}
+          </button>
+        ))}
+      </div>
+
+      {error && <Alert kind="error">{error}</Alert>}
+
+      {loading ? (
+        <PageLoader />
+      ) : orders.length === 0 ? (
+        <div className="card flex flex-col items-center px-4 py-12 text-center">
+          <Package className="h-8 w-8 text-slate-300" />
+          <p className="mt-2 text-sm text-slate-600">
+            {tab === 'buy' ? 'Bạn chưa có đơn mua nào.' : 'Bạn chưa có đơn bán nào.'}
+          </p>
+          {tab === 'buy' && <Link to="/" className="btn-primary mt-3">Khám phá sản phẩm</Link>}
+        </div>
+      ) : (
+        <ul className="space-y-3">
+          {orders.map((o) => (
+            <li key={o.id}>
+              <Link to={`/orders/${o.id}`} className="card flex gap-3 p-3 transition-shadow hover:shadow-pop sm:gap-4 sm:p-4">
+                <div className="h-20 w-20 shrink-0 overflow-hidden rounded-lg bg-slate-100">
+                  {o.listing_snapshot.image && <img src={cldUrl(o.listing_snapshot.image, { width: 200, height: 200, crop: 'fill' })} alt="" className="h-full w-full object-cover" />}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="line-clamp-2 text-sm font-medium text-slate-900">{o.listing_snapshot.title}</p>
+                  <p className="mt-0.5 text-sm text-slate-600">
+                    {tab === 'buy' ? 'Đã/cần chuyển: ' : 'Bạn thực nhận: '}
+                    <strong className="text-slate-900">{formatVND(tab === 'buy' ? o.amount : o.seller_payout)}</strong>
+                  </p>
+                  <div className="mt-1.5 flex flex-wrap items-center gap-2">
+                    <OrderStatusBadge status={o.status} />
+                    <span className="text-xs text-slate-500">{new Date(o.created_at).toLocaleString('vi-VN')}</span>
+                  </div>
+                  <p className="mt-1 font-mono text-xs text-slate-400">{o.payment_code}</p>
+                </div>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
