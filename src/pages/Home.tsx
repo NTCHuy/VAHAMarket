@@ -3,17 +3,17 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { Headphones, Loader2, MapPin, Search, SlidersHorizontal, Truck, X } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { cldUrl } from '@/lib/cloudinary';
-import { formatVND } from '@/lib/money';
 import { getErrorMessage } from '@/lib/errors';
 import { BOX_STATUS_OPTIONS, CATEGORIES, LISTING_CONDITIONS, getBoxStatusLabel, getCategory, getConditionLabel } from '@/constants/categories';
 import { PROVINCES } from '@/constants/provinces';
 import { Alert } from '@/components/ui';
+import PriceTag from '@/components/PriceTag';
 import type { Listing } from '@/types';
 
-type ListingCard = Pick<Listing, 'id' | 'title' | 'price' | 'condition' | 'category' | 'province' | 'ship_cod' | 'box_status' | 'images'>;
+type ListingCard = Pick<Listing, 'id' | 'title' | 'price' | 'original_price' | 'condition' | 'category' | 'province' | 'ship_cod' | 'box_status' | 'images'>;
 
 const PAGE_SIZE = 24;
-const COLUMNS = 'id,title,price,condition,category,province,ship_cod,box_status,images';
+const COLUMNS = 'id,title,price,original_price,condition,category,province,ship_cod,box_status,images';
 
 type SortKey = 'new' | 'price_asc' | 'price_desc';
 const SORTS: { id: SortKey; label: string }[] = [
@@ -148,7 +148,8 @@ export default function Home() {
   return (
     <div className="space-y-5">
       <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-card sm:p-7">
-        <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">Chợ Nghiện Tai Nghe</h1>
+        <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">VAHA Market</h1>
+        <p className="text-xs font-medium uppercase tracking-wide text-brand-700">Vietnamese Association of Headphone Addicts Market</p>
         <p className="mt-1.5 max-w-xl text-sm text-slate-600 sm:text-base">
           Mua bán đồ âm thanh second-hand có trung gian giữ tiền — an tâm cho cả người mua lẫn người bán.
         </p>
@@ -226,7 +227,7 @@ export default function Home() {
                     </div>
                     <div className="space-y-1 p-3">
                       <p className="line-clamp-2 text-sm font-medium text-slate-900">{l.title}</p>
-                      <p className="text-base font-semibold text-brand-800">{formatVND(l.price)}</p>
+                      <PriceTag price={l.price} originalPrice={l.original_price} />
                       <p className="text-xs text-slate-500">{getCategory(l.category)?.label ?? l.category} · {getConditionLabel(l.condition)}</p>
                       <p className="text-xs text-slate-500">{getBoxStatusLabel(l.box_status)}</p>
                       <p className="flex flex-wrap items-center gap-x-3 text-xs text-slate-500">

@@ -66,8 +66,10 @@ export default function Navbar() {
           <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-700 text-white">
             <Headphones className="h-[18px] w-[18px]" />
           </span>
-          <span className="hidden sm:inline">Chợ Nghiện Tai Nghe</span>
-          <span className="sm:hidden">CNTN</span>
+          <span className="flex flex-col leading-tight">
+            <span>VAHA Market</span>
+            <span className="hidden text-[10px] font-normal text-slate-500 lg:block">Vietnamese Association of Headphone Addicts Market</span>
+          </span>
         </Link>
 
         {/* Desktop */}

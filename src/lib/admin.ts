@@ -1,11 +1,11 @@
 import { supabase } from './supabase';
-import type { Order, Transaction } from '@/types';
+import type { Listing, Order, Profile, Transaction } from '@/types';
 
 /** Các hàm RPC dành cho admin. Mỗi hàm tự kiểm tra is_admin() ở tầng DB. */
 
 export interface AdminStats {
-  gmv: number;                  // tổng giá trị giao dịch thành công
-  fees: number;                 // tổng phí sàn 5% đã thu
+  gmv: number;                  // tổng giá trị hàng hóa giao dịch thành công (giá niêm yết)
+  fees: number;                 // tổng phí sàn đã thu
   held_count: number;           // số đơn đang giữ tiền (PAID_HELD + SHIPPED)
   held_amount: number;
   dispute_count: number;        // số đơn đang khiếu nại
@@ -51,4 +51,22 @@ export async function markTransactionResolved(txId: string, note: string): Promi
   const { data, error } = await supabase.rpc('admin_mark_transaction_resolved', { p_tx_id: txId, p_note: note });
   if (error) throw new Error(error.message);
   return data as Transaction;
+}
+
+/** Gắn/gỡ huy hiệu Mod (phí trung gian 0%) cho thành viên. */
+export async function setMod(userId: string, isMod: boolean): Promise<Profile> {
+  const { data, error } = await supabase.rpc('admin_set_mod', { p_user_id: userId, p_is_mod: isMod });
+  if (error) throw new Error(error.message);
+  return data as Profile;
+}
+
+/** Chỉnh giá bán / giá gốc (null = bỏ giảm giá) của tin đăng. */
+export async function updateListingPrice(listingId: string, price: number, originalPrice: number | null): Promise<Listing> {
+  const { data, error } = await supabase.rpc('admin_update_listing_price', {
+    p_listing_id: listingId,
+    p_price: price,
+    p_original_price: originalPrice,
+  });
+  if (error) throw new Error(error.message);
+  return data as Listing;
 }

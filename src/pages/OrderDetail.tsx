@@ -7,15 +7,17 @@ import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { cldUrl } from '@/lib/cloudinary';
 import { formatVND } from '@/lib/money';
-import { buildEscrowQrUrl, getEscrowTransferInfo } from '@/lib/vietqr';
+import { getEscrowTransferInfo, tryBuildEscrowQrUrl } from '@/lib/vietqr';
 import {
   cancelOrder, confirmReceived, expireOrderIfDue, getSellerFacebook, markShipped, openDispute, subscribeToOrder,
 } from '@/lib/orders';
 import { getErrorMessage } from '@/lib/errors';
 import { CARRIERS } from '@/constants/orderStatus';
-import { PLATFORM_FEE_RATE } from '@/constants/payment';
 import { formatCountdown, useCountdown } from '@/hooks/useCountdown';
+import BuyerProtectionSteps from '@/components/BuyerProtectionSteps';
 import CopyButton from '@/components/CopyButton';
+import ErrorBoundary from '@/components/ErrorBoundary';
+import ModBadge from '@/components/ModBadge';
 import OrderStatusBadge from '@/components/OrderStatusBadge';
 import { Alert, Avatar, Field, PageLoader } from '@/components/ui';
 import type { Order, OrderPayout, OrderStatus, Profile } from '@/types';
@@ -33,7 +35,17 @@ const PAYOUT_LABEL: Record<OrderPayout['status'], string> = {
   DONE: 'Sàn đã chuyển khoản cho bạn',
 };
 
+/** Bọc ErrorBoundary riêng cho trang đơn hàng: lỗi render không bao giờ làm trắng trang. */
 export default function OrderDetail() {
+  const { id } = useParams<{ id: string }>();
+  return (
+    <ErrorBoundary variant="inline" resetKey={id}>
+      <OrderDetailContent />
+    </ErrorBoundary>
+  );
+}
+
+function OrderDetailContent() {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
   const [order, setOrder] = useState<Order | null>(null);
@@ -248,11 +260,17 @@ export default function OrderDetail() {
         <section className="card space-y-3 p-5">
           <h2 className="text-base font-semibold">Thanh toán</h2>
           <dl className="divide-y divide-slate-100 text-sm">
-            <Row label="Giá sản phẩm" value={formatVND(order.amount)} />
-            {isSeller && <Row label={`Phí trung gian (${Math.round(PLATFORM_FEE_RATE * 100)}%)`} value={`− ${formatVND(order.platform_fee)}`} />}
+            <Row label="Giá sản phẩm" value={formatVND(order.list_price)} />
+            {isBuyer && order.buyer_fee > 0 && <Row label="Phí trung gian (bạn chịu)" value={`+ ${formatVND(order.buyer_fee)}`} />}
+            {isBuyer && <Row label="Bạn chuyển khoản" value={formatVND(order.amount)} strong />}
+            {isSeller && order.seller_fee > 0 && <Row label="Phí trung gian (bạn chịu)" value={`− ${formatVND(order.seller_fee)}`} />}
             {isSeller && <Row label="Bạn thực nhận" value={formatVND(order.seller_payout)} strong />}
+            {!isBuyer && !isSeller && <Row label="Người mua chuyển" value={formatVND(order.amount)} />}
+            {!isBuyer && !isSeller && <Row label="Phí sàn" value={formatVND(order.platform_fee)} />}
+            {!isBuyer && !isSeller && <Row label="Người bán nhận" value={formatVND(order.seller_payout)} strong />}
             {isBuyer && <Row label="Phí ship" value="Trả cho bưu tá khi nhận hàng" />}
           </dl>
+          {order.fee_rate_bp === 0 && <ModBadge full />}
           {isSeller && payout && (
             <p className="rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-600">
               Tài khoản nhận: {payout.bank_name} ••••{payout.account_number.slice(-4)} · <strong>{PAYOUT_LABEL[payout.status]}</strong>
@@ -315,13 +333,15 @@ function PaymentPanel({ order, secondsLeft, busy, onCancel }: {
 }) {
   const [confirming, setConfirming] = useState(false);
   const [qrFailed, setQrFailed] = useState(false);
-  const qrUrl = useMemo(() => buildEscrowQrUrl({ amount: order.amount, paymentCode: order.payment_code }), [order.amount, order.payment_code]);
+  // tryBuild không ném lỗi: nếu dữ liệu tài khoản sai, chỉ hiện hướng dẫn chuyển khoản thủ công thay vì trắng trang
+  const qrUrl = useMemo(() => tryBuildEscrowQrUrl({ amount: order.amount, paymentCode: order.payment_code }), [order.amount, order.payment_code]);
   const info = getEscrowTransferInfo();
   const expired = secondsLeft === 0;
   const urgent = secondsLeft !== null && secondsLeft <= 120;
 
   return (
     <section className="card space-y-4 p-5">
+      <BuyerProtectionSteps current={1} />
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="text-base font-semibold">Thanh toán qua tài khoản trung gian</h2>
         <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-semibold tabular-nums ${expired ? 'bg-slate-100 text-slate-600' : urgent ? 'bg-red-50 text-red-700' : 'bg-amber-50 text-amber-800'}`}>
@@ -336,7 +356,7 @@ function PaymentPanel({ order, secondsLeft, busy, onCancel }: {
           <p className="text-sm text-slate-600">Quét mã bằng app ngân hàng hoặc chuyển khoản thủ công. Hệ thống tự nhận biết khi tiền về, bạn không cần báo lại.</p>
           <div className="grid gap-4 sm:grid-cols-[220px_1fr]">
             <div className="mx-auto w-[220px]">
-              {qrFailed ? (
+              {qrFailed || !qrUrl ? (
                 <div className="flex aspect-square items-center justify-center rounded-xl border border-dashed border-slate-300 p-3 text-center text-xs text-slate-500">Không tải được mã QR. Hãy chuyển khoản thủ công theo thông tin bên cạnh.</div>
               ) : (
                 <img src={qrUrl} alt="Mã VietQR thanh toán đơn hàng" className="w-full rounded-xl border border-slate-200 bg-white" onError={() => setQrFailed(true)} />

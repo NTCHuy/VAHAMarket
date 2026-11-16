@@ -1,4 +1,5 @@
 import type { BoxStatus, ListingCondition } from '@/constants/categories';
+import type { FeePayer } from '@/constants/fees';
 
 /** Kiểu dữ liệu khớp với supabase/schema.sql (cột snake_case, timestamptz → chuỗi ISO). */
 
@@ -9,6 +10,7 @@ export interface Profile {
   bio: string | null;
   sold_count: number;   // chỉ hệ thống cập nhật
   bought_count: number; // chỉ hệ thống cập nhật
+  is_mod: boolean;      // Mod Group: phí trung gian 0% (chỉ admin gán)
   created_at: string;
   updated_at: string;
 }
@@ -51,6 +53,8 @@ export interface Listing {
   title: string;
   description: string;
   price: number; // VND (bigint → number, an toàn dưới 2^53)
+  original_price: number | null; // giá gốc (gạch ngang) nếu đang giảm giá
+  fee_payer: FeePayer;
   category: string;
   condition: ListingCondition;
   brand: string | null;
@@ -83,9 +87,14 @@ export interface Order {
   listing_snapshot: { title: string; image: string | null; price: number };
   buyer_id: string;
   seller_id: string;
-  amount: number;
-  platform_fee: number;
-  seller_payout: number;
+  amount: number;        // số tiền NGƯỜI MUA phải chuyển khoản
+  platform_fee: number;  // tổng phí sàn thu
+  seller_payout: number; // số tiền NGƯỜI BÁN thực nhận
+  list_price: number;    // giá niêm yết
+  fee_payer: FeePayer;
+  fee_rate_bp: number;   // 500 = 5%, 0 = Mod
+  buyer_fee: number;
+  seller_fee: number;
   status: OrderStatus;
   paid_amount: number;
   paid_at: string | null;

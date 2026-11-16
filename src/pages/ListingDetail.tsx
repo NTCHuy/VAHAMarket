@@ -6,11 +6,16 @@ import {
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { cldUrl } from '@/lib/cloudinary';
-import { formatVND } from '@/lib/money';
+import { calcFees, formatVND, type FeeBreakdown } from '@/lib/money';
+import { getFeePayerLabel } from '@/constants/fees';
 import { createOrder, getSellerFacebook } from '@/lib/orders';
 import { getErrorMessage } from '@/lib/errors';
 import { getBoxStatusLabel, getCategory, getConditionLabel } from '@/constants/categories';
 import { Alert, Avatar, Field, PageLoader } from '@/components/ui';
+import BuyerProtectionSteps from '@/components/BuyerProtectionSteps';
+import ModBadge from '@/components/ModBadge';
+import PriceTag from '@/components/PriceTag';
+import TrustBadge from '@/components/TrustBadge';
 import type { Listing, Profile } from '@/types';
 
 const PHONE_RE = /^[0-9+ ]{8,15}$/;
@@ -88,6 +93,8 @@ export default function ListingDetail() {
   const images = listing.images;
   const canBuy = listing.status === 'active' && listing.ship_cod && !isOwner;
   const category = getCategory(listing.category);
+  const sellerIsMod = seller?.is_mod ?? false;
+  const fees = calcFees(listing.price, listing.fee_payer, sellerIsMod);
 
   const specs: { label: string; value: string }[] = [
     { label: 'Phân loại', value: category?.label ?? listing.category },
@@ -127,7 +134,7 @@ export default function ListingDetail() {
         <div className="space-y-4">
           <div>
             <h1 className="text-xl font-semibold leading-snug tracking-tight sm:text-2xl">{listing.title}</h1>
-            <p className="mt-2 text-3xl font-semibold text-brand-800">{formatVND(listing.price)}</p>
+            <div className="mt-2"><PriceTag price={listing.price} originalPrice={listing.original_price} size="lg" /></div>
             <div className="mt-2 flex flex-wrap gap-2 text-xs text-slate-600">
               {listing.province && <span className="badge"><MapPin className="mr-1 h-3 w-3" />{listing.province}</span>}
               {listing.ship_cod && <span className="badge"><Truck className="mr-1 h-3 w-3" />Ship COD</span>}
@@ -155,9 +162,11 @@ export default function ListingDetail() {
               </button>
             )}
             {canBuy && (
-              <p className="text-xs text-slate-500">
-                Bạn chuyển <strong>{formatVND(listing.price)}</strong> vào tài khoản trung gian. Phí ship trả cho bưu tá khi nhận hàng (không tính vào số tiền này).
-              </p>
+              <>
+                <FeeSummary fees={fees} feePayer={listing.fee_payer} isMod={sellerIsMod} />
+                <BuyerProtectionSteps compact />
+                <p className="text-xs text-slate-500">Phí ship trả cho bưu tá khi nhận hàng (không tính vào số tiền chuyển cho trung gian).</p>
+              </>
             )}
           </div>
 
@@ -168,7 +177,7 @@ export default function ListingDetail() {
               <div className="flex items-center gap-3">
                 <Avatar name={seller.display_name} url={seller.avatar_url} size={44} />
                 <div className="min-w-0 flex-1">
-                  <p className="truncate font-medium text-slate-900">{seller.display_name}</p>
+                  <p className="flex flex-wrap items-center gap-2 font-medium text-slate-900"><span className="truncate">{seller.display_name}</span>{seller.is_mod && <ModBadge full />}</p>
                   <p className="text-sm text-slate-600">Đã bán thành công <strong>{seller.sold_count}</strong> đơn</p>
                 </div>
               </div>
@@ -208,6 +217,7 @@ export default function ListingDetail() {
             <li className="flex gap-2"><ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" /><span>Chỉ chuyển tiền qua mã QR trong đơn hàng. <strong>Không chuyển khoản riêng</strong> cho người bán.</span></li>
             <li className="flex gap-2"><Truck className="mt-0.5 h-4 w-4 shrink-0" /><span>Chỉ bấm “Đã nhận hàng” sau khi kiểm tra kỹ. Khi xác nhận, tiền được giải ngân cho người bán.</span></li>
           </ul>
+          <div className="border-t border-amber-200 pt-3"><TrustBadge compact /></div>
         </section>
       </div>
 
@@ -228,7 +238,7 @@ export default function ListingDetail() {
         </div>
       )}
 
-      {buyOpen && <BuyDialog listing={listing} onClose={() => setBuyOpen(false)} />}
+      {buyOpen && <BuyDialog listing={listing} buyerPays={fees.buyerPays} onClose={() => setBuyOpen(false)} />}
     </div>
   );
 }
@@ -236,7 +246,7 @@ export default function ListingDetail() {
 /* ----------------------------------------------------------------------------
  *  Hộp thoại xác nhận mua: kiểm tra/nhắc cập nhật SĐT + địa chỉ trước khi gọi create_order
  * -------------------------------------------------------------------------- */
-function BuyDialog({ listing, onClose }: { listing: Listing; onClose: () => void }) {
+function BuyDialog({ listing, buyerPays, onClose }: { listing: Listing; buyerPays: number; onClose: () => void }) {
   const { user, profile, contact, refresh } = useAuth();
   const navigate = useNavigate();
   const missing = !contact?.phone || !contact?.shipping_address;
@@ -324,7 +334,7 @@ function BuyDialog({ listing, onClose }: { listing: Listing; onClose: () => void
         </label>
 
         <div className="rounded-xl bg-slate-50 p-3 text-sm">
-          <div className="flex justify-between"><span className="text-slate-600">Số tiền chuyển vào trung gian</span><strong>{formatVND(listing.price)}</strong></div>
+          <div className="flex justify-between"><span className="text-slate-600">Số tiền chuyển vào trung gian</span><strong>{formatVND(buyerPays)}</strong></div>
           <p className="mt-1 text-xs text-slate-500">Bạn có 15 phút để thanh toán sau khi đặt. Phí ship trả cho bưu tá khi nhận hàng.</p>
         </div>
 
@@ -345,6 +355,25 @@ function BuyDialog({ listing, onClose }: { listing: Listing; onClose: () => void
           </button>
         </div>
       </form>
+    </div>
+  );
+}
+
+/* Bảng tóm tắt giá minh bạch: người mua chuyển bao nhiêu, người bán nhận bao nhiêu */
+function FeeSummary({ fees, feePayer, isMod }: { fees: FeeBreakdown; feePayer: Listing['fee_payer']; isMod: boolean }) {
+  return (
+    <div className="space-y-2">
+      <dl className="divide-y divide-slate-100 rounded-xl border border-slate-200 bg-slate-50 text-sm">
+        <div className="flex justify-between px-3 py-2"><dt className="text-slate-600">Giá niêm yết</dt><dd className="font-medium text-slate-900">{formatVND(fees.listPrice)}</dd></div>
+        {fees.buyerFee > 0 && (
+          <div className="flex justify-between px-3 py-2"><dt className="text-slate-600">Phí trung gian (bạn chịu)</dt><dd className="font-medium text-slate-900">+ {formatVND(fees.buyerFee)}</dd></div>
+        )}
+        <div className="flex justify-between px-3 py-2.5"><dt className="font-medium text-slate-900">Bạn chuyển khoản</dt><dd className="text-base font-semibold text-brand-800">{formatVND(fees.buyerPays)}</dd></div>
+        <div className="flex justify-between px-3 py-2"><dt className="text-slate-500">Người bán thực nhận</dt><dd className="text-slate-700">{formatVND(fees.sellerReceives)}</dd></div>
+      </dl>
+      <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-slate-500">
+        {isMod ? <ModBadge full /> : <span>Phí trung gian {fees.feeRateBp / 100}%: {getFeePayerLabel(feePayer).toLowerCase()}.</span>}
+      </p>
     </div>
   );
 }

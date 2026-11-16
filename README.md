@@ -1,6 +1,6 @@
-# Chợ Nghiện Tai Nghe
+# VAHA Market
 
-Sàn C2C đồ âm thanh second-hand có trung gian giữ tiền (escrow).
+*Vietnamese Association of Headphone Addicts Market* — sàn C2C đồ âm thanh second-hand có trung gian giữ tiền (escrow), bảo lãnh bởi Hội người Việt nghiện tai nghe.
 React + Vite + TypeScript + Tailwind · Supabase (Auth, Postgres/RLS, Realtime, Edge Functions) · Cloudinary · VietQR + SePay.
 
 > **Không mở `index.html` bằng cách bấm đúp.** Đây là dự án Vite, phải chạy bằng lệnh (xem Bước 1).
@@ -10,7 +10,7 @@ React + Vite + TypeScript + Tailwind · Supabase (Auth, Postgres/RLS, Realtime, 
 ## Bước 0 — Chuẩn bị Supabase (làm 1 lần)
 
 1. Supabase Dashboard → **SQL Editor** → chạy lần lượt, mỗi file 1 lần:
-   `supabase/schema.sql` → `supabase/migrations/002_ui_fields.sql` → `003_order_dispute_fields.sql` → `004_admin_actions.sql`
+   `supabase/schema.sql` → `supabase/migrations/002_ui_fields.sql` → `003_order_dispute_fields.sql` → `004_admin_actions.sql` → `005_vaha_rebrand_and_fees.sql`
 2. **Authentication → Providers → Google**: bật và nhập Client ID/Secret (Google Cloud Console → OAuth client, loại Web).
    *Authorized redirect URI* trên Google phải là `https://<PROJECT_REF>.supabase.co/auth/v1/callback`.
 3. Đăng nhập vào web 1 lần, rồi lấy UUID của bạn ở **Authentication → Users** và chạy trên SQL Editor:
@@ -18,6 +18,14 @@ React + Vite + TypeScript + Tailwind · Supabase (Auth, Postgres/RLS, Realtime, 
    insert into public.admins (user_id) values ('UUID_CUA_BAN');
    ```
 4. (Khuyến nghị) Bật tự hủy đơn quá hạn: bỏ comment mục 8 trong `schema.sql` (pg_cron) rồi chạy lại phần đó.
+
+## Cấu hình VAHA Market (làm trước khi mở cho cộng đồng)
+
+- **Link thương hiệu**: mở `src/constants/links.ts`, điền `FOUNDER_FACEBOOK_URL` (Facebook cá nhân) và `GROUP_URL` (Group 50.000+ thành viên). Hai nút này hiện ở Footer và khung "Quy định giao dịch an toàn".
+- **Tài khoản nhận tiền Escrow** nằm ở `src/constants/payment.ts` (BIDV + số VA, vd `96247VAHA`). Số tài khoản nhận cả **chữ cái và chữ số** (`/^[A-Z0-9]{6,25}$/i`). Nếu dữ liệu QR sai, trang đơn hàng vẫn hiển thị thông tin chuyển khoản thủ công thay vì trắng trang.
+- **Phí trung gian**: mặc định 5% giá niêm yết. Người bán chọn khi đăng tin: *Người bán chịu* (mặc định) / *Người mua chịu* / *Chia đôi*. Người bán có huy hiệu **Mod** được miễn phí (0%). Gắn/gỡ Mod ở **Admin → Mod**.
+- **Giảm giá**: người bán nhập "Giá gốc" khi đăng/sửa tin; Admin chỉnh nhanh giá và giá gốc ở **Admin → Tin đăng & giá**.
+- Mã thanh toán vẫn bắt đầu bằng `CNTH` (không đổi để không ảnh hưởng webhook/đơn cũ).
 
 ## Bước 1 — Chạy thử trên máy
 
@@ -86,7 +94,7 @@ Function nhận biến động số dư từ SePay và đặt đơn sang `PAID_H
 3. **Environment Variables** (Production): thêm đủ
    `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, `VITE_CLOUDINARY_CLOUD_NAME`, `VITE_CLOUDINARY_UPLOAD_PRESET`, `VITE_ESCROW_ACCOUNT_NAME`.
    **Tuyệt đối không** thêm `sb_secret_...` vì mọi biến `VITE_*` đều lộ ra trình duyệt.
-4. Bấm **Deploy**. Sau khi có domain (vd `https://cho-nghien-tai-nghe.vercel.app`):
+4. Bấm **Deploy**. Sau khi có domain (vd `https://vahamarket.vercel.app`):
    - Supabase → **Authentication → URL Configuration**: đặt **Site URL** = domain Vercel và thêm `https://<domain>/**` vào **Redirect URLs** (giữ cả `http://localhost:5173`).
    - Nếu đổi biến môi trường sau này, phải **Redeploy** vì biến được nhúng lúc build.
 
@@ -96,6 +104,8 @@ Function nhận biến động số dư từ SePay và đặt đơn sang `PAID_H
 - [ ] Tài khoản thứ 2 đặt mua → quét QR → đơn tự sang `PAID_HELD`
 - [ ] Người bán nhập vận đơn + link video → người mua xác nhận → Admin thấy đơn trong **Giải ngân** → quét QR chuyển tiền → bấm "Xác nhận đã chuyển tiền"
 - [ ] Thử 1 khiếu nại và xử lý ở **Admin → Khiếu nại**
+- [ ] Đăng 3 tin thử với 3 cách chia phí, đặt mua và kiểm tra số tiền chuyển khoản khớp bảng giá
+- [ ] Gắn Mod cho 1 người bán → đơn mới của họ không tính phí; đặt giá gốc cho 1 tin → thấy giá gạch ngang
 - [ ] Đơn không thanh toán sau 15 phút tự hết hạn và tin được mở bán lại
 - [ ] `sb_secret_...` chỉ nằm trong Supabase secrets (không có trong `.env`, GitHub hay Vercel)
 

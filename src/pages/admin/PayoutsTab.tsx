@@ -113,7 +113,7 @@ function PayoutCard({ row, onDone }: { row: PayoutRow; onDone: () => Promise<voi
 
           {row.order && (
             <p className="text-xs text-slate-500">
-              Giá bán {formatVND(row.order.amount)} − phí sàn {formatVND(row.order.platform_fee)} = {formatVND(row.order.seller_payout)}
+              Người mua chuyển {formatVND(row.order.amount)} − phí sàn {formatVND(row.order.platform_fee)} = chuyển cho người bán {formatVND(row.order.seller_payout)}
             </p>
           )}
 

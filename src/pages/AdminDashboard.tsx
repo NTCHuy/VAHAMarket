@@ -9,12 +9,15 @@ import PayoutsTab from './admin/PayoutsTab';
 import DisputesTab from './admin/DisputesTab';
 import TransactionsTab from './admin/TransactionsTab';
 import OrdersTab from './admin/OrdersTab';
+import ListingsTab from './admin/ListingsTab';
+import MembersTab from './admin/MembersTab';
 
-type TabId = 'payouts' | 'disputes' | 'transactions' | 'orders';
+type TabId = 'payouts' | 'disputes' | 'transactions' | 'orders' | 'listings' | 'members';
+const TAB_IDS: TabId[] = ['payouts', 'disputes', 'transactions', 'orders', 'listings', 'members'];
 
 export default function AdminDashboard() {
   const [params, setParams] = useSearchParams();
-  const tab = (['payouts', 'disputes', 'transactions', 'orders'].includes(params.get('tab') ?? '') ? params.get('tab') : 'payouts') as TabId;
+  const tab = (TAB_IDS.includes(params.get('tab') as TabId) ? params.get('tab') : 'payouts') as TabId;
 
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -37,6 +40,8 @@ export default function AdminDashboard() {
     { id: 'disputes', label: 'Khiếu nại', badge: stats?.dispute_count },
     { id: 'transactions', label: 'Giao dịch lệch', badge: stats?.flagged_tx_count },
     { id: 'orders', label: 'Tất cả đơn hàng' },
+    { id: 'listings', label: 'Tin đăng & giá' },
+    { id: 'members', label: 'Mod' },
   ];
 
   return (
@@ -49,8 +54,8 @@ export default function AdminDashboard() {
       {error && <Alert kind="error">{error}</Alert>}
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <StatCard icon={Banknote} label="Tổng giá trị giao dịch (GMV)" value={stats ? formatVND(stats.gmv) : '—'} sub="Đơn đã hoàn tất" />
-        <StatCard icon={Percent} label="Phí sàn 5% đã thu" value={stats ? formatVND(stats.fees) : '—'} sub={stats ? `Chờ giải ngân: ${formatVND(stats.payout_pending_amount)}` : undefined} />
+        <StatCard icon={Banknote} label="Tổng giá trị giao dịch (GMV)" value={stats ? formatVND(stats.gmv) : '—'} sub="Giá hàng, đơn đã hoàn tất" />
+        <StatCard icon={Percent} label="Phí sàn đã thu" value={stats ? formatVND(stats.fees) : '—'} sub={stats ? `Chờ giải ngân: ${formatVND(stats.payout_pending_amount)}` : undefined} />
         <StatCard icon={Lock} label="Đơn đang giữ tiền" value={stats ? String(stats.held_count) : '—'} sub={stats ? `${formatVND(stats.held_amount)} (đã TT / đang giao)` : undefined} />
         <StatCard icon={AlertTriangle} label="Đơn đang khiếu nại" value={stats ? String(stats.dispute_count) : '—'} sub="Cần phân xử" tone={stats && stats.dispute_count > 0 ? 'danger' : 'normal'} />
       </div>
@@ -71,6 +76,8 @@ export default function AdminDashboard() {
       {tab === 'disputes' && <DisputesTab onChanged={refreshStats} />}
       {tab === 'transactions' && <TransactionsTab onChanged={refreshStats} />}
       {tab === 'orders' && <OrdersTab onChanged={refreshStats} />}
+      {tab === 'listings' && <ListingsTab />}
+      {tab === 'members' && <MembersTab />}
     </div>
   );
 }

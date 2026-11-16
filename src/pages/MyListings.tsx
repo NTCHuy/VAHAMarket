@@ -4,9 +4,9 @@ import { Loader2, Pencil, Plus, Trash2 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { cldUrl } from '@/lib/cloudinary';
-import { formatVND } from '@/lib/money';
 import { getErrorMessage } from '@/lib/errors';
 import { Alert, PageLoader } from '@/components/ui';
+import PriceTag from '@/components/PriceTag';
 import type { Listing, ListingStatus } from '@/types';
 
 const STATUS_BADGE: Record<ListingStatus, { label: string; cls: string }> = {
@@ -82,7 +82,7 @@ export default function MyListings() {
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="line-clamp-2 text-sm font-medium text-slate-900">{l.title}</p>
-                  <p className="mt-0.5 font-semibold text-brand-800">{formatVND(l.price)}</p>
+                  <div className="mt-0.5"><PriceTag price={l.price} originalPrice={l.original_price} /></div>
                   <span className={`badge mt-1 ${badge.cls}`}>{badge.label}</span>
                   {editable && (
                     <div className="mt-2 flex flex-wrap items-center gap-2">

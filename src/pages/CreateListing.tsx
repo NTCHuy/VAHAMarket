@@ -4,12 +4,14 @@ import { AlertTriangle, ArrowLeft, ArrowRight, ImagePlus, Landmark, Loader2, Ref
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { cldUrl, uploadImage, validateImage } from '@/lib/cloudinary';
-import { calcEscrow, formatVND } from '@/lib/money';
+import { calcFees, formatVND } from '@/lib/money';
 import { getErrorMessage } from '@/lib/errors';
 import { BOX_STATUS_OPTIONS, CATEGORIES, LISTING_CONDITIONS, type BoxStatus, type ListingCondition } from '@/constants/categories';
-import { PLATFORM_FEE_RATE } from '@/constants/payment';
+import { FEE_PAYER_OPTIONS, type FeePayer } from '@/constants/fees';
 import { PROVINCES } from '@/constants/provinces';
 import { Alert, Field, PageLoader } from '@/components/ui';
+import ModBadge from '@/components/ModBadge';
+import PriceTag from '@/components/PriceTag';
 import type { BankAccount, Listing, ListingStatus } from '@/types';
 
 const MAX_IMAGES = 6;
@@ -48,7 +50,7 @@ let keySeq = 0;
 const nextKey = () => `img-${Date.now()}-${keySeq++}`;
 
 function ListingForm({ listingId }: { listingId?: string }) {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const navigate = useNavigate();
   const isEdit = Boolean(listingId);
 
@@ -65,6 +67,8 @@ function ListingForm({ listingId }: { listingId?: string }) {
   const [condition, setCondition] = useState<ListingCondition | ''>('');
   const [boxStatus, setBoxStatus] = useState<BoxStatus>('full');
   const [priceText, setPriceText] = useState('');
+  const [originalPriceText, setOriginalPriceText] = useState('');
+  const [feePayer, setFeePayer] = useState<FeePayer>('SELLER');
   const [province, setProvince] = useState('');
   const [shipCod, setShipCod] = useState(true);
   const [description, setDescription] = useState('');
@@ -118,6 +122,8 @@ function ListingForm({ listingId }: { listingId?: string }) {
           setCondition(l.condition);
           setBoxStatus(l.box_status);
           setPriceText(String(l.price));
+          setOriginalPriceText(l.original_price ? String(l.original_price) : '');
+          setFeePayer(l.fee_payer);
           setProvince(l.province ?? '');
           setShipCod(l.ship_cod);
           setDescription(l.description);
@@ -224,7 +230,9 @@ function ListingForm({ listingId }: { listingId?: string }) {
   /* ----------------------------- Giá & phí ----------------------------- */
   const price = priceText ? parseInt(priceText, 10) : 0;
   const priceValid = Number.isInteger(price) && price >= MIN_PRICE && price <= MAX_PRICE;
-  const escrow = useMemo(() => (priceValid ? calcEscrow(price) : null), [price, priceValid]);
+  const isMod = profile?.is_mod ?? false;
+  const fees = useMemo(() => (priceValid ? calcFees(price, feePayer, isMod) : null), [price, priceValid, feePayer, isMod]);
+  const originalPrice = originalPriceText ? parseInt(originalPriceText, 10) : 0;
 
   /* ----------------------------- Validate ----------------------------- */
   const uploading = images.some((i) => i.state === 'uploading');
@@ -240,12 +248,13 @@ function ListingForm({ listingId }: { listingId?: string }) {
     if (!category) e.category = 'Chọn phân loại.';
     if (!condition) e.condition = 'Chọn tình trạng ngoại hình.';
     if (!priceValid) e.price = `Giá bán từ ${formatVND(MIN_PRICE)} đến ${formatVND(MAX_PRICE)}.`;
+    if (originalPriceText && !(originalPrice > price && originalPrice <= MAX_PRICE)) e.originalPrice = 'Giá gốc phải lớn hơn giá bán hiện tại.';
     if (!province && !shipCod) e.delivery = 'Chọn ít nhất một hình thức: giao dịch trực tiếp hoặc ship COD.';
     const d = description.trim();
     if (d.length < 10 || d.length > 5000) e.description = 'Mô tả từ 10 đến 5000 ký tự.';
     if (!bankAccountId) e.bank = 'Chọn tài khoản ngân hàng nhận tiền.';
     return e;
-  }, [images.length, uploading, uploadFailed, title, category, condition, priceValid, province, shipCod, description, bankAccountId]);
+  }, [images.length, uploading, uploadFailed, title, category, condition, priceValid, price, originalPrice, originalPriceText, province, shipCod, description, bankAccountId]);
 
   /* ----------------------------- Lưu ----------------------------- */
   const save = async (targetStatus: EditableStatus, mode: 'publish' | 'draft' | 'save') => {
@@ -267,6 +276,8 @@ function ListingForm({ listingId }: { listingId?: string }) {
         ship_cod: shipCod,
         images: images.map((i) => ({ url: i.url, publicId: i.publicId, width: i.width, height: i.height })),
         bank_account_id: bankAccountId,
+        fee_payer: feePayer,
+        original_price: originalPrice > 0 ? originalPrice : null,
         status: targetStatus,
       };
       const res = listingId
@@ -453,21 +464,65 @@ function ListingForm({ listingId }: { listingId?: string }) {
           </div>
         </Field>
 
+        <Field label="Giá gốc (nếu đang giảm giá)" htmlFor="originalPrice" error={show('originalPrice')} hint="Không bắt buộc. Nhập giá cũ lớn hơn giá bán để hiển thị giá gạch ngang và % giảm.">
+          <div className="relative">
+            <input
+              id="originalPrice"
+              className="input pr-12 text-right font-mono"
+              inputMode="numeric"
+              autoComplete="off"
+              placeholder="0"
+              value={originalPriceText ? new Intl.NumberFormat('vi-VN').format(parseInt(originalPriceText, 10)) : ''}
+              onChange={(e) => setOriginalPriceText(e.target.value.replace(/\D/g, '').slice(0, 10))}
+            />
+            <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-slate-400">đ</span>
+          </div>
+        </Field>
+        {priceValid && originalPrice > price && (
+          <div className="rounded-lg bg-slate-50 px-3 py-2"><PriceTag price={price} originalPrice={originalPrice} /></div>
+        )}
+
+        <fieldset>
+          <legend className="label">Ai chịu phí trung gian {isMod ? '0%' : '5%'}?</legend>
+          {isMod && <div className="mb-2"><ModBadge full /></div>}
+          <div className="grid gap-2 sm:grid-cols-3">
+            {FEE_PAYER_OPTIONS.map((o) => {
+              const f = priceValid ? calcFees(price, o.id, isMod) : null;
+              return (
+                <label key={o.id} className={`cursor-pointer rounded-lg border p-3 transition-colors ${feePayer === o.id ? 'border-brand-600 bg-brand-50 ring-1 ring-brand-600' : 'border-slate-200 hover:bg-slate-50'}`}>
+                  <input type="radio" name="feePayer" value={o.id} checked={feePayer === o.id} onChange={() => setFeePayer(o.id)} className="sr-only" />
+                  <span className="block text-sm font-medium text-slate-900">{o.label}{o.id === 'SELLER' && <span className="ml-1 text-xs font-normal text-slate-500">(mặc định)</span>}</span>
+                  <span className="block text-xs text-slate-500">{o.hint}</span>
+                  {f && (
+                    <span className="mt-1.5 block text-xs text-slate-700">
+                      Người mua trả <strong>{formatVND(f.buyerPays)}</strong><br />Bạn nhận <strong>{formatVND(f.sellerReceives)}</strong>
+                    </span>
+                  )}
+                </label>
+              );
+            })}
+          </div>
+        </fieldset>
+
         <dl className="divide-y divide-slate-100 rounded-xl border border-slate-200 bg-slate-50 text-sm">
           <div className="flex justify-between px-4 py-2.5">
-            <dt className="text-slate-600">Giá bán</dt>
-            <dd className="font-medium text-slate-900">{escrow ? formatVND(escrow.amount) : '—'}</dd>
+            <dt className="text-slate-600">Giá niêm yết</dt>
+            <dd className="font-medium text-slate-900">{fees ? formatVND(fees.listPrice) : '—'}</dd>
           </div>
           <div className="flex justify-between px-4 py-2.5">
-            <dt className="text-slate-600">Phí trung gian ({Math.round(PLATFORM_FEE_RATE * 100)}%)</dt>
-            <dd className="font-medium text-red-600">{escrow ? `− ${formatVND(escrow.platformFee)}` : '—'}</dd>
+            <dt className="text-slate-600">Phí trung gian bạn chịu ({isMod ? '0' : '5'}%{feePayer === 'SPLIT' ? ', chia đôi' : ''})</dt>
+            <dd className="font-medium text-red-600">{fees ? (fees.sellerFee > 0 ? `− ${formatVND(fees.sellerFee)}` : formatVND(0)) : '—'}</dd>
           </div>
           <div className="flex justify-between px-4 py-3">
             <dt className="font-medium text-slate-900">Bạn thực nhận</dt>
-            <dd className="text-base font-semibold text-brand-800">{escrow ? formatVND(escrow.sellerPayout) : '—'}</dd>
+            <dd className="text-base font-semibold text-brand-800">{fees ? formatVND(fees.sellerReceives) : '—'}</dd>
+          </div>
+          <div className="flex justify-between px-4 py-2.5">
+            <dt className="text-slate-600">Người mua phải chuyển khoản</dt>
+            <dd className="font-medium text-slate-900">{fees ? formatVND(fees.buyerPays) : '—'}</dd>
           </div>
         </dl>
-        <p className="text-xs text-slate-500">Người mua chuyển đúng giá bán vào tài khoản trung gian. Sau khi họ xác nhận nhận hàng, sàn giữ phí và chuyển phần còn lại cho bạn.</p>
+        <p className="text-xs text-slate-500">Người mua chuyển tiền vào tài khoản trung gian. Sau khi họ xác nhận nhận hàng, sàn giữ phần phí và chuyển số thực nhận cho bạn.</p>
       </section>
 
       {/* Giao nhận */}
