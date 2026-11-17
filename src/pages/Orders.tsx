@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Package } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import { useOrderAlerts } from '@/context/OrderAlertsContext';
+import CountBadge from '@/components/CountBadge';
 import { supabase } from '@/lib/supabase';
 import { cldUrl } from '@/lib/cloudinary';
 import { formatVND } from '@/lib/money';
@@ -15,6 +17,7 @@ type Tab = 'buy' | 'sell';
 
 export default function Orders() {
   const { user } = useAuth();
+  const alerts = useOrderAlerts();
   const [params, setParams] = useSearchParams();
   const tab: Tab = params.get('tab') === 'sell' ? 'sell' : 'buy';
   const filterId = params.get('status') ?? 'all';
@@ -62,8 +65,9 @@ export default function Orders() {
       <div role="tablist" className="grid grid-cols-2 rounded-xl border border-slate-200 bg-white p-1">
         {([['buy', 'Đơn mua của tôi'], ['sell', 'Đơn bán của tôi']] as const).map(([id, label]) => (
           <button key={id} type="button" role="tab" aria-selected={tab === id} onClick={() => setParam('tab', id, 'buy')}
-            className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${tab === id ? 'bg-brand-700 text-white' : 'text-slate-600 hover:bg-slate-50'}`}>
+            className={`inline-flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${tab === id ? 'bg-brand-700 text-white' : 'text-slate-600 hover:bg-slate-50'}`}>
             {label}
+            <CountBadge count={id === 'buy' ? alerts.buy : alerts.sell} />
           </button>
         ))}
       </div>

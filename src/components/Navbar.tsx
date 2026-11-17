@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { ChevronDown, Headphones, LogIn, LogOut, Menu, Package, Plus, Settings, Shield, Tag, X } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import { useOrderAlerts } from '@/context/OrderAlertsContext';
+import CountBadge from './CountBadge';
 import { Avatar } from './ui';
 
 const navLinkClass = ({ isActive }: { isActive: boolean }) =>
@@ -11,6 +13,7 @@ const navLinkClass = ({ isActive }: { isActive: boolean }) =>
 
 export default function Navbar() {
   const { user, profile, isAdmin, loading, signIn, signOut } = useAuth();
+  const alerts = useOrderAlerts();
   const [menuOpen, setMenuOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [signingIn, setSigningIn] = useState(false);
@@ -76,7 +79,7 @@ export default function Navbar() {
         <nav className="ml-4 hidden items-center gap-1 md:flex">
           {user && (
             <NavLink to="/orders" className={navLinkClass}>
-              <Package className="h-4 w-4" /> Đơn hàng của tôi
+              <Package className="h-4 w-4" /> Đơn hàng của tôi <CountBadge count={alerts.total} />
             </NavLink>
           )}
           {isAdmin && (
@@ -140,9 +143,10 @@ export default function Navbar() {
             onClick={() => setMobileOpen((v) => !v)}
             aria-label={mobileOpen ? 'Đóng menu' : 'Mở menu'}
             aria-expanded={mobileOpen}
-            className="btn-ghost px-2 md:hidden"
+            className="btn-ghost relative px-2 md:hidden"
           >
             {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            {!mobileOpen && alerts.total > 0 && <span className="absolute right-1 top-1 h-2.5 w-2.5 rounded-full bg-red-600 ring-2 ring-white" aria-hidden="true" />}
           </button>
         </div>
       </div>
@@ -162,7 +166,7 @@ export default function Navbar() {
                   <p className="truncate text-xs text-slate-500">{user.email}</p>
                 </div>
               </div>
-              <NavLink to="/orders" className={navLinkClass}><Package className="h-4 w-4" /> Đơn hàng của tôi</NavLink>
+              <NavLink to="/orders" className={navLinkClass}><Package className="h-4 w-4" /> Đơn hàng của tôi <CountBadge count={alerts.total} /></NavLink>
               <NavLink to="/my-listings" className={navLinkClass}><Tag className="h-4 w-4" /> Tin đăng của tôi</NavLink>
               {isAdmin && <NavLink to="/admin" className={navLinkClass}><Shield className="h-4 w-4" /> Admin</NavLink>}
               <NavLink to="/settings" className={navLinkClass}><Settings className="h-4 w-4" /> Cài đặt tài khoản</NavLink>

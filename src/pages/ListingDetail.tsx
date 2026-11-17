@@ -6,15 +6,16 @@ import {
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { cldUrl } from '@/lib/cloudinary';
-import { calcFees, formatVND, type FeeBreakdown } from '@/lib/money';
-import { getFeePayerLabel } from '@/constants/fees';
+import { calcFees, formatVND, getDisplayPrice } from '@/lib/money';
 import { createOrder, getSellerFacebook } from '@/lib/orders';
 import { getErrorMessage } from '@/lib/errors';
 import { getBoxStatusLabel, getCategory, getConditionLabel } from '@/constants/categories';
 import { Alert, Avatar, Field, PageLoader } from '@/components/ui';
 import BuyerProtectionSteps from '@/components/BuyerProtectionSteps';
 import ModBadge from '@/components/ModBadge';
+import PriceBreakdown from '@/components/PriceBreakdown';
 import PriceTag from '@/components/PriceTag';
+import { usePlatformSettings } from '@/context/PlatformSettingsContext';
 import TrustBadge from '@/components/TrustBadge';
 import type { Listing, Profile } from '@/types';
 
@@ -23,6 +24,7 @@ const PHONE_RE = /^[0-9+ ]{8,15}$/;
 export default function ListingDetail() {
   const { id } = useParams<{ id: string }>();
   const { user, signIn } = useAuth();
+  const { feeBp } = usePlatformSettings();
   const [listing, setListing] = useState<Listing | null>(null);
   const [seller, setSeller] = useState<Profile | null>(null);
   const [facebook, setFacebook] = useState<string | null>(null);
@@ -94,7 +96,8 @@ export default function ListingDetail() {
   const canBuy = listing.status === 'active' && listing.ship_cod && !isOwner;
   const category = getCategory(listing.category);
   const sellerIsMod = seller?.is_mod ?? false;
-  const fees = calcFees(listing.price, listing.fee_payer, sellerIsMod);
+  const fees = calcFees(listing.price, listing.fee_payer, sellerIsMod, feeBp);
+  const dp = getDisplayPrice(listing, { isMod: sellerIsMod, globalBp: feeBp });
 
   const specs: { label: string; value: string }[] = [
     { label: 'Phân loại', value: category?.label ?? listing.category },
@@ -134,7 +137,7 @@ export default function ListingDetail() {
         <div className="space-y-4">
           <div>
             <h1 className="text-xl font-semibold leading-snug tracking-tight sm:text-2xl">{listing.title}</h1>
-            <div className="mt-2"><PriceTag price={listing.price} originalPrice={listing.original_price} size="lg" /></div>
+            <div className="mt-2"><PriceTag size="lg" display={dp.display} strike={dp.strike} percent={dp.percent} feePromo={dp.feePromo} note={fees.buyerFee > 0 ? 'Giá trọn gói người mua thanh toán, đã gồm phí bảo lãnh giao dịch' : undefined} /></div>
             <div className="mt-2 flex flex-wrap gap-2 text-xs text-slate-600">
               {listing.province && <span className="badge"><MapPin className="mr-1 h-3 w-3" />{listing.province}</span>}
               {listing.ship_cod && <span className="badge"><Truck className="mr-1 h-3 w-3" />Ship COD</span>}
@@ -163,7 +166,7 @@ export default function ListingDetail() {
             )}
             {canBuy && (
               <>
-                <FeeSummary fees={fees} feePayer={listing.fee_payer} isMod={sellerIsMod} />
+                <PriceBreakdown listPrice={fees.listPrice} buyerFee={fees.buyerFee} total={fees.buyerPays} feePayer={listing.fee_payer} feeRateBp={fees.feeRateBp} waivedReason={sellerIsMod ? 'Mod Group' : undefined} />
                 <BuyerProtectionSteps compact />
                 <p className="text-xs text-slate-500">Phí ship trả cho bưu tá khi nhận hàng (không tính vào số tiền chuyển cho trung gian).</p>
               </>
@@ -294,6 +297,7 @@ function BuyDialog({ listing, buyerPays, onClose }: { listing: Listing; buyerPay
         phone: phone.trim(),
         address: address.trim(),
         note: note.trim() || undefined,
+        expectedAmount: buyerPays,
       });
       navigate(`/orders/${order.id}`);
     } catch (err) {
@@ -355,25 +359,6 @@ function BuyDialog({ listing, buyerPays, onClose }: { listing: Listing; buyerPay
           </button>
         </div>
       </form>
-    </div>
-  );
-}
-
-/* Bảng tóm tắt giá minh bạch: người mua chuyển bao nhiêu, người bán nhận bao nhiêu */
-function FeeSummary({ fees, feePayer, isMod }: { fees: FeeBreakdown; feePayer: Listing['fee_payer']; isMod: boolean }) {
-  return (
-    <div className="space-y-2">
-      <dl className="divide-y divide-slate-100 rounded-xl border border-slate-200 bg-slate-50 text-sm">
-        <div className="flex justify-between px-3 py-2"><dt className="text-slate-600">Giá niêm yết</dt><dd className="font-medium text-slate-900">{formatVND(fees.listPrice)}</dd></div>
-        {fees.buyerFee > 0 && (
-          <div className="flex justify-between px-3 py-2"><dt className="text-slate-600">Phí trung gian (bạn chịu)</dt><dd className="font-medium text-slate-900">+ {formatVND(fees.buyerFee)}</dd></div>
-        )}
-        <div className="flex justify-between px-3 py-2.5"><dt className="font-medium text-slate-900">Bạn chuyển khoản</dt><dd className="text-base font-semibold text-brand-800">{formatVND(fees.buyerPays)}</dd></div>
-        <div className="flex justify-between px-3 py-2"><dt className="text-slate-500">Người bán thực nhận</dt><dd className="text-slate-700">{formatVND(fees.sellerReceives)}</dd></div>
-      </dl>
-      <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-slate-500">
-        {isMod ? <ModBadge full /> : <span>Phí trung gian {fees.feeRateBp / 100}%: {getFeePayerLabel(feePayer).toLowerCase()}.</span>}
-      </p>
     </div>
   );
 }

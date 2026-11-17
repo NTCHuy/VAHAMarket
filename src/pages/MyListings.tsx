@@ -7,6 +7,7 @@ import { cldUrl } from '@/lib/cloudinary';
 import { getErrorMessage } from '@/lib/errors';
 import { Alert, PageLoader } from '@/components/ui';
 import PriceTag from '@/components/PriceTag';
+import { discountPercent } from '@/lib/money';
 import type { Listing, ListingStatus } from '@/types';
 
 const STATUS_BADGE: Record<ListingStatus, { label: string; cls: string }> = {
@@ -82,7 +83,7 @@ export default function MyListings() {
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="line-clamp-2 text-sm font-medium text-slate-900">{l.title}</p>
-                  <div className="mt-0.5"><PriceTag price={l.price} originalPrice={l.original_price} /></div>
+                  <div className="mt-0.5"><PriceTag display={l.price} strike={l.original_price} percent={discountPercent(l.price, l.original_price)} /></div>
                   <span className={`badge mt-1 ${badge.cls}`}>{badge.label}</span>
                   {editable && (
                     <div className="mt-2 flex flex-wrap items-center gap-2">

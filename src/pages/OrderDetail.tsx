@@ -18,6 +18,7 @@ import BuyerProtectionSteps from '@/components/BuyerProtectionSteps';
 import CopyButton from '@/components/CopyButton';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import ModBadge from '@/components/ModBadge';
+import PriceBreakdown from '@/components/PriceBreakdown';
 import OrderStatusBadge from '@/components/OrderStatusBadge';
 import { Alert, Avatar, Field, PageLoader } from '@/components/ui';
 import type { Order, OrderPayout, OrderStatus, Profile } from '@/types';
@@ -259,17 +260,23 @@ function OrderDetailContent() {
       <div className="grid gap-5 md:grid-cols-2">
         <section className="card space-y-3 p-5">
           <h2 className="text-base font-semibold">Thanh toán</h2>
-          <dl className="divide-y divide-slate-100 text-sm">
-            <Row label="Giá sản phẩm" value={formatVND(order.list_price)} />
-            {isBuyer && order.buyer_fee > 0 && <Row label="Phí trung gian (bạn chịu)" value={`+ ${formatVND(order.buyer_fee)}`} />}
-            {isBuyer && <Row label="Bạn chuyển khoản" value={formatVND(order.amount)} strong />}
-            {isSeller && order.seller_fee > 0 && <Row label="Phí trung gian (bạn chịu)" value={`− ${formatVND(order.seller_fee)}`} />}
-            {isSeller && <Row label="Bạn thực nhận" value={formatVND(order.seller_payout)} strong />}
-            {!isBuyer && !isSeller && <Row label="Người mua chuyển" value={formatVND(order.amount)} />}
-            {!isBuyer && !isSeller && <Row label="Phí sàn" value={formatVND(order.platform_fee)} />}
-            {!isBuyer && !isSeller && <Row label="Người bán nhận" value={formatVND(order.seller_payout)} strong />}
-            {isBuyer && <Row label="Phí ship" value="Trả cho bưu tá khi nhận hàng" />}
-          </dl>
+          {isBuyer ? (
+            <>
+              <PriceBreakdown listPrice={order.list_price} buyerFee={order.buyer_fee} total={order.amount} feePayer={order.fee_payer} feeRateBp={order.fee_rate_bp} waivedReason="Ưu đãi" />
+              <p className="text-xs text-slate-500">Số tiền trên là số bạn chuyển khoản. Phí ship trả cho bưu tá khi nhận hàng.</p>
+            </>
+          ) : (
+            <dl className="divide-y divide-slate-100 text-sm">
+              <Row label="Giá sản phẩm gốc" value={formatVND(order.list_price)} />
+              {isSeller && (order.seller_fee > 0
+                ? <Row label="Phí bảo lãnh giao dịch (bên bạn chịu)" value={`− ${formatVND(order.seller_fee)}`} />
+                : <Row label="Phí bảo lãnh giao dịch (bên bạn chịu)" value="Miễn phí" />)}
+              {isSeller && <Row label="Bạn thực nhận" value={formatVND(order.seller_payout)} strong />}
+              {!isSeller && <Row label="Người mua chuyển" value={formatVND(order.amount)} />}
+              {!isSeller && <Row label="Phí sàn" value={formatVND(order.platform_fee)} />}
+              {!isSeller && <Row label="Người bán nhận" value={formatVND(order.seller_payout)} strong />}
+            </dl>
+          )}
           {order.fee_rate_bp === 0 && <ModBadge full />}
           {isSeller && payout && (
             <p className="rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-600">

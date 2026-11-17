@@ -4,7 +4,7 @@ import { Check, Loader2, Search, Tag } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { updateListingPrice } from '@/lib/admin';
 import { cldUrl } from '@/lib/cloudinary';
-import { formatVND } from '@/lib/money';
+import { discountPercent, formatVND } from '@/lib/money';
 import { getErrorMessage } from '@/lib/errors';
 import ModBadge from '@/components/ModBadge';
 import PriceTag from '@/components/PriceTag';
@@ -177,7 +177,7 @@ function ListingRow({ listing, seller, onSaved }: { listing: Listing; seller?: P
             <span className="badge">{STATUS_LABEL[listing.status]}</span>
             <Link to={`/listing/${listing.id}`} className="text-brand-700 hover:underline">Xem tin</Link>
           </p>
-          <div className="mt-1"><PriceTag price={listing.price} originalPrice={listing.original_price} /></div>
+          <div className="mt-1"><PriceTag display={listing.price} strike={listing.original_price} percent={discountPercent(listing.price, listing.original_price)} /></div>
         </div>
       </div>
 

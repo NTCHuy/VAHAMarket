@@ -11,6 +11,7 @@ import TransactionsTab from './admin/TransactionsTab';
 import OrdersTab from './admin/OrdersTab';
 import ListingsTab from './admin/ListingsTab';
 import MembersTab from './admin/MembersTab';
+import FeeSettingsCard from './admin/FeeSettingsCard';
 
 type TabId = 'payouts' | 'disputes' | 'transactions' | 'orders' | 'listings' | 'members';
 const TAB_IDS: TabId[] = ['payouts', 'disputes', 'transactions', 'orders', 'listings', 'members'];
@@ -59,6 +60,8 @@ export default function AdminDashboard() {
         <StatCard icon={Lock} label="Đơn đang giữ tiền" value={stats ? String(stats.held_count) : '—'} sub={stats ? `${formatVND(stats.held_amount)} (đã TT / đang giao)` : undefined} />
         <StatCard icon={AlertTriangle} label="Đơn đang khiếu nại" value={stats ? String(stats.dispute_count) : '—'} sub="Cần phân xử" tone={stats && stats.dispute_count > 0 ? 'danger' : 'normal'} />
       </div>
+
+      <FeeSettingsCard />
 
       <div role="tablist" className="-mx-4 flex gap-1 overflow-x-auto border-b border-slate-200 px-4 sm:mx-0 sm:px-0">
         {tabs.map((t) => (

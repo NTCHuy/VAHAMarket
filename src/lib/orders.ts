@@ -12,6 +12,8 @@ export interface CreateOrderInput {
   phone: string;
   address: string;
   note?: string;
+  /** Số tiền người mua đang thấy trên màn hình; DB từ chối nếu giá đã đổi (vd admin vừa đổi phí). */
+  expectedAmount?: number;
 }
 
 export async function createOrder(input: CreateOrderInput): Promise<Order> {
@@ -21,6 +23,7 @@ export async function createOrder(input: CreateOrderInput): Promise<Order> {
     p_phone: input.phone,
     p_address: input.address,
     p_note: input.note ?? null,
+    p_expected_amount: input.expectedAmount ?? null,
   });
   if (error) throw new Error(error.message);
   return data as Order;

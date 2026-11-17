@@ -11,7 +11,7 @@ import { FEE_PAYER_OPTIONS, type FeePayer } from '@/constants/fees';
 import { PROVINCES } from '@/constants/provinces';
 import { Alert, Field, PageLoader } from '@/components/ui';
 import ModBadge from '@/components/ModBadge';
-import PriceTag from '@/components/PriceTag';
+import { usePlatformSettings } from '@/context/PlatformSettingsContext';
 import type { BankAccount, Listing, ListingStatus } from '@/types';
 
 const MAX_IMAGES = 6;
@@ -51,6 +51,7 @@ const nextKey = () => `img-${Date.now()}-${keySeq++}`;
 
 function ListingForm({ listingId }: { listingId?: string }) {
   const { user, profile } = useAuth();
+  const { feeBp } = usePlatformSettings();
   const navigate = useNavigate();
   const isEdit = Boolean(listingId);
 
@@ -67,7 +68,7 @@ function ListingForm({ listingId }: { listingId?: string }) {
   const [condition, setCondition] = useState<ListingCondition | ''>('');
   const [boxStatus, setBoxStatus] = useState<BoxStatus>('full');
   const [priceText, setPriceText] = useState('');
-  const [originalPriceText, setOriginalPriceText] = useState('');
+  const [hadAdminDiscount, setHadAdminDiscount] = useState(false); // tin đang có giá ưu đãi do Admin đặt
   const [feePayer, setFeePayer] = useState<FeePayer>('SELLER');
   const [province, setProvince] = useState('');
   const [shipCod, setShipCod] = useState(true);
@@ -122,7 +123,7 @@ function ListingForm({ listingId }: { listingId?: string }) {
           setCondition(l.condition);
           setBoxStatus(l.box_status);
           setPriceText(String(l.price));
-          setOriginalPriceText(l.original_price ? String(l.original_price) : '');
+          setHadAdminDiscount(l.original_price !== null);
           setFeePayer(l.fee_payer);
           setProvince(l.province ?? '');
           setShipCod(l.ship_cod);
@@ -231,8 +232,8 @@ function ListingForm({ listingId }: { listingId?: string }) {
   const price = priceText ? parseInt(priceText, 10) : 0;
   const priceValid = Number.isInteger(price) && price >= MIN_PRICE && price <= MAX_PRICE;
   const isMod = profile?.is_mod ?? false;
-  const fees = useMemo(() => (priceValid ? calcFees(price, feePayer, isMod) : null), [price, priceValid, feePayer, isMod]);
-  const originalPrice = originalPriceText ? parseInt(originalPriceText, 10) : 0;
+  const fees = useMemo(() => (priceValid ? calcFees(price, feePayer, isMod, feeBp) : null), [price, priceValid, feePayer, isMod, feeBp]);
+  const feePctText = `${Number(((isMod ? 0 : feeBp) / 100).toFixed(2))}%`;
 
   /* ----------------------------- Validate ----------------------------- */
   const uploading = images.some((i) => i.state === 'uploading');
@@ -248,13 +249,12 @@ function ListingForm({ listingId }: { listingId?: string }) {
     if (!category) e.category = 'Chọn phân loại.';
     if (!condition) e.condition = 'Chọn tình trạng ngoại hình.';
     if (!priceValid) e.price = `Giá bán từ ${formatVND(MIN_PRICE)} đến ${formatVND(MAX_PRICE)}.`;
-    if (originalPriceText && !(originalPrice > price && originalPrice <= MAX_PRICE)) e.originalPrice = 'Giá gốc phải lớn hơn giá bán hiện tại.';
     if (!province && !shipCod) e.delivery = 'Chọn ít nhất một hình thức: giao dịch trực tiếp hoặc ship COD.';
     const d = description.trim();
     if (d.length < 10 || d.length > 5000) e.description = 'Mô tả từ 10 đến 5000 ký tự.';
     if (!bankAccountId) e.bank = 'Chọn tài khoản ngân hàng nhận tiền.';
     return e;
-  }, [images.length, uploading, uploadFailed, title, category, condition, priceValid, price, originalPrice, originalPriceText, province, shipCod, description, bankAccountId]);
+  }, [images.length, uploading, uploadFailed, title, category, condition, priceValid, province, shipCod, description, bankAccountId]);
 
   /* ----------------------------- Lưu ----------------------------- */
   const save = async (targetStatus: EditableStatus, mode: 'publish' | 'draft' | 'save') => {
@@ -277,7 +277,6 @@ function ListingForm({ listingId }: { listingId?: string }) {
         images: images.map((i) => ({ url: i.url, publicId: i.publicId, width: i.width, height: i.height })),
         bank_account_id: bankAccountId,
         fee_payer: feePayer,
-        original_price: originalPrice > 0 ? originalPrice : null,
         status: targetStatus,
       };
       const res = listingId
@@ -464,30 +463,17 @@ function ListingForm({ listingId }: { listingId?: string }) {
           </div>
         </Field>
 
-        <Field label="Giá gốc (nếu đang giảm giá)" htmlFor="originalPrice" error={show('originalPrice')} hint="Không bắt buộc. Nhập giá cũ lớn hơn giá bán để hiển thị giá gạch ngang và % giảm.">
-          <div className="relative">
-            <input
-              id="originalPrice"
-              className="input pr-12 text-right font-mono"
-              inputMode="numeric"
-              autoComplete="off"
-              placeholder="0"
-              value={originalPriceText ? new Intl.NumberFormat('vi-VN').format(parseInt(originalPriceText, 10)) : ''}
-              onChange={(e) => setOriginalPriceText(e.target.value.replace(/\D/g, '').slice(0, 10))}
-            />
-            <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-slate-400">đ</span>
-          </div>
-        </Field>
-        {priceValid && originalPrice > price && (
-          <div className="rounded-lg bg-slate-50 px-3 py-2"><PriceTag price={price} originalPrice={originalPrice} /></div>
+        {hadAdminDiscount && (
+          <Alert kind="info">Tin này đang có giá ưu đãi do Admin đặt. Nếu bạn đổi giá bán, giá ưu đãi (gạch ngang) sẽ tự động được gỡ.</Alert>
         )}
 
         <fieldset>
-          <legend className="label">Ai chịu phí trung gian {isMod ? '0%' : '5%'}?</legend>
+          <legend className="label">Ai chịu phí trung gian {feePctText}?</legend>
           {isMod && <div className="mb-2"><ModBadge full /></div>}
+          {!isMod && feeBp < 500 && <p className="mb-2 text-xs text-amber-700">Đang áp dụng ưu đãi phí sàn toàn hệ thống: {feePctText} (thay vì 5%).</p>}
           <div className="grid gap-2 sm:grid-cols-3">
             {FEE_PAYER_OPTIONS.map((o) => {
-              const f = priceValid ? calcFees(price, o.id, isMod) : null;
+              const f = priceValid ? calcFees(price, o.id, isMod, feeBp) : null;
               return (
                 <label key={o.id} className={`cursor-pointer rounded-lg border p-3 transition-colors ${feePayer === o.id ? 'border-brand-600 bg-brand-50 ring-1 ring-brand-600' : 'border-slate-200 hover:bg-slate-50'}`}>
                   <input type="radio" name="feePayer" value={o.id} checked={feePayer === o.id} onChange={() => setFeePayer(o.id)} className="sr-only" />
@@ -510,7 +496,7 @@ function ListingForm({ listingId }: { listingId?: string }) {
             <dd className="font-medium text-slate-900">{fees ? formatVND(fees.listPrice) : '—'}</dd>
           </div>
           <div className="flex justify-between px-4 py-2.5">
-            <dt className="text-slate-600">Phí trung gian bạn chịu ({isMod ? '0' : '5'}%{feePayer === 'SPLIT' ? ', chia đôi' : ''})</dt>
+            <dt className="text-slate-600">Phí trung gian bạn chịu ({feePctText}{feePayer === 'SPLIT' ? ', chia đôi' : ''})</dt>
             <dd className="font-medium text-red-600">{fees ? (fees.sellerFee > 0 ? `− ${formatVND(fees.sellerFee)}` : formatVND(0)) : '—'}</dd>
           </div>
           <div className="flex justify-between px-4 py-3">

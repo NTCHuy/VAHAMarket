@@ -70,3 +70,10 @@ export async function updateListingPrice(listingId: string, price: number, origi
   if (error) throw new Error(error.message);
   return data as Listing;
 }
+
+/** Đổi phí sàn toàn hệ thống (0–0.05). Ví dụ 0.025 = 2.5%. */
+export async function setGlobalFeeRate(rate: number): Promise<{ global_fee_rate: number }> {
+  const { data, error } = await supabase.rpc('admin_set_global_fee_rate', { p_rate: rate });
+  if (error) throw new Error(error.message);
+  return data as { global_fee_rate: number };
+}

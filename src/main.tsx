@@ -13,16 +13,22 @@ const root = createRoot(container);
  */
 async function start() {
   try {
-    const [{ default: App }, { AuthProvider }] = await Promise.all([
+    const [{ default: App }, { AuthProvider }, { PlatformSettingsProvider }, { OrderAlertsProvider }] = await Promise.all([
       import('./App'),
       import('./context/AuthContext'),
+      import('./context/PlatformSettingsContext'),
+      import('./context/OrderAlertsContext'),
     ]);
     root.render(
       <StrictMode>
         <ErrorBoundary variant="fullscreen">
           <BrowserRouter>
             <AuthProvider>
-              <App />
+              <PlatformSettingsProvider>
+                <OrderAlertsProvider>
+                  <App />
+                </OrderAlertsProvider>
+              </PlatformSettingsProvider>
             </AuthProvider>
           </BrowserRouter>
         </ErrorBoundary>

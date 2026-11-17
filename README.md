@@ -10,7 +10,7 @@ React + Vite + TypeScript + Tailwind · Supabase (Auth, Postgres/RLS, Realtime, 
 ## Bước 0 — Chuẩn bị Supabase (làm 1 lần)
 
 1. Supabase Dashboard → **SQL Editor** → chạy lần lượt, mỗi file 1 lần:
-   `supabase/schema.sql` → `supabase/migrations/002_ui_fields.sql` → `003_order_dispute_fields.sql` → `004_admin_actions.sql` → `005_vaha_rebrand_and_fees.sql`
+   `supabase/schema.sql` → `supabase/migrations/002_ui_fields.sql` → `003_order_dispute_fields.sql` → `004_admin_actions.sql` → `005_vaha_rebrand_and_fees.sql` → `006_platform_settings_and_ux.sql`
 2. **Authentication → Providers → Google**: bật và nhập Client ID/Secret (Google Cloud Console → OAuth client, loại Web).
    *Authorized redirect URI* trên Google phải là `https://<PROJECT_REF>.supabase.co/auth/v1/callback`.
 3. Đăng nhập vào web 1 lần, rồi lấy UUID của bạn ở **Authentication → Users** và chạy trên SQL Editor:
@@ -21,10 +21,13 @@ React + Vite + TypeScript + Tailwind · Supabase (Auth, Postgres/RLS, Realtime, 
 
 ## Cấu hình VAHA Market (làm trước khi mở cho cộng đồng)
 
-- **Link thương hiệu**: mở `src/constants/links.ts`, điền `FOUNDER_FACEBOOK_URL` (Facebook cá nhân) và `GROUP_URL` (Group 50.000+ thành viên). Hai nút này hiện ở Footer và khung "Quy định giao dịch an toàn".
+- **Link thương hiệu**: mở `src/constants/links.ts`, điền `FOUNDER_FACEBOOK_URL`, `GROUP_URL` và `DISCORD_SERVER_URL` (link mời Discord). Ba nút này hiện ở Footer và khung "Quy định giao dịch an toàn".
 - **Tài khoản nhận tiền Escrow** nằm ở `src/constants/payment.ts` (BIDV + số VA, vd `96247VAHA`). Số tài khoản nhận cả **chữ cái và chữ số** (`/^[A-Z0-9]{6,25}$/i`). Nếu dữ liệu QR sai, trang đơn hàng vẫn hiển thị thông tin chuyển khoản thủ công thay vì trắng trang.
+- **Phí sàn toàn hệ thống**: đổi ở **Admin → khung "Cấu hình phí sàn toàn hệ thống"** (0% ưu đãi ra mắt, 2%, 3%, 5% hoặc nhập 0–5%). Chỉ áp dụng cho đơn mới. Khi phí < 5%, tin do người mua chịu phí tự hiện giá 5% gạch ngang + nhãn "Ưu đãi phí sàn".
+- **Giá trọn gói**: người mua luôn thấy tổng số tiền thực chuyển khoản (đã gồm phần phí họ chịu) ở trang chủ, trang chi tiết và đơn hàng; `create_order` từ chối nếu giá đã đổi so với màn hình để QR luôn khớp từng đồng.
+- **Chấm đỏ đơn hàng**: Navbar và 2 tab Đơn mua/Đơn bán hiện số đơn cần xử lý (mua: chờ chuyển khoản còn hạn hoặc đang giao; bán: khách đã thanh toán chờ gửi hàng).
 - **Phí trung gian**: mặc định 5% giá niêm yết. Người bán chọn khi đăng tin: *Người bán chịu* (mặc định) / *Người mua chịu* / *Chia đôi*. Người bán có huy hiệu **Mod** được miễn phí (0%). Gắn/gỡ Mod ở **Admin → Mod**.
-- **Giảm giá**: người bán nhập "Giá gốc" khi đăng/sửa tin; Admin chỉnh nhanh giá và giá gốc ở **Admin → Tin đăng & giá**.
+- **Giảm giá**: chỉ Admin đặt `original_price` (Admin → Tin đăng & giá); người bán không tự nhập được, và nếu họ đổi giá bán thì giá ưu đãi do Admin đặt tự gỡ.
 - Mã thanh toán vẫn bắt đầu bằng `CNTH` (không đổi để không ảnh hưởng webhook/đơn cũ).
 
 ## Bước 1 — Chạy thử trên máy
@@ -105,6 +108,8 @@ Function nhận biến động số dư từ SePay và đặt đơn sang `PAID_H
 - [ ] Người bán nhập vận đơn + link video → người mua xác nhận → Admin thấy đơn trong **Giải ngân** → quét QR chuyển tiền → bấm "Xác nhận đã chuyển tiền"
 - [ ] Thử 1 khiếu nại và xử lý ở **Admin → Khiếu nại**
 - [ ] Đăng 3 tin thử với 3 cách chia phí, đặt mua và kiểm tra số tiền chuyển khoản khớp bảng giá
+- [ ] Đổi phí sàn về 0% rồi đặt mua 1 tin "người mua chịu phí": số tiền ở trang chủ = trang chi tiết = mã QR
+- [ ] Đơn chờ thanh toán / chờ gửi hàng làm hiện chấm đỏ ở Navbar và tab tương ứng
 - [ ] Gắn Mod cho 1 người bán → đơn mới của họ không tính phí; đặt giá gốc cho 1 tin → thấy giá gạch ngang
 - [ ] Đơn không thanh toán sau 15 phút tự hết hạn và tin được mở bán lại
 - [ ] `sb_secret_...` chỉ nằm trong Supabase secrets (không có trong `.env`, GitHub hay Vercel)

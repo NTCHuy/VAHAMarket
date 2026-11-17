@@ -8,12 +8,16 @@ import { BOX_STATUS_OPTIONS, CATEGORIES, LISTING_CONDITIONS, getBoxStatusLabel, 
 import { PROVINCES } from '@/constants/provinces';
 import { Alert } from '@/components/ui';
 import PriceTag from '@/components/PriceTag';
+import { usePlatformSettings } from '@/context/PlatformSettingsContext';
+import { getDisplayPrice } from '@/lib/money';
 import type { Listing } from '@/types';
 
-type ListingCard = Pick<Listing, 'id' | 'title' | 'price' | 'original_price' | 'condition' | 'category' | 'province' | 'ship_cod' | 'box_status' | 'images'>;
+type ListingCard = Pick<Listing, 'id' | 'title' | 'price' | 'original_price' | 'fee_payer' | 'condition' | 'category' | 'province' | 'ship_cod' | 'box_status' | 'images'> & {
+  profiles: { is_mod: boolean } | null; // người bán (để biết Mod → phí 0%)
+};
 
 const PAGE_SIZE = 24;
-const COLUMNS = 'id,title,price,original_price,condition,category,province,ship_cod,box_status,images';
+const COLUMNS = 'id,title,price,original_price,fee_payer,condition,category,province,ship_cod,box_status,images,profiles(is_mod)';
 
 type SortKey = 'new' | 'price_asc' | 'price_desc';
 const SORTS: { id: SortKey; label: string }[] = [
@@ -27,6 +31,7 @@ const escapeLike = (s: string) => s.replace(/[\\%_]/g, (c) => `\\${c}`);
 const digitsOnly = (s: string) => s.replace(/\D/g, '').slice(0, 10);
 
 export default function Home() {
+  const { feeBp } = usePlatformSettings();
   const [params, setParams] = useSearchParams();
   const q = params.get('q') ?? '';
   const category = params.get('category') ?? '';
@@ -113,7 +118,7 @@ export default function Home() {
       if (id !== requestId.current) return; // bỏ kết quả cũ
       if (err) setError(getErrorMessage(err));
       else {
-        setItems((data ?? []) as ListingCard[]);
+        setItems((data ?? []) as unknown as ListingCard[]);
         setTotal(count ?? 0);
       }
       setLoading(false);
@@ -126,7 +131,7 @@ export default function Home() {
     const { data, error: err } = await fetchPage(items.length);
     if (id !== requestId.current) return;
     if (err) setError(getErrorMessage(err));
-    else setItems((prev) => [...prev, ...((data ?? []) as ListingCard[])]);
+    else setItems((prev) => [...prev, ...((data ?? []) as unknown as ListingCard[])]);
     setLoadingMore(false);
   };
 
@@ -227,7 +232,7 @@ export default function Home() {
                     </div>
                     <div className="space-y-1 p-3">
                       <p className="line-clamp-2 text-sm font-medium text-slate-900">{l.title}</p>
-                      <PriceTag price={l.price} originalPrice={l.original_price} />
+                      <CardPrice l={l} feeBp={feeBp} />
                       <p className="text-xs text-slate-500">{getCategory(l.category)?.label ?? l.category} · {getConditionLabel(l.condition)}</p>
                       <p className="text-xs text-slate-500">{getBoxStatusLabel(l.box_status)}</p>
                       <p className="flex flex-wrap items-center gap-x-3 text-xs text-slate-500">
@@ -250,5 +255,19 @@ export default function Home() {
         )}
       </section>
     </div>
+  );
+}
+
+/** Giá TRỌN GÓI người mua thực trả (đã gồm phần phí người mua chịu) + ưu đãi gạch ngang. */
+function CardPrice({ l, feeBp }: { l: ListingCard; feeBp: number }) {
+  const dp = getDisplayPrice(l, { isMod: l.profiles?.is_mod ?? false, globalBp: feeBp });
+  return (
+    <PriceTag
+      display={dp.display}
+      strike={dp.strike}
+      percent={dp.percent}
+      feePromo={dp.feePromo}
+      note={dp.fees.buyerFee > 0 ? 'Giá trọn gói, đã gồm phí bảo lãnh' : undefined}
+    />
   );
 }
