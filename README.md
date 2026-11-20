@@ -30,6 +30,12 @@ React + Vite + TypeScript + Tailwind · Supabase (Auth, Postgres/RLS, Realtime, 
 - **Giảm giá**: chỉ Admin đặt `original_price` (Admin → Tin đăng & giá); người bán không tự nhập được, và nếu họ đổi giá bán thì giá ưu đãi do Admin đặt tự gỡ.
 - Mã thanh toán vẫn bắt đầu bằng `CNTH` (không đổi để không ảnh hưởng webhook/đơn cũ).
 
+## Link Preview (Open Graph)
+
+- Ảnh preview 1200×630 nằm ở `public/og-preview.png`, thẻ meta nằm trong `index.html` (og:image dùng URL tuyệt đối `https://vahamarket.vercel.app/og-preview.png`).
+- Muốn sửa nội dung ảnh: chỉnh `scripts/generate-og-preview.py` rồi chạy `python3 scripts/generate-og-preview.py` (cần `pip install pillow` và font Inter).
+- Sau khi deploy, Facebook/Zalo/Discord **lưu cache** preview cũ: dán link vào [Sharing Debugger](https://developers.facebook.com/tools/debug/) và bấm **Scrape Again** để Facebook/Messenger lấy ảnh mới. Discord cache vài giờ; thêm `?v=2` sau link nếu cần xem ngay.
+
 ## Bước 1 — Chạy thử trên máy
 
 Cần Node.js 18+. Trong thư mục dự án:
