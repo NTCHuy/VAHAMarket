@@ -66,8 +66,8 @@ export default function ReviewTab({ onChanged }: { onChanged: () => void }) {
   if (items.length === 0) {
     return (
       <div className="card flex flex-col items-center px-4 py-12 text-center">
-        <ShieldCheck className="h-8 w-8 text-slate-300" />
-        <p className="mt-2 text-sm text-slate-600">Không có tin nào đang chờ duyệt.</p>
+        <ShieldCheck className="h-8 w-8 text-slate-300 dark:text-slate-600" />
+        <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">Không có tin nào đang chờ duyệt.</p>
       </div>
     );
   }
@@ -105,40 +105,40 @@ function ReviewCard({ listing, seller, contact, bank, onDone }: {
   const postedDate = new Date(listing.created_at).toLocaleDateString('vi-VN');
 
   return (
-    <li className="card space-y-4 border-amber-200 p-4 sm:p-5">
+    <li className="card space-y-4 border-amber-200 dark:border-amber-800/70 p-4 sm:p-5">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div className="min-w-0">
-          <p className="text-base font-semibold text-slate-900">{listing.title}</p>
-          <p className="text-sm text-slate-600">
+          <p className="text-base font-semibold text-slate-900 dark:text-slate-100">{listing.title}</p>
+          <p className="text-sm text-slate-600 dark:text-slate-400">
             {formatVND(listing.price)} · {getCategory(listing.category)?.label ?? listing.category} · {getConditionLabel(listing.condition)} · {getBoxStatusLabel(listing.box_status)}
           </p>
         </div>
-        <span className="text-xs text-slate-500">Gửi lúc {new Date(listing.created_at).toLocaleString('vi-VN')}</span>
+        <span className="text-xs text-slate-500 dark:text-slate-400">Gửi lúc {new Date(listing.created_at).toLocaleString('vi-VN')}</span>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
         {/* Ảnh xác thực: nổi bật nhất */}
-        <div className="space-y-2 rounded-xl border-2 border-amber-300 bg-amber-50/60 p-3">
-          <p className="flex items-center gap-1.5 text-sm font-semibold text-amber-900"><BadgeCheck className="h-4 w-4" /> Ảnh xác thực giấy viết tay</p>
+        <div className="space-y-2 rounded-xl border-2 border-amber-300 dark:border-amber-700/80 bg-amber-50/60 dark:bg-amber-950/40 p-3">
+          <p className="flex items-center gap-1.5 text-sm font-semibold text-amber-900 dark:text-amber-200"><BadgeCheck className="h-4 w-4" /> Ảnh xác thực giấy viết tay</p>
           {listing.verification_image_url ? (
-            <a href={listing.verification_image_url} target="_blank" rel="noopener noreferrer" className="block overflow-hidden rounded-lg border border-amber-200 bg-white">
+            <a href={listing.verification_image_url} target="_blank" rel="noopener noreferrer" className="block overflow-hidden rounded-lg border border-amber-200 dark:border-amber-800/70 bg-white dark:bg-slate-900">
               <img src={cldUrl(listing.verification_image_url, { width: 900 })} alt="Ảnh xác thực" className="max-h-96 w-full object-contain" />
             </a>
           ) : (
-            <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">Tin này chưa có ảnh xác thực.</p>
+            <p className="rounded-lg bg-red-50 dark:bg-red-950/50 px-3 py-2 text-sm text-red-700 dark:text-red-400">Tin này chưa có ảnh xác thực.</p>
           )}
-          <p className="text-xs text-amber-900">
+          <p className="text-xs text-amber-900 dark:text-amber-200">
             Kiểm tra giấy viết tay có đủ: <strong>VAHA</strong> + <strong>ngày {postedDate}</strong> + <strong>tên Facebook</strong> khớp với hồ sơ bên cạnh, và sản phẩm thật nằm cùng khung hình.
           </p>
         </div>
 
         {/* Hồ sơ người bán */}
-        <div className="space-y-3 rounded-xl border border-slate-200 p-3">
+        <div className="space-y-3 rounded-xl border border-slate-200 dark:border-slate-800 p-3">
           <div className="flex items-center gap-3">
             <Avatar name={seller?.display_name ?? '?'} url={seller?.avatar_url ?? null} size={40} />
             <div className="min-w-0">
-              <p className="flex flex-wrap items-center gap-2 font-medium text-slate-900"><span className="truncate">{seller?.display_name ?? '—'}</span>{seller?.is_mod && <ModBadge />}</p>
-              <p className="text-xs text-slate-500">{seller?.sold_count ?? 0} đơn bán thành công · tham gia {seller ? new Date(seller.created_at).toLocaleDateString('vi-VN') : '—'}</p>
+              <p className="flex flex-wrap items-center gap-2 font-medium text-slate-900 dark:text-slate-100"><span className="truncate">{seller?.display_name ?? '—'}</span>{seller?.is_mod && <ModBadge />}</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">{seller?.sold_count ?? 0} đơn bán thành công · tham gia {seller ? new Date(seller.created_at).toLocaleDateString('vi-VN') : '—'}</p>
             </div>
           </div>
 
@@ -147,24 +147,24 @@ function ReviewCard({ listing, seller, contact, bank, onDone }: {
               <Facebook className="h-4 w-4" /> Mở Facebook cá nhân của người bán <ExternalLink className="h-3.5 w-3.5" />
             </a>
           ) : (
-            <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">Người bán chưa khai báo link Facebook.</p>
+            <p className="rounded-lg bg-red-50 dark:bg-red-950/50 px-3 py-2 text-sm text-red-700 dark:text-red-400">Người bán chưa khai báo link Facebook.</p>
           )}
 
           <p className="flex items-center gap-2 text-sm">
-            <Phone className="h-4 w-4 text-slate-400" />
-            {contact?.phone ? <><span className="font-mono">{contact.phone}</span> <CopyButton value={contact.phone} /></> : <span className="text-red-600">Chưa có SĐT</span>}
+            <Phone className="h-4 w-4 text-slate-400 dark:text-slate-500" />
+            {contact?.phone ? <><span className="font-mono">{contact.phone}</span> <CopyButton value={contact.phone} /></> : <span className="text-red-600 dark:text-red-400">Chưa có SĐT</span>}
           </p>
 
-          <div className="rounded-lg bg-slate-50 p-3 text-sm">
-            <p className="mb-1 flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-slate-500"><Landmark className="h-3.5 w-3.5" /> Tài khoản nhận giải ngân</p>
+          <div className="rounded-lg bg-slate-50 dark:bg-slate-800/60 p-3 text-sm">
+            <p className="mb-1 flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400"><Landmark className="h-3.5 w-3.5" /> Tài khoản nhận giải ngân</p>
             {bank ? (
               <>
-                <p className="font-medium text-slate-900">{bank.bank_name} · <span className="font-mono">{bank.account_number}</span> <CopyButton value={bank.account_number} /></p>
-                <p className="text-slate-700">Chủ TK: <strong>{bank.account_name}</strong></p>
-                <p className="mt-1 text-xs text-slate-500">Tên chủ TK phải là tên chính chủ, khớp Facebook / giấy viết tay.</p>
+                <p className="font-medium text-slate-900 dark:text-slate-100">{bank.bank_name} · <span className="font-mono">{bank.account_number}</span> <CopyButton value={bank.account_number} /></p>
+                <p className="text-slate-700 dark:text-slate-200">Chủ TK: <strong>{bank.account_name}</strong></p>
+                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Tên chủ TK phải là tên chính chủ, khớp Facebook / giấy viết tay.</p>
               </>
             ) : (
-              <p className="text-red-600">Không tìm thấy tài khoản ngân hàng.</p>
+              <p className="text-red-600 dark:text-red-400">Không tìm thấy tài khoản ngân hàng.</p>
             )}
           </div>
         </div>
@@ -172,27 +172,27 @@ function ReviewCard({ listing, seller, contact, bank, onDone }: {
 
       {/* Ảnh sản phẩm + mô tả */}
       <div className="space-y-2">
-        <p className="text-sm font-medium text-slate-900">Ảnh sản phẩm ({listing.images.length})</p>
+        <p className="text-sm font-medium text-slate-900 dark:text-slate-100">Ảnh sản phẩm ({listing.images.length})</p>
         <ul className="flex gap-2 overflow-x-auto pb-1">
           {listing.images.map((img, i) => (
             <li key={`${img.url}-${i}`} className="shrink-0">
-              <a href={img.url} target="_blank" rel="noopener noreferrer" className="block h-24 w-24 overflow-hidden rounded-lg border border-slate-200 bg-slate-100">
+              <a href={img.url} target="_blank" rel="noopener noreferrer" className="block h-24 w-24 overflow-hidden rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-800">
                 <img src={cldUrl(img.url, { width: 240, height: 240, crop: 'fill' })} alt={`Ảnh ${i + 1}`} loading="lazy" className="h-full w-full object-cover" />
               </a>
             </li>
           ))}
         </ul>
-        <p className="whitespace-pre-line rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-700">{listing.description}</p>
+        <p className="whitespace-pre-line rounded-lg bg-slate-50 dark:bg-slate-800/60 px-3 py-2 text-sm text-slate-700 dark:text-slate-200">{listing.description}</p>
       </div>
 
       {error && <Alert kind="error">{error}</Alert>}
 
       {rejecting ? (
-        <div className="space-y-3 rounded-xl border border-red-200 bg-red-50/40 p-3">
-          <p className="text-sm font-medium text-red-900">Lý do từ chối (người bán sẽ thấy để sửa lại)</p>
+        <div className="space-y-3 rounded-xl border border-red-200 dark:border-red-900/70 bg-red-50/40 dark:bg-red-950/30 p-3">
+          <p className="text-sm font-medium text-red-900 dark:text-red-200">Lý do từ chối (người bán sẽ thấy để sửa lại)</p>
           <div className="flex flex-wrap gap-1.5">
             {REJECT_PRESETS.map((p) => (
-              <button key={p} type="button" className="rounded-full border border-red-200 bg-white px-2.5 py-1 text-xs text-red-800 hover:bg-red-50" onClick={() => setReason(p)}>{p.split(' (')[0]}</button>
+              <button key={p} type="button" className="rounded-full border border-red-200 dark:border-red-900/70 bg-white dark:bg-slate-900 px-2.5 py-1 text-xs text-red-800 dark:text-red-300 hover:bg-red-50 dark:hover:bg-red-950/60" onClick={() => setReason(p)}>{p.split(' (')[0]}</button>
             ))}
           </div>
           <textarea className="input" rows={3} maxLength={500} placeholder="Nhập lý do từ chối (tối thiểu 5 ký tự)" value={reason} onChange={(e) => setReason(e.target.value)} aria-label="Lý do từ chối" />
@@ -205,7 +205,7 @@ function ReviewCard({ listing, seller, contact, bank, onDone }: {
         </div>
       ) : (
         <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
-          <button type="button" className="btn-secondary text-red-700" disabled={busy !== null} onClick={() => setRejecting(true)}><XCircle className="h-4 w-4" /> Từ chối</button>
+          <button type="button" className="btn-secondary text-red-700 dark:text-red-400" disabled={busy !== null} onClick={() => setRejecting(true)}><XCircle className="h-4 w-4" /> Từ chối</button>
           <button type="button" className="btn-primary" disabled={busy !== null || !listing.verification_image_url} onClick={() => void run('APPROVE')}>
             {busy === 'APPROVE' ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />} Duyệt lên sàn
           </button>

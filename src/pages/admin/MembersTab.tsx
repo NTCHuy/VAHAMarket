@@ -96,12 +96,12 @@ export default function MembersTab() {
       <div className="flex min-w-0 items-center gap-3">
         <Avatar name={m.profile.display_name} url={m.profile.avatar_url} size={40} />
         <div className="min-w-0">
-          <p className="flex flex-wrap items-center gap-2 text-sm font-medium text-slate-900"><span className="truncate">{m.profile.display_name}</span>{m.profile.is_mod && <ModBadge full />}</p>
-          <p className="truncate text-xs text-slate-500">{m.email ?? 'Không có email'} · {m.profile.sold_count} đơn bán</p>
-          <p className="truncate font-mono text-[11px] text-slate-400">{m.profile.id}</p>
+          <p className="flex flex-wrap items-center gap-2 text-sm font-medium text-slate-900 dark:text-slate-100"><span className="truncate">{m.profile.display_name}</span>{m.profile.is_mod && <ModBadge full />}</p>
+          <p className="truncate text-xs text-slate-500 dark:text-slate-400">{m.email ?? 'Không có email'} · {m.profile.sold_count} đơn bán</p>
+          <p className="truncate font-mono text-[11px] text-slate-400 dark:text-slate-500">{m.profile.id}</p>
         </div>
       </div>
-      <button type="button" className={m.profile.is_mod ? 'btn-secondary text-red-700' : 'btn-primary'} disabled={busyId === m.profile.id} onClick={() => void toggle(m)}>
+      <button type="button" className={m.profile.is_mod ? 'btn-secondary text-red-700 dark:text-red-400' : 'btn-primary'} disabled={busyId === m.profile.id} onClick={() => void toggle(m)}>
         {busyId === m.profile.id ? <Loader2 className="h-4 w-4 animate-spin" /> : m.profile.is_mod ? <ShieldOff className="h-4 w-4" /> : <ShieldCheck className="h-4 w-4" />}
         {m.profile.is_mod ? 'Gỡ huy hiệu Mod' : 'Gắn huy hiệu Mod'}
       </button>
@@ -110,11 +110,11 @@ export default function MembersTab() {
 
   return (
     <div className="space-y-6">
-      <p className="text-sm text-slate-600">Người bán có huy hiệu <strong>Mod</strong> được miễn phí trung gian (0%) cho các đơn mới. Đơn đã tạo trước đó giữ nguyên mức phí cũ.</p>
+      <p className="text-sm text-slate-600 dark:text-slate-400">Người bán có huy hiệu <strong>Mod</strong> được miễn phí trung gian (0%) cho các đơn mới. Đơn đã tạo trước đó giữ nguyên mức phí cũ.</p>
 
       <form onSubmit={search} className="flex gap-2">
         <div className="relative flex-1">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
           <input className="input pl-9" placeholder="Email, UUID hoặc tên thành viên" value={query} onChange={(e) => setQuery(e.target.value)} aria-label="Tìm thành viên" />
         </div>
         <button type="submit" className="btn-primary" disabled={searching || !query.trim()}>
@@ -126,14 +126,14 @@ export default function MembersTab() {
 
       {results && (
         <section className="space-y-2">
-          <h2 className="text-sm font-semibold text-slate-900">Kết quả tìm kiếm</h2>
-          {results.length === 0 ? <p className="text-sm text-slate-500">Không tìm thấy thành viên nào.</p> : <ul className="space-y-2">{results.map((m) => <Row key={m.profile.id} m={m} />)}</ul>}
+          <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Kết quả tìm kiếm</h2>
+          {results.length === 0 ? <p className="text-sm text-slate-500 dark:text-slate-400">Không tìm thấy thành viên nào.</p> : <ul className="space-y-2">{results.map((m) => <Row key={m.profile.id} m={m} />)}</ul>}
         </section>
       )}
 
       <section className="space-y-2">
-        <h2 className="text-sm font-semibold text-slate-900">Danh sách Mod hiện tại ({mods.length})</h2>
-        {loading ? <PageLoader /> : mods.length === 0 ? <p className="text-sm text-slate-500">Chưa có Mod nào.</p> : <ul className="space-y-2">{mods.map((m) => <Row key={m.profile.id} m={m} />)}</ul>}
+        <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Danh sách Mod hiện tại ({mods.length})</h2>
+        {loading ? <PageLoader /> : mods.length === 0 ? <p className="text-sm text-slate-500 dark:text-slate-400">Chưa có Mod nào.</p> : <ul className="space-y-2">{mods.map((m) => <Row key={m.profile.id} m={m} />)}</ul>}
       </section>
     </div>
   );

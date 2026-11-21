@@ -4,7 +4,6 @@ import { LogIn, ShieldAlert } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { Alert, PageLoader } from './ui';
 
-/** Route cha: yêu cầu đăng nhập (và tùy chọn quyền admin) trước khi hiển thị <Outlet />. */
 export default function RequireAuth({ requireAdmin = false }: { requireAdmin?: boolean }) {
   const { user, loading, isAdmin, error, signIn } = useAuth();
   const [busy, setBusy] = useState(false);
@@ -15,7 +14,7 @@ export default function RequireAuth({ requireAdmin = false }: { requireAdmin?: b
     return (
       <div className="card mx-auto mt-8 max-w-md p-6 text-center">
         <h1 className="text-lg font-semibold">Đăng nhập để tiếp tục</h1>
-        <p className="mt-1 text-sm text-slate-600">Bạn cần đăng nhập bằng tài khoản Google để sử dụng chức năng này.</p>
+        <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">Bạn cần đăng nhập bằng tài khoản Google để sử dụng chức năng này.</p>
         <button
           type="button"
           disabled={busy}
@@ -48,7 +47,7 @@ export default function RequireAuth({ requireAdmin = false }: { requireAdmin?: b
       <div className="card mx-auto mt-8 max-w-md p-6 text-center">
         <ShieldAlert className="mx-auto h-8 w-8 text-slate-400" />
         <h1 className="mt-2 text-lg font-semibold">Không đủ quyền truy cập</h1>
-        <p className="mt-1 text-sm text-slate-600">Khu vực này chỉ dành cho quản trị viên.</p>
+        <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">Khu vực này chỉ dành cho quản trị viên.</p>
       </div>
     );
   }

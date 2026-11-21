@@ -4,21 +4,24 @@
 
 @layer base {
   html { color-scheme: light; }
-  body { @apply bg-slate-50 text-slate-900 font-sans; }
-  :focus-visible { @apply outline-none ring-2 ring-brand-500 ring-offset-2 ring-offset-white; }
+  html.dark { color-scheme: dark; }
+  body { @apply bg-slate-50 text-slate-900 font-sans dark:bg-slate-950 dark:text-slate-100; }
+  :focus-visible { @apply outline-none ring-2 ring-brand-500 ring-offset-2 ring-offset-white dark:ring-offset-slate-950; }
 }
 
 @layer components {
   .btn {
     @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50;
   }
-  .btn-primary { @apply btn bg-brand-700 text-white hover:bg-brand-800; }
-  .btn-secondary { @apply btn border border-slate-200 bg-white text-slate-700 hover:bg-slate-50; }
-  .btn-ghost { @apply btn text-slate-600 hover:bg-slate-100; }
-  .card { @apply rounded-xl border border-slate-200 bg-white shadow-card; }
-  .input {
-    @apply w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-brand-500;
+  .btn-primary { @apply btn bg-brand-700 text-white hover:bg-brand-800 dark:bg-brand-600 dark:hover:bg-brand-500; }
+  .btn-secondary {
+    @apply btn border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800;
   }
-  .label { @apply mb-1 block text-sm font-medium text-slate-700; }
-  .badge { @apply inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-700; }
+  .btn-ghost { @apply btn text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800; }
+  .card { @apply rounded-xl border border-slate-200 bg-white shadow-card dark:border-slate-800 dark:bg-slate-900; }
+  .input {
+    @apply w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-brand-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-brand-400;
+  }
+  .label { @apply mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200; }
+  .badge { @apply inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-700 dark:bg-slate-800 dark:text-slate-300; }
 }

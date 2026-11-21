@@ -8,7 +8,8 @@
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "lint": "tsc --noEmit",
-    "functions:deploy": "supabase functions deploy sepay-webhook --no-verify-jwt"
+    "functions:deploy": "supabase functions deploy sepay-webhook --no-verify-jwt",
+    "functions:deploy:email": "supabase functions deploy send-order-email --no-verify-jwt"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.0",

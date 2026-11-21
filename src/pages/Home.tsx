@@ -152,16 +152,16 @@ export default function Home() {
 
   return (
     <div className="space-y-5">
-      <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-card sm:p-7">
+      <section className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-card sm:p-7">
         <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">VAHA Market</h1>
-        <p className="text-xs font-medium uppercase tracking-wide text-brand-700">Vietnamese Association of Headphone Addicts Market</p>
-        <p className="mt-1.5 max-w-xl text-sm text-slate-600 sm:text-base">
+        <p className="text-xs font-medium uppercase tracking-wide text-brand-700 dark:text-brand-400">Vietnamese Association of Headphone Addicts Market</p>
+        <p className="mt-1.5 max-w-xl text-sm text-slate-600 dark:text-slate-400 sm:text-base">
           Mua bán đồ âm thanh second-hand có trung gian giữ tiền — an tâm cho cả người mua lẫn người bán.
         </p>
 
         <div className="mt-4 flex gap-2">
           <div className="relative flex-1">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
             <input
               type="search"
               className="input pl-9"
@@ -207,17 +207,17 @@ export default function Home() {
       <section>
         <div className="mb-3 flex items-baseline justify-between">
           <h2 className="text-lg font-semibold">{q || activeFilters ? 'Kết quả' : 'Tin mới đăng'}</h2>
-          {!loading && !error && <span className="text-sm text-slate-500">{total} sản phẩm</span>}
+          {!loading && !error && <span className="text-sm text-slate-500 dark:text-slate-400">{total} sản phẩm</span>}
         </div>
 
         {loading ? (
-          <div className="flex justify-center py-16"><Loader2 className="h-7 w-7 animate-spin text-slate-400" /></div>
+          <div className="flex justify-center py-16"><Loader2 className="h-7 w-7 animate-spin text-slate-400 dark:text-slate-500" /></div>
         ) : error ? (
           <Alert kind="error">{error}</Alert>
         ) : items.length === 0 ? (
           <div className="card flex flex-col items-center px-4 py-12 text-center">
-            <Headphones className="h-8 w-8 text-slate-300" />
-            <p className="mt-2 text-sm text-slate-600">{q || activeFilters ? 'Không có sản phẩm nào khớp bộ lọc.' : 'Chưa có tin nào. Hãy là người đăng bán đầu tiên!'}</p>
+            <Headphones className="h-8 w-8 text-slate-300 dark:text-slate-600" />
+            <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">{q || activeFilters ? 'Không có sản phẩm nào khớp bộ lọc.' : 'Chưa có tin nào. Hãy là người đăng bán đầu tiên!'}</p>
           </div>
         ) : (
           <>
@@ -225,17 +225,17 @@ export default function Home() {
               {items.map((l) => (
                 <li key={l.id}>
                   <Link to={`/listing/${l.id}`} className="card block h-full overflow-hidden transition-shadow hover:shadow-pop">
-                    <div className="aspect-square bg-slate-100">
+                    <div className="aspect-square bg-slate-100 dark:bg-slate-800">
                       {l.images[0] && (
                         <img src={cldUrl(l.images[0].url, { width: 480, height: 480, crop: 'fill' })} alt={l.title} loading="lazy" className="h-full w-full object-cover" />
                       )}
                     </div>
                     <div className="space-y-1 p-3">
-                      <p className="line-clamp-2 text-sm font-medium text-slate-900">{l.title}</p>
+                      <p className="line-clamp-2 text-sm font-medium text-slate-900 dark:text-slate-100">{l.title}</p>
                       <CardPrice l={l} feeBp={feeBp} />
-                      <p className="text-xs text-slate-500">{getCategory(l.category)?.label ?? l.category} · {getConditionLabel(l.condition)}</p>
-                      <p className="text-xs text-slate-500">{getBoxStatusLabel(l.box_status)}</p>
-                      <p className="flex flex-wrap items-center gap-x-3 text-xs text-slate-500">
+                      <p className="text-xs text-slate-500 dark:text-slate-400">{getCategory(l.category)?.label ?? l.category} · {getConditionLabel(l.condition)}</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">{getBoxStatusLabel(l.box_status)}</p>
+                      <p className="flex flex-wrap items-center gap-x-3 text-xs text-slate-500 dark:text-slate-400">
                         {l.province && <span className="inline-flex items-center gap-1"><MapPin className="h-3 w-3" />{l.province}</span>}
                         {l.ship_cod && <span className="inline-flex items-center gap-1"><Truck className="h-3 w-3" />Ship COD</span>}
                       </p>

@@ -176,7 +176,7 @@ function OrderDetailContent() {
     return (
       <div className="card mx-auto mt-8 max-w-md p-8 text-center">
         <h1 className="text-lg font-semibold">Không tìm thấy đơn hàng</h1>
-        <p className="mt-1 text-sm text-slate-600">Đơn không tồn tại hoặc bạn không phải người mua/bán của đơn này.</p>
+        <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">Đơn không tồn tại hoặc bạn không phải người mua/bán của đơn này.</p>
         <Link to="/orders" className="btn-primary mt-4">Về danh sách đơn</Link>
       </div>
     );
@@ -188,21 +188,21 @@ function OrderDetailContent() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-5">
-      <Link to="/orders" className="inline-flex items-center gap-1 text-sm text-slate-600 hover:text-slate-900"><ArrowLeft className="h-4 w-4" /> Đơn hàng của tôi</Link>
+      <Link to="/orders" className="inline-flex items-center gap-1 text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100"><ArrowLeft className="h-4 w-4" /> Đơn hàng của tôi</Link>
 
       {/* Tiêu đề */}
       <div className="card flex gap-3 p-4 sm:gap-4">
-        <div className="h-20 w-20 shrink-0 overflow-hidden rounded-lg bg-slate-100">
+        <div className="h-20 w-20 shrink-0 overflow-hidden rounded-lg bg-slate-100 dark:bg-slate-800">
           {order.listing_snapshot.image && <img src={cldUrl(order.listing_snapshot.image, { width: 200, height: 200, crop: 'fill' })} alt="" className="h-full w-full object-cover" />}
         </div>
         <div className="min-w-0 flex-1">
-          <p className="line-clamp-2 font-medium text-slate-900">{order.listing_snapshot.title}</p>
+          <p className="line-clamp-2 font-medium text-slate-900 dark:text-slate-100">{order.listing_snapshot.title}</p>
           <div className="mt-1.5 flex flex-wrap items-center gap-2">
             <OrderStatusBadge status={order.status} />
-            <span className="text-xs text-slate-500">{isBuyer ? 'Đơn mua' : isSeller ? 'Đơn bán' : 'Xem với tư cách admin'}</span>
+            <span className="text-xs text-slate-500 dark:text-slate-400">{isBuyer ? 'Đơn mua' : isSeller ? 'Đơn bán' : 'Xem với tư cách admin'}</span>
           </div>
-          <p className="mt-1 flex items-center gap-2 text-xs text-slate-500">
-            Mã đơn <span className="font-mono text-slate-700">{order.payment_code}</span> <CopyButton value={order.payment_code} />
+          <p className="mt-1 flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+            Mã đơn <span className="font-mono text-slate-700 dark:text-slate-200">{order.payment_code}</span> <CopyButton value={order.payment_code} />
           </p>
         </div>
       </div>
@@ -212,8 +212,8 @@ function OrderDetailContent() {
         <ol className="grid grid-cols-4 gap-1" aria-label="Tiến trình đơn hàng">
           {STEPS.map((label, i) => (
             <li key={label} className="text-center">
-              <div className={`mx-auto h-1.5 rounded-full ${i <= step ? 'bg-brand-600' : 'bg-slate-200'}`} />
-              <span className={`mt-1 block text-xs ${i <= step ? 'font-medium text-slate-900' : 'text-slate-400'}`}>{label}</span>
+              <div className={`mx-auto h-1.5 rounded-full ${i <= step ? 'bg-brand-600' : 'bg-slate-200 dark:bg-slate-700'}`} />
+              <span className={`mt-1 block text-xs ${i <= step ? 'font-medium text-slate-900 dark:text-slate-100' : 'text-slate-400 dark:text-slate-500'}`}>{label}</span>
             </li>
           ))}
         </ol>
@@ -263,10 +263,10 @@ function OrderDetailContent() {
           {isBuyer ? (
             <>
               <PriceBreakdown listPrice={order.list_price} buyerFee={order.buyer_fee} total={order.amount} feePayer={order.fee_payer} feeRateBp={order.fee_rate_bp} waivedReason="Ưu đãi" />
-              <p className="text-xs text-slate-500">Số tiền trên là số bạn chuyển khoản. Phí ship trả cho bưu tá khi nhận hàng.</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">Số tiền trên là số bạn chuyển khoản. Phí ship trả cho bưu tá khi nhận hàng.</p>
             </>
           ) : (
-            <dl className="divide-y divide-slate-100 text-sm">
+            <dl className="divide-y divide-slate-100 dark:divide-slate-800 text-sm">
               <Row label="Giá sản phẩm gốc" value={formatVND(order.list_price)} />
               {isSeller && (order.seller_fee > 0
                 ? <Row label="Phí bảo lãnh giao dịch (bên bạn chịu)" value={`− ${formatVND(order.seller_fee)}`} />
@@ -279,7 +279,7 @@ function OrderDetailContent() {
           )}
           {order.fee_rate_bp === 0 && <ModBadge full />}
           {isSeller && payout && (
-            <p className="rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-600">
+            <p className="rounded-lg bg-slate-50 dark:bg-slate-800/60 px-3 py-2 text-xs text-slate-600 dark:text-slate-400">
               Tài khoản nhận: {payout.bank_name} ••••{payout.account_number.slice(-4)} · <strong>{PAYOUT_LABEL[payout.status]}</strong>
             </p>
           )}
@@ -291,16 +291,16 @@ function OrderDetailContent() {
             <div className="flex items-center gap-3">
               <Avatar name={counterpart.display_name} url={counterpart.avatar_url} size={40} />
               <div className="min-w-0">
-                <p className="truncate font-medium text-slate-900">{counterpart.display_name}</p>
-                <p className="text-xs text-slate-500">{counterpart.sold_count} đơn bán · {counterpart.bought_count} đơn mua</p>
+                <p className="truncate font-medium text-slate-900 dark:text-slate-100">{counterpart.display_name}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">{counterpart.sold_count} đơn bán · {counterpart.bought_count} đơn mua</p>
               </div>
             </div>
           ) : (
-            <p className="text-sm text-slate-500">—</p>
+            <p className="text-sm text-slate-500 dark:text-slate-400">—</p>
           )}
           {isBuyer && sellerFb && (
             <a href={sellerFb} target="_blank" rel="noopener noreferrer nofollow" className="btn-secondary w-full">
-              <Facebook className="h-4 w-4 text-[#1877F2]" /> Facebook người bán <ExternalLink className="h-3.5 w-3.5 text-slate-400" />
+              <Facebook className="h-4 w-4 text-[#1877F2]" /> Facebook người bán <ExternalLink className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500" />
             </a>
           )}
         </section>
@@ -309,7 +309,7 @@ function OrderDetailContent() {
       {showShipping && (
         <section className="card space-y-3 p-5">
           <h2 className="text-base font-semibold">Thông tin giao nhận</h2>
-          <dl className="divide-y divide-slate-100 text-sm">
+          <dl className="divide-y divide-slate-100 dark:divide-slate-800 text-sm">
             <Row label="Người nhận" value={order.recipient_name} />
             <Row label="Số điện thoại" value={order.phone} />
             <Row label="Địa chỉ" value={order.address} />
@@ -326,8 +326,8 @@ function OrderDetailContent() {
 function Row({ label, value, strong = false }: { label: string; value: string; strong?: boolean }) {
   return (
     <div className="flex justify-between gap-4 py-2">
-      <dt className="shrink-0 text-slate-500">{label}</dt>
-      <dd className={`text-right ${strong ? 'text-base font-semibold text-brand-800' : 'font-medium text-slate-900'}`}>{value}</dd>
+      <dt className="shrink-0 text-slate-500 dark:text-slate-400">{label}</dt>
+      <dd className={`text-right ${strong ? 'text-base font-semibold text-brand-800 dark:text-brand-300' : 'font-medium text-slate-900 dark:text-slate-100'}`}>{value}</dd>
     </div>
   );
 }
@@ -351,7 +351,7 @@ function PaymentPanel({ order, secondsLeft, busy, onCancel }: {
       <BuyerProtectionSteps current={1} />
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="text-base font-semibold">Thanh toán qua tài khoản trung gian</h2>
-        <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-semibold tabular-nums ${expired ? 'bg-slate-100 text-slate-600' : urgent ? 'bg-red-50 text-red-700' : 'bg-amber-50 text-amber-800'}`}>
+        <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-semibold tabular-nums ${expired ? 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400' : urgent ? 'bg-red-50 dark:bg-red-950/50 text-red-700 dark:text-red-400' : 'bg-amber-50 dark:bg-amber-950/50 text-amber-800 dark:text-amber-300'}`}>
           <Clock className="h-4 w-4" /> {secondsLeft === null ? '--:--' : expired ? 'Hết hạn' : formatCountdown(secondsLeft)}
         </span>
       </div>
@@ -360,13 +360,13 @@ function PaymentPanel({ order, secondsLeft, busy, onCancel }: {
         <Alert kind="info">Đã quá thời hạn giữ chỗ. Hệ thống đang đóng đơn — vui lòng <strong>không chuyển khoản</strong>. Bạn có thể đặt mua lại nếu sản phẩm còn.</Alert>
       ) : (
         <>
-          <p className="text-sm text-slate-600">Quét mã bằng app ngân hàng hoặc chuyển khoản thủ công. Hệ thống tự nhận biết khi tiền về, bạn không cần báo lại.</p>
+          <p className="text-sm text-slate-600 dark:text-slate-400">Quét mã bằng app ngân hàng hoặc chuyển khoản thủ công. Hệ thống tự nhận biết khi tiền về, bạn không cần báo lại.</p>
           <div className="grid gap-4 sm:grid-cols-[220px_1fr]">
             <div className="mx-auto w-[220px]">
               {qrFailed || !qrUrl ? (
-                <div className="flex aspect-square items-center justify-center rounded-xl border border-dashed border-slate-300 p-3 text-center text-xs text-slate-500">Không tải được mã QR. Hãy chuyển khoản thủ công theo thông tin bên cạnh.</div>
+                <div className="flex aspect-square items-center justify-center rounded-xl border border-dashed border-slate-300 dark:border-slate-700 p-3 text-center text-xs text-slate-500 dark:text-slate-400">Không tải được mã QR. Hãy chuyển khoản thủ công theo thông tin bên cạnh.</div>
               ) : (
-                <img src={qrUrl} alt="Mã VietQR thanh toán đơn hàng" className="w-full rounded-xl border border-slate-200 bg-white" onError={() => setQrFailed(true)} />
+                <div className="rounded-xl border border-slate-200 bg-white p-3 dark:border-slate-700"><img src={qrUrl} alt="Mã VietQR thanh toán đơn hàng" className="w-full rounded-lg bg-white" onError={() => setQrFailed(true)} /></div>
               )}
             </div>
             <dl className="space-y-2 text-sm">
@@ -381,32 +381,32 @@ function PaymentPanel({ order, secondsLeft, busy, onCancel }: {
         </>
       )}
 
-      <div className="flex flex-wrap items-center justify-end gap-2 border-t border-slate-100 pt-3">
+      <div className="flex flex-wrap items-center justify-end gap-2 border-t border-slate-100 dark:border-slate-800 pt-3">
         {confirming ? (
           <>
-            <span className="text-sm text-slate-600">Hủy đơn này?</span>
+            <span className="text-sm text-slate-600 dark:text-slate-400">Hủy đơn này?</span>
             <button type="button" className="btn-ghost" onClick={() => setConfirming(false)} disabled={busy}>Không</button>
             <button type="button" className="btn bg-red-600 text-white hover:bg-red-700" disabled={busy} onClick={async () => { await onCancel(); setConfirming(false); }}>
               {busy && <Loader2 className="h-4 w-4 animate-spin" />} Xác nhận hủy
             </button>
           </>
         ) : (
-          <button type="button" className="btn-ghost text-red-600 hover:bg-red-50" onClick={() => setConfirming(true)} disabled={busy}>
+          <button type="button" className="btn-ghost text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/60" onClick={() => setConfirming(true)} disabled={busy}>
             <XCircle className="h-4 w-4" /> Hủy đơn hàng
           </button>
         )}
       </div>
-      <p className="text-xs text-slate-500">Chỉ hủy được khi chưa chuyển tiền. Nếu đã chuyển khoản, hãy chờ hệ thống xác nhận.</p>
+      <p className="text-xs text-slate-500 dark:text-slate-400">Chỉ hủy được khi chưa chuyển tiền. Nếu đã chuyển khoản, hãy chờ hệ thống xác nhận.</p>
     </section>
   );
 }
 
 function CopyRow({ label, value, display, mono = false }: { label: string; value: string; display?: string; mono?: boolean }) {
   return (
-    <div className="flex items-center justify-between gap-3 rounded-lg bg-slate-50 px-3 py-2">
+    <div className="flex items-center justify-between gap-3 rounded-lg bg-slate-50 dark:bg-slate-800/60 px-3 py-2">
       <div className="min-w-0">
-        <dt className="text-xs text-slate-500">{label}</dt>
-        <dd className={`truncate font-medium text-slate-900 ${mono ? 'font-mono' : ''}`}>{display ?? value}</dd>
+        <dt className="text-xs text-slate-500 dark:text-slate-400">{label}</dt>
+        <dd className={`truncate font-medium text-slate-900 dark:text-slate-100 ${mono ? 'font-mono' : ''}`}>{display ?? value}</dd>
       </div>
       <CopyButton value={value} />
     </div>
@@ -441,10 +441,10 @@ function ShipForm({ order, busy, onSubmit }: {
   return (
     <form onSubmit={submit} noValidate className="card space-y-4 p-5">
       <Alert kind="success">Sàn đã nhận <strong>{formatVND(order.amount)}</strong> từ người mua. Hãy đóng gói và gửi hàng.</Alert>
-      <div className="rounded-xl bg-slate-50 p-3 text-sm">
-        <p className="font-medium text-slate-900">Gửi tới: {order.recipient_name} · {order.phone}</p>
-        <p className="mt-0.5 text-slate-700">{order.address}</p>
-        {order.note && <p className="mt-1 text-xs text-slate-500">Ghi chú: {order.note}</p>}
+      <div className="rounded-xl bg-slate-50 dark:bg-slate-800/60 p-3 text-sm">
+        <p className="font-medium text-slate-900 dark:text-slate-100">Gửi tới: {order.recipient_name} · {order.phone}</p>
+        <p className="mt-0.5 text-slate-700 dark:text-slate-200">{order.address}</p>
+        {order.note && <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Ghi chú: {order.note}</p>}
       </div>
 
       <h2 className="text-base font-semibold">Xác nhận đã gửi hàng</h2>
@@ -505,16 +505,16 @@ function ShippedPanel({ order, isBuyer, busy, onConfirm, onDispute }: {
   return (
     <section className="card space-y-4 p-5">
       <div className="flex items-start gap-3">
-        <Truck className="mt-0.5 h-5 w-5 shrink-0 text-sky-600" />
+        <Truck className="mt-0.5 h-5 w-5 shrink-0 text-sky-600 dark:text-sky-400" />
         <div className="min-w-0 text-sm">
           <h2 className="text-base font-semibold">Hàng đang trên đường giao</h2>
-          <p className="mt-1 text-slate-600">
-            {order.carrier ?? 'Đơn vị vận chuyển'} · Mã vận đơn: <span className="font-mono font-medium text-slate-900">{order.tracking_code}</span>{' '}
+          <p className="mt-1 text-slate-600 dark:text-slate-400">
+            {order.carrier ?? 'Đơn vị vận chuyển'} · Mã vận đơn: <span className="font-mono font-medium text-slate-900 dark:text-slate-100">{order.tracking_code}</span>{' '}
             {order.tracking_code && <CopyButton value={order.tracking_code} label="Chép mã" />}
           </p>
-          <p className="mt-1 text-xs text-slate-500">Dùng mã vận đơn để tra cứu trên website/app của đơn vị vận chuyển.</p>
+          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Dùng mã vận đơn để tra cứu trên website/app của đơn vị vận chuyển.</p>
           {order.packing_video_url && (
-            <a href={order.packing_video_url} target="_blank" rel="noopener noreferrer nofollow" className="mt-2 inline-flex items-center gap-1.5 text-brand-700 hover:underline">
+            <a href={order.packing_video_url} target="_blank" rel="noopener noreferrer nofollow" className="mt-2 inline-flex items-center gap-1.5 text-brand-700 dark:text-brand-400 hover:underline">
               <Video className="h-4 w-4" /> Xem video test của người bán <ExternalLink className="h-3.5 w-3.5" />
             </a>
           )}
@@ -524,8 +524,8 @@ function ShippedPanel({ order, isBuyer, busy, onConfirm, onDispute }: {
       {!isBuyer ? (
         <Alert kind="info">Đang chờ người mua nhận hàng và xác nhận.</Alert>
       ) : disputing ? (
-        <form onSubmit={submitDispute} noValidate className="space-y-4 rounded-xl border border-red-200 bg-red-50/40 p-4">
-          <h3 className="flex items-center gap-2 text-sm font-semibold text-red-800"><ShieldAlert className="h-4 w-4" /> Khiếu nại / Hàng lỗi</h3>
+        <form onSubmit={submitDispute} noValidate className="space-y-4 rounded-xl border border-red-200 dark:border-red-900/70 bg-red-50/40 dark:bg-red-950/30 p-4">
+          <h3 className="flex items-center gap-2 text-sm font-semibold text-red-800 dark:text-red-300"><ShieldAlert className="h-4 w-4" /> Khiếu nại / Hàng lỗi</h3>
           <Field label="Lý do khiếu nại" htmlFor="reason" required error={errors.reason}>
             <textarea id="reason" rows={4} className="input" maxLength={1000} placeholder="Mô tả chi tiết lỗi: hàng không đúng mô tả, lỗi âm thanh, thiếu phụ kiện..." value={reason} onChange={(e) => setReason(e.target.value)} />
           </Field>
@@ -533,7 +533,7 @@ function ShippedPanel({ order, isBuyer, busy, onConfirm, onDispute }: {
             hint="Video quay liền mạch từ lúc bưu kiện còn nguyên niêm phong. Tải lên YouTube (không công khai), Google Drive hoặc Facebook rồi dán link.">
             <input id="dvideo" className="input" inputMode="url" placeholder="https://..." value={video} maxLength={500} onChange={(e) => setVideo(e.target.value)} />
           </Field>
-          <p className="text-xs text-red-800">Khi gửi khiếu nại, tiền sẽ tiếp tục được sàn giữ cho đến khi admin xem xét và xử lý.</p>
+          <p className="text-xs text-red-800 dark:text-red-300">Khi gửi khiếu nại, tiền sẽ tiếp tục được sàn giữ cho đến khi admin xem xét và xử lý.</p>
           <div className="flex justify-end gap-2">
             <button type="button" className="btn-ghost" onClick={() => setDisputing(false)} disabled={busy}>Quay lại</button>
             <button type="submit" className="btn bg-red-600 text-white hover:bg-red-700" disabled={busy}>
@@ -542,26 +542,26 @@ function ShippedPanel({ order, isBuyer, busy, onConfirm, onDispute }: {
           </div>
         </form>
       ) : (
-        <div className="space-y-3 border-t border-slate-100 pt-4">
-          <div role="alert" className="flex gap-3 rounded-xl border-2 border-amber-400 bg-amber-50 p-4 text-amber-950">
-            <AlertTriangle className="mt-0.5 h-6 w-6 shrink-0 text-amber-600" />
+        <div className="space-y-3 border-t border-slate-100 dark:border-slate-800 pt-4">
+          <div role="alert" className="flex gap-3 rounded-xl border-2 border-amber-400 dark:border-amber-600/80 bg-amber-50 dark:bg-amber-950/50 p-4 text-amber-950 dark:text-amber-100">
+            <AlertTriangle className="mt-0.5 h-6 w-6 shrink-0 text-amber-600 dark:text-amber-400" />
             <p className="text-sm font-semibold leading-relaxed sm:text-base">
               QUY TẮC BẮT BUỘC: Vui lòng quay video mở hộp liền mạch từ lúc gói hàng còn nguyên niêm phong 6 mặt đến khi cắm test âm thanh. VAHA Market từ chối giải quyết khiếu nại hoàn tiền nếu không có video mở hộp nguyên vẹn.
             </p>
           </div>
-          <label className="flex cursor-pointer items-start gap-2 text-sm text-slate-700">
-            <input type="checkbox" checked={checked} onChange={(e) => setChecked(e.target.checked)} className="mt-0.5 h-4 w-4 rounded border-slate-300 text-brand-700" />
+          <label className="flex cursor-pointer items-start gap-2 text-sm text-slate-700 dark:text-slate-200">
+            <input type="checkbox" checked={checked} onChange={(e) => setChecked(e.target.checked)} className="mt-0.5 h-4 w-4 rounded border-slate-300 dark:border-slate-700 text-brand-700 dark:text-brand-400" />
             <span>Tôi đã quay video mở hộp liền mạch và kiểm tra tai nghe hoạt động đúng mô tả.</span>
           </label>
           <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
-            <button type="button" className="btn-secondary text-red-700" onClick={() => setDisputing(true)} disabled={busy}>
+            <button type="button" className="btn-secondary text-red-700 dark:text-red-400" onClick={() => setDisputing(true)} disabled={busy}>
               <AlertTriangle className="h-4 w-4" /> Khiếu nại / Hàng lỗi
             </button>
             <button type="button" className="btn-primary" disabled={!checked || busy} onClick={() => void onConfirm()}>
               {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <PackageCheck className="h-4 w-4" />} Đã nhận được hàng (Giải ngân cho người bán)
             </button>
           </div>
-          <p className="text-xs text-slate-500">Sau khi bấm xác nhận, tiền sẽ được chuyển cho người bán và không thể hoàn tác.</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400">Sau khi bấm xác nhận, tiền sẽ được chuyển cho người bán và không thể hoàn tác.</p>
         </div>
       )}
     </section>
@@ -570,27 +570,27 @@ function ShippedPanel({ order, isBuyer, busy, onConfirm, onDispute }: {
 
 function DisputeInfo({ order }: { order: Order }) {
   return (
-    <section className="card space-y-3 border-red-200 p-5">
-      <h2 className="flex items-center gap-2 text-base font-semibold text-red-800"><ShieldAlert className="h-5 w-5" /> Đơn đang có khiếu nại</h2>
-      <p className="text-sm text-slate-600">Sàn đang giữ tiền và admin sẽ xem xét bằng chứng của hai bên.</p>
-      {order.disputed_at && <p className="text-xs text-slate-500">Gửi lúc {new Date(order.disputed_at).toLocaleString('vi-VN')}</p>}
-      <div className="rounded-xl bg-red-50/60 p-3 text-sm">
-        <p className="font-medium text-slate-900">Lý do của người mua</p>
-        <p className="mt-1 whitespace-pre-line text-slate-700">{order.dispute_reason}</p>
+    <section className="card space-y-3 border-red-200 dark:border-red-900/70 p-5">
+      <h2 className="flex items-center gap-2 text-base font-semibold text-red-800 dark:text-red-300"><ShieldAlert className="h-5 w-5" /> Đơn đang có khiếu nại</h2>
+      <p className="text-sm text-slate-600 dark:text-slate-400">Sàn đang giữ tiền và admin sẽ xem xét bằng chứng của hai bên.</p>
+      {order.disputed_at && <p className="text-xs text-slate-500 dark:text-slate-400">Gửi lúc {new Date(order.disputed_at).toLocaleString('vi-VN')}</p>}
+      <div className="rounded-xl bg-red-50/60 dark:bg-red-950/40 p-3 text-sm">
+        <p className="font-medium text-slate-900 dark:text-slate-100">Lý do của người mua</p>
+        <p className="mt-1 whitespace-pre-line text-slate-700 dark:text-slate-200">{order.dispute_reason}</p>
       </div>
       <div className="flex flex-wrap gap-3 text-sm">
         {order.dispute_video_url && (
-          <a href={order.dispute_video_url} target="_blank" rel="noopener noreferrer nofollow" className="inline-flex items-center gap-1.5 text-brand-700 hover:underline">
+          <a href={order.dispute_video_url} target="_blank" rel="noopener noreferrer nofollow" className="inline-flex items-center gap-1.5 text-brand-700 dark:text-brand-400 hover:underline">
             <Video className="h-4 w-4" /> Video mở hộp của người mua <ExternalLink className="h-3.5 w-3.5" />
           </a>
         )}
         {order.packing_video_url && (
-          <a href={order.packing_video_url} target="_blank" rel="noopener noreferrer nofollow" className="inline-flex items-center gap-1.5 text-brand-700 hover:underline">
+          <a href={order.packing_video_url} target="_blank" rel="noopener noreferrer nofollow" className="inline-flex items-center gap-1.5 text-brand-700 dark:text-brand-400 hover:underline">
             <Video className="h-4 w-4" /> Video test của người bán <ExternalLink className="h-3.5 w-3.5" />
           </a>
         )}
       </div>
-      <p className="flex items-center gap-1.5 text-xs text-slate-500"><CheckCircle2 className="h-3.5 w-3.5" /> Hai bên chưa cần thao tác thêm. Hãy liên hệ admin nếu cần bổ sung bằng chứng.</p>
+      <p className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400"><CheckCircle2 className="h-3.5 w-3.5" /> Hai bên chưa cần thao tác thêm. Hãy liên hệ admin nếu cần bổ sung bằng chứng.</p>
     </section>
   );
 }

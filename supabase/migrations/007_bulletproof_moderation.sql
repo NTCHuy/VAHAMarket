@@ -360,7 +360,7 @@ begin
           or new.account_number is distinct from old.account_number
           or new.account_name is distinct from old.account_name)
      and public.identity_locked(new.user_id) then
-    raise exception 'Không thể đổi thông tin tài khoản ngân hàng khi bạn đang có tin đang hiển thị/chờ duyệt hoặc đơn hàng đang xử lý. Tên chủ tài khoản phải chính chủ, khớp Facebook/CCCD. Liên hệ Admin nếu cần chỉnh sửa.' using errcode = 'P0001';
+    raise exception 'Không thể đổi thông tin tài khoản ngân hàng khi bạn đang có tin đang hiển thị/chờ duyệt hoặc đơn hàng đang xử lý. Tên chủ tài khoản phải chính chủ, khớp với tên trên trang cá nhân Facebook của bạn. Liên hệ Admin nếu cần chỉnh sửa.' using errcode = 'P0001';
   end if;
   return new;
 end;

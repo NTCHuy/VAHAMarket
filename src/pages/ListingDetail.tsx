@@ -95,7 +95,7 @@ export default function ListingDetail() {
     return (
       <div className="card mx-auto mt-8 max-w-md p-8 text-center">
         <h1 className="text-lg font-semibold">Không tìm thấy sản phẩm</h1>
-        <p className="mt-1 text-sm text-slate-600">Tin đăng không tồn tại, đã bán hoặc đang bị ẩn.</p>
+        <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">Tin đăng không tồn tại, đã bán hoặc đang bị ẩn.</p>
         <Link to="/" className="btn-primary mt-4">Về trang chủ</Link>
       </div>
     );
@@ -121,12 +121,12 @@ export default function ListingDetail() {
 
   return (
     <div className="mx-auto max-w-5xl space-y-5">
-      <Link to="/" className="inline-flex items-center gap-1 text-sm text-slate-600 hover:text-slate-900"><ArrowLeft className="h-4 w-4" /> Tất cả sản phẩm</Link>
+      <Link to="/" className="inline-flex items-center gap-1 text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100"><ArrowLeft className="h-4 w-4" /> Tất cả sản phẩm</Link>
 
       <div className="grid gap-6 lg:grid-cols-[1.1fr_1fr]">
         {/* Gallery */}
         <div className="space-y-3">
-          <button type="button" onClick={() => setLightbox(active)} className="block aspect-square w-full overflow-hidden rounded-2xl border border-slate-200 bg-slate-100" aria-label="Phóng to ảnh">
+          <button type="button" onClick={() => setLightbox(active)} className="block aspect-square w-full overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-800" aria-label="Phóng to ảnh">
             <img src={cldUrl(images[active]?.url ?? '', { width: 1000 })} alt={listing.title} className="h-full w-full object-contain" />
           </button>
           {images.length > 1 && (
@@ -134,7 +134,7 @@ export default function ListingDetail() {
               {images.map((img, i) => (
                 <li key={`${img.url}-${i}`}>
                   <button type="button" onClick={() => setActive(i)} aria-label={`Xem ảnh ${i + 1}`}
-                    className={`h-16 w-16 overflow-hidden rounded-lg border-2 ${i === active ? 'border-brand-600' : 'border-transparent'}`}>
+                    className={`h-16 w-16 overflow-hidden rounded-lg border-2 ${i === active ? 'border-brand-600 dark:border-brand-500' : 'border-transparent'}`}>
                     <img src={cldUrl(img.url, { width: 160, height: 160, crop: 'fill' })} alt="" className="h-full w-full object-cover" />
                   </button>
                 </li>
@@ -148,10 +148,10 @@ export default function ListingDetail() {
           <div>
             <h1 className="text-xl font-semibold leading-snug tracking-tight sm:text-2xl">{listing.title}</h1>
             <div className="mt-2"><PriceTag size="lg" display={dp.display} strike={dp.strike} percent={dp.percent} feePromo={dp.feePromo} note={fees.buyerFee > 0 ? 'Giá trọn gói người mua thanh toán, đã gồm phí bảo lãnh giao dịch' : undefined} /></div>
-            <div className="mt-2 flex flex-wrap gap-2 text-xs text-slate-600">
+            <div className="mt-2 flex flex-wrap gap-2 text-xs text-slate-600 dark:text-slate-400">
               {listing.province && <span className="badge"><MapPin className="mr-1 h-3 w-3" />{listing.province}</span>}
               {listing.ship_cod && <span className="badge"><Truck className="mr-1 h-3 w-3" />Ship COD</span>}
-              {listing.verification_image_url && <span className="badge bg-emerald-50 text-emerald-700"><BadgeCheck className="mr-1 h-3 w-3" />Đã xác thực ảnh chính chủ</span>}
+              {listing.verification_image_url && <span className="badge bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400"><BadgeCheck className="mr-1 h-3 w-3" />Đã xác thực ảnh chính chủ</span>}
             </div>
           </div>
 
@@ -167,19 +167,37 @@ export default function ListingDetail() {
             ) : !listing.ship_cod ? (
               <Alert kind="info">Tin này chỉ giao dịch trực tiếp{listing.province ? ` tại ${listing.province}` : ''}, không mua qua trung gian được. Hãy liên hệ người bán qua Facebook.</Alert>
             ) : user ? (
-              <button type="button" className="btn-primary w-full py-3 text-base" onClick={() => setBuyOpen(true)}>
-                <ShieldCheck className="h-5 w-5" /> Mua qua trung gian ngay
-              </button>
+              <div className="space-y-2">
+                <button type="button" className="btn-primary w-full py-3 text-base" onClick={() => setBuyOpen(true)}>
+                  <ShieldCheck className="h-5 w-5" /> Mua qua trung gian ngay
+                </button>
+                <p className="text-center text-xs text-slate-500 dark:text-slate-400">
+                  Bằng việc đặt mua, bạn đồng ý với{' '}
+                  <Link to="/terms" className="font-medium text-brand-700 hover:underline dark:text-brand-400">
+                    Điều khoản dịch vụ
+                  </Link>{' '}
+                  của VAHA Market.
+                </p>
+              </div>
             ) : (
-              <button type="button" className="btn-primary w-full py-3 text-base" onClick={() => void signIn()}>
-                Đăng nhập để mua qua trung gian
-              </button>
+              <div className="space-y-2">
+                <button type="button" className="btn-primary w-full py-3 text-base" onClick={() => void signIn()}>
+                  Đăng nhập để mua qua trung gian
+                </button>
+                <p className="text-center text-xs text-slate-500 dark:text-slate-400">
+                  Bằng việc đặt mua, bạn đồng ý với{' '}
+                  <Link to="/terms" className="font-medium text-brand-700 hover:underline dark:text-brand-400">
+                    Điều khoản dịch vụ
+                  </Link>{' '}
+                  của VAHA Market.
+                </p>
+              </div>
             )}
             {canBuy && (
               <>
                 <PriceBreakdown listPrice={fees.listPrice} buyerFee={fees.buyerFee} total={fees.buyerPays} feePayer={listing.fee_payer} feeRateBp={fees.feeRateBp} waivedReason={sellerIsMod ? 'Mod Group' : undefined} />
                 <BuyerProtectionSteps compact />
-                <p className="text-xs text-slate-500">Phí ship trả cho bưu tá khi nhận hàng (không tính vào số tiền chuyển cho trung gian).</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">Phí ship trả cho bưu tá khi nhận hàng (không tính vào số tiền chuyển cho trung gian).</p>
               </>
             )}
           </div>
@@ -187,22 +205,22 @@ export default function ListingDetail() {
           {/* Người bán */}
           {seller && (
             <div className="card p-4">
-              <p className="mb-3 text-xs font-medium uppercase tracking-wide text-slate-500">Người bán</p>
+              <p className="mb-3 text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">Người bán</p>
               <div className="flex items-center gap-3">
                 <Avatar name={seller.display_name} url={seller.avatar_url} size={44} />
                 <div className="min-w-0 flex-1">
-                  <p className="flex flex-wrap items-center gap-2 font-medium text-slate-900"><span className="truncate">{seller.display_name}</span>{seller.is_mod && <ModBadge full />}</p>
-                  <p className="text-sm text-slate-600">Đã bán thành công <strong>{seller.sold_count}</strong> đơn</p>
+                  <p className="flex flex-wrap items-center gap-2 font-medium text-slate-900 dark:text-slate-100"><span className="truncate">{seller.display_name}</span>{seller.is_mod && <ModBadge full />}</p>
+                  <p className="text-sm text-slate-600 dark:text-slate-400">Đã bán thành công <strong>{seller.sold_count}</strong> đơn</p>
                 </div>
               </div>
               {facebook ? (
                 <a href={facebook} target="_blank" rel="noopener noreferrer nofollow" className="btn-secondary mt-3 w-full">
-                  <Facebook className="h-4 w-4 text-[#1877F2]" /> Xem Facebook người bán <ExternalLink className="h-3.5 w-3.5 text-slate-400" />
+                  <Facebook className="h-4 w-4 text-[#1877F2]" /> Xem Facebook người bán <ExternalLink className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500" />
                 </a>
               ) : (
-                <p className="mt-3 text-xs text-slate-500">Người bán chưa cung cấp link Facebook.</p>
+                <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">Người bán chưa cung cấp link Facebook.</p>
               )}
-              <p className="mt-2 text-xs text-slate-500">Hãy tìm tên người bán trong group để kiểm tra uy tín trước khi mua.</p>
+              <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">Hãy tìm tên người bán trong group để kiểm tra uy tín trước khi mua.</p>
             </div>
           )}
         </div>
@@ -211,39 +229,39 @@ export default function ListingDetail() {
       <div className="grid gap-5 lg:grid-cols-[1.1fr_1fr]">
         <section className="card space-y-4 p-5">
           <h2 className="text-base font-semibold">Thông số & tình trạng</h2>
-          <dl className="divide-y divide-slate-100 text-sm">
+          <dl className="divide-y divide-slate-100 dark:divide-slate-800 text-sm">
             {specs.map((s) => (
               <div key={s.label} className="flex justify-between gap-4 py-2">
-                <dt className="text-slate-500">{s.label}</dt>
-                <dd className="text-right font-medium text-slate-900">{s.value}</dd>
+                <dt className="text-slate-500 dark:text-slate-400">{s.label}</dt>
+                <dd className="text-right font-medium text-slate-900 dark:text-slate-100">{s.value}</dd>
               </div>
             ))}
           </dl>
           <h2 className="pt-2 text-base font-semibold">Mô tả</h2>
-          <p className="whitespace-pre-line text-sm leading-relaxed text-slate-700">{listing.description}</p>
+          <p className="whitespace-pre-line text-sm leading-relaxed text-slate-700 dark:text-slate-200">{listing.description}</p>
           {listing.verification_image_url && (
-            <div className="space-y-2 border-t border-slate-100 pt-4">
+            <div className="space-y-2 border-t border-slate-100 dark:border-slate-800 pt-4">
               <h2 className="flex flex-wrap items-center gap-2 text-base font-semibold">
                 Ảnh xác thực chính chủ
-                <span className="badge bg-emerald-50 text-emerald-700"><BadgeCheck className="mr-1 h-3 w-3" />Đã xác thực ảnh chính chủ</span>
+                <span className="badge bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400"><BadgeCheck className="mr-1 h-3 w-3" />Đã xác thực ảnh chính chủ</span>
               </h2>
-              <a href={listing.verification_image_url} target="_blank" rel="noopener noreferrer" className="block overflow-hidden rounded-xl border border-slate-200">
-                <img src={cldUrl(listing.verification_image_url, { width: 900 })} alt="Ảnh sản phẩm cạnh giấy viết tay xác thực chính chủ" loading="lazy" className="max-h-80 w-full object-contain bg-slate-50" />
+              <a href={listing.verification_image_url} target="_blank" rel="noopener noreferrer" className="block overflow-hidden rounded-xl border border-slate-200 dark:border-slate-800">
+                <img src={cldUrl(listing.verification_image_url, { width: 900 })} alt="Ảnh sản phẩm cạnh giấy viết tay xác thực chính chủ" loading="lazy" className="max-h-80 w-full object-contain bg-slate-50 dark:bg-slate-800/60" />
               </a>
-              <p className="text-xs text-slate-500">Người bán chụp sản phẩm cạnh giấy viết tay ghi “VAHA + ngày đăng + tên Facebook” để chứng minh sở hữu hàng thật.</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">Người bán chụp sản phẩm cạnh giấy viết tay ghi “VAHA + ngày đăng + tên Facebook” để chứng minh sở hữu hàng thật.</p>
             </div>
           )}
         </section>
 
-        <section className="card h-fit space-y-3 border-amber-200 bg-amber-50/50 p-5">
-          <h2 className="flex items-center gap-2 text-base font-semibold text-amber-900"><ShieldCheck className="h-5 w-5" /> Quy định giao dịch an toàn</h2>
-          <ul className="space-y-2 text-sm text-amber-900">
+        <section className="card h-fit space-y-3 border-amber-200 dark:border-amber-800/70 bg-amber-50/50 dark:bg-amber-950/30 p-5">
+          <h2 className="flex items-center gap-2 text-base font-semibold text-amber-900 dark:text-amber-200"><ShieldCheck className="h-5 w-5" /> Quy định giao dịch an toàn</h2>
+          <ul className="space-y-2 text-sm text-amber-900 dark:text-amber-200">
             <li className="flex gap-2"><Package className="mt-0.5 h-4 w-4 shrink-0" /><span><strong>Bắt buộc quay video mở hộp liền mạch</strong> từ lúc bưu kiện còn nguyên niêm phong đến khi test sản phẩm. Đây là bằng chứng duy nhất để khiếu nại.</span></li>
             <li className="flex gap-2"><Video className="mt-0.5 h-4 w-4 shrink-0" /><span>Người bán phải quay video test sản phẩm trước khi đóng gói và gửi link cho người mua.</span></li>
             <li className="flex gap-2"><ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" /><span>Chỉ chuyển tiền qua mã QR trong đơn hàng. <strong>Không chuyển khoản riêng</strong> cho người bán.</span></li>
             <li className="flex gap-2"><Truck className="mt-0.5 h-4 w-4 shrink-0" /><span>Chỉ bấm “Đã nhận hàng” sau khi kiểm tra kỹ. Khi xác nhận, tiền được giải ngân cho người bán.</span></li>
           </ul>
-          <div className="border-t border-amber-200 pt-3"><TrustBadge compact /></div>
+          <div className="border-t border-amber-200 dark:border-amber-800/70 pt-3"><TrustBadge compact /></div>
         </section>
       </div>
 
@@ -331,11 +349,11 @@ function BuyDialog({ listing, buyerPays, onClose }: { listing: Listing; buyerPay
 
   return (
     <div role="dialog" aria-modal="true" aria-label="Xác nhận đặt mua" className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/50 sm:items-center sm:p-4">
-      <form onSubmit={onSubmit} noValidate className="max-h-[92vh] w-full max-w-lg space-y-4 overflow-y-auto rounded-t-2xl bg-white p-5 shadow-pop sm:rounded-2xl">
+      <form onSubmit={onSubmit} noValidate className="max-h-[92vh] w-full max-w-lg space-y-4 overflow-y-auto rounded-t-2xl bg-white dark:bg-slate-900 p-5 shadow-pop sm:rounded-2xl">
         <div className="flex items-start justify-between gap-3">
           <div>
             <h2 className="text-lg font-semibold">Xác nhận đặt mua</h2>
-            <p className="mt-0.5 line-clamp-1 text-sm text-slate-600">{listing.title}</p>
+            <p className="mt-0.5 line-clamp-1 text-sm text-slate-600 dark:text-slate-400">{listing.title}</p>
           </div>
           <button type="button" className="btn-ghost px-2" onClick={onClose} disabled={busy} aria-label="Đóng"><X className="h-5 w-5" /></button>
         </div>
@@ -355,25 +373,33 @@ function BuyDialog({ listing, buyerPays, onClose }: { listing: Listing; buyerPay
           <input id="b-note" className="input" value={note} maxLength={500} onChange={(e) => setNote(e.target.value)} />
         </Field>
 
-        <label className="flex items-center gap-2 text-sm text-slate-700">
-          <input type="checkbox" checked={saveProfile} onChange={(e) => setSaveProfile(e.target.checked)} className="h-4 w-4 rounded border-slate-300 text-brand-700" />
+        <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
+          <input type="checkbox" checked={saveProfile} onChange={(e) => setSaveProfile(e.target.checked)} className="h-4 w-4 rounded border-slate-300 dark:border-slate-700 text-brand-700 dark:text-brand-400" />
           Lưu số điện thoại và địa chỉ này vào hồ sơ
         </label>
 
-        <div className="rounded-xl bg-slate-50 p-3 text-sm">
-          <div className="flex justify-between"><span className="text-slate-600">Số tiền chuyển vào trung gian</span><strong>{formatVND(buyerPays)}</strong></div>
-          <p className="mt-1 text-xs text-slate-500">Bạn có 15 phút để thanh toán sau khi đặt. Phí ship trả cho bưu tá khi nhận hàng.</p>
+        <div className="rounded-xl bg-slate-50 dark:bg-slate-800/60 p-3 text-sm">
+          <div className="flex justify-between"><span className="text-slate-600 dark:text-slate-400">Số tiền chuyển vào trung gian</span><strong>{formatVND(buyerPays)}</strong></div>
+          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Bạn có 15 phút để thanh toán sau khi đặt. Phí ship trả cho bưu tá khi nhận hàng.</p>
         </div>
 
         <div>
-          <label className="flex items-start gap-2 text-sm text-slate-700">
-            <input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} className="mt-0.5 h-4 w-4 rounded border-slate-300 text-brand-700" />
+          <label className="flex items-start gap-2 text-sm text-slate-700 dark:text-slate-200">
+            <input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} className="mt-0.5 h-4 w-4 rounded border-slate-300 dark:border-slate-700 text-brand-700 dark:text-brand-400" />
             <span>Tôi đã đọc quy định giao dịch an toàn và cam kết <strong>quay video mở hộp liền mạch</strong> khi nhận hàng.</span>
           </label>
-          {errors.agree && <p className="mt-1 text-xs text-red-600">{errors.agree}</p>}
+          {errors.agree && <p className="mt-1 text-xs text-red-600 dark:text-red-400">{errors.agree}</p>}
         </div>
 
         {error && <Alert kind="error">{error}</Alert>}
+
+        <p className="text-xs text-slate-500 dark:text-slate-400">
+          Bằng việc đặt mua, bạn đồng ý với{' '}
+          <Link to="/terms" target="_blank" rel="noopener noreferrer" className="font-medium text-brand-700 hover:underline dark:text-brand-400">
+            Điều khoản dịch vụ
+          </Link>{' '}
+          của VAHA Market.
+        </p>
 
         <div className="flex justify-end gap-2">
           <button type="button" className="btn-ghost" onClick={onClose} disabled={busy}>Hủy</button>

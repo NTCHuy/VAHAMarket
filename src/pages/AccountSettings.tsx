@@ -78,7 +78,7 @@ export default function AccountSettings() {
     <div className="mx-auto max-w-3xl space-y-6">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Cài đặt tài khoản</h1>
-        <p className="mt-1 text-sm text-slate-600">Quản lý thông tin liên hệ và tài khoản ngân hàng nhận tiền khi bán hàng.</p>
+        <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">Quản lý thông tin liên hệ và tài khoản ngân hàng nhận tiền khi bán hàng.</p>
       </div>
 
       {checklistReady && (
@@ -114,15 +114,15 @@ function SellerChecklist({
   return (
     <section
       className={`rounded-2xl border p-4 sm:p-5 ${
-        ready ? 'border-emerald-200 bg-emerald-50/70' : 'border-amber-200 bg-amber-50/80'
+        ready ? 'border-emerald-200 dark:border-emerald-800/70 bg-emerald-50/70 dark:bg-emerald-950/40' : 'border-amber-200 dark:border-amber-800/70 bg-amber-50/80 dark:bg-amber-950/50'
       }`}
     >
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 className={`text-sm font-semibold ${ready ? 'text-emerald-900' : 'text-amber-900'}`}>
+          <h2 className={`text-sm font-semibold ${ready ? 'text-emerald-900 dark:text-emerald-200' : 'text-amber-900 dark:text-amber-200'}`}>
             {ready ? 'Hồ sơ người bán đã đầy đủ' : 'Hoàn tất hồ sơ để mở quyền đăng bán'}
           </h2>
-          <p className={`mt-0.5 text-xs ${ready ? 'text-emerald-800' : 'text-amber-800'}`}>
+          <p className={`mt-0.5 text-xs ${ready ? 'text-emerald-800 dark:text-emerald-300' : 'text-amber-800 dark:text-amber-300'}`}>
             {ready
               ? 'Bạn đã đủ điều kiện định danh để đăng tin trên VAHA Market.'
               : 'Để chống lừa đảo, hệ thống yêu cầu đủ 3 thông tin dưới đây trước khi mở form đăng tin.'}
@@ -141,12 +141,12 @@ function SellerChecklist({
             key={item.label}
             className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-medium ${
               item.done
-                ? 'border-emerald-200 bg-white/80 text-emerald-900'
-                : 'border-amber-200 bg-white/80 text-slate-700'
+                ? 'border-emerald-200 dark:border-emerald-800/70 bg-white/80 dark:bg-slate-900/80 text-emerald-900 dark:text-emerald-200'
+                : 'border-amber-200 dark:border-amber-800/70 bg-white/80 dark:bg-slate-900/80 text-slate-700 dark:text-slate-200'
             }`}
           >
             {item.done ? (
-              <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />
+              <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
             ) : (
               <Circle className="h-4 w-4 shrink-0 text-amber-500" />
             )}
@@ -254,7 +254,7 @@ function ProfileSection({ identityLock }: { identityLock: IdentityLock }) {
       >
         <input
           id="facebook"
-          className="input disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500"
+          className="input disabled:cursor-not-allowed disabled:bg-slate-100 dark:disabled:bg-slate-800 disabled:text-slate-500 dark:disabled:text-slate-500"
           inputMode="url"
           placeholder="https://facebook.com/..."
           value={facebook}
@@ -265,8 +265,8 @@ function ProfileSection({ identityLock }: { identityLock: IdentityLock }) {
       </Field>
 
       {fbLocked && (
-        <div className="flex items-start gap-2.5 rounded-xl border border-amber-200 bg-amber-50 px-3.5 py-2.5 text-xs text-amber-900">
-          <Lock className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
+        <div className="flex items-start gap-2.5 rounded-xl border border-amber-200 dark:border-amber-800/70 bg-amber-50 dark:bg-amber-950/50 px-3.5 py-2.5 text-xs text-amber-900 dark:text-amber-200">
+          <Lock className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
           <p>
             Link Facebook đang bị khóa vì bạn có <strong>{formatLockSummary(identityLock)}</strong>. Thông tin định danh được giữ cố định để bảo vệ người mua; hãy liên hệ Admin nếu cần chỉnh sửa.
           </p>
@@ -287,7 +287,7 @@ function ProfileSection({ identityLock }: { identityLock: IdentityLock }) {
         </Field>
       </div>
 
-      {user?.email && <p className="text-xs text-slate-500">Email đăng nhập: {user.email}</p>}
+      {user?.email && <p className="text-xs text-slate-500 dark:text-slate-400">Email đăng nhập: {user.email}</p>}
       {result && <Alert kind={result.kind}>{result.text}</Alert>}
 
       <div className="flex justify-end">
@@ -435,7 +435,7 @@ function BankAccountsSection({
       <div className="flex items-start justify-between gap-3">
         <div>
           <h2 className="text-base font-semibold">Tài khoản ngân hàng nhận tiền</h2>
-          <p className="mt-0.5 text-sm text-slate-600">Khi đăng bán, bạn chọn 1 tài khoản trong danh sách này để nhận tiền sau giao dịch.</p>
+          <p className="mt-0.5 text-sm text-slate-600 dark:text-slate-400">Khi đăng bán, bạn chọn 1 tài khoản trong danh sách này để nhận tiền sau giao dịch.</p>
         </div>
         {!showForm && (
           <button type="button" className="btn-secondary shrink-0" onClick={() => setShowForm(true)}>
@@ -444,14 +444,14 @@ function BankAccountsSection({
         )}
       </div>
 
-      <div className="flex items-start gap-2.5 rounded-xl border border-amber-300 bg-amber-50 px-3.5 py-3 text-sm text-amber-950">
-        <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
+      <div className="flex items-start gap-2.5 rounded-xl border border-amber-300 dark:border-amber-700/80 bg-amber-50 dark:bg-amber-950/50 px-3.5 py-3 text-sm text-amber-950 dark:text-amber-100">
+        <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
         <div className="space-y-1">
           <p className="font-medium">
-            Tên chủ tài khoản ngân hàng phải là tên chính chủ, khớp với Facebook/CCCD để được giải ngân.
+            Tên chủ tài khoản ngân hàng phải là tên chính chủ, khớp với tên trên trang cá nhân Facebook của bạn để được giải ngân.
           </p>
           {identityLock.locked && (
-            <p className="text-xs text-amber-900">
+            <p className="text-xs text-amber-900 dark:text-amber-200">
               Bạn đang có <strong>{formatLockSummary(identityLock)}</strong>: thông tin tài khoản ngân hàng đã lưu đang được khóa chỉnh sửa để chống gian lận. Liên hệ Admin nếu cần hỗ trợ.
             </p>
           )}
@@ -461,7 +461,7 @@ function BankAccountsSection({
       {notice && <Alert kind={notice.kind}>{notice.text}</Alert>}
 
       {showForm && (
-        <form onSubmit={onAdd} className="space-y-4 rounded-xl border border-slate-200 bg-slate-50 p-4" noValidate>
+        <form onSubmit={onAdd} className="space-y-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 p-4" noValidate>
           <Field label="Ngân hàng" htmlFor="bank" required error={formErrors.bank}>
             <select id="bank" className="input" value={bankBin} onChange={(e) => setBankBin(e.target.value)}>
               <option value="">— Chọn ngân hàng —</option>
@@ -481,7 +481,7 @@ function BankAccountsSection({
                 onChange={(e) => setAccountNumber(e.target.value.replace(/\D/g, '').slice(0, 19))}
               />
             </Field>
-            <Field label="Tên chủ tài khoản" htmlFor="accName" required error={formErrors.accountName} hint="Viết HOA không dấu, đúng tên chính chủ khớp Facebook/CCCD.">
+            <Field label="Tên chủ tài khoản" htmlFor="accName" required error={formErrors.accountName} hint="Viết HOA không dấu, đúng tên chính chủ khớp với tên trên trang cá nhân Facebook của bạn.">
               <input
                 id="accName"
                 className="input uppercase"
@@ -494,8 +494,8 @@ function BankAccountsSection({
             </Field>
           </div>
           {accounts.length > 0 && (
-            <label className="flex items-center gap-2 text-sm text-slate-700">
-              <input type="checkbox" checked={makeDefault} onChange={(e) => setMakeDefault(e.target.checked)} className="h-4 w-4 rounded border-slate-300 text-brand-700" />
+            <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
+              <input type="checkbox" checked={makeDefault} onChange={(e) => setMakeDefault(e.target.checked)} className="h-4 w-4 rounded border-slate-300 dark:border-slate-700 text-brand-700 dark:text-brand-400" />
               Đặt làm tài khoản mặc định
             </label>
           )}
@@ -513,23 +513,23 @@ function BankAccountsSection({
       ) : loadError ? (
         <Alert kind="error">{loadError}</Alert>
       ) : accounts.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-slate-300 px-4 py-8 text-center">
-          <Landmark className="mx-auto h-7 w-7 text-slate-300" />
-          <p className="mt-2 text-sm text-slate-600">Bạn chưa lưu tài khoản ngân hàng nào.</p>
+        <div className="rounded-xl border border-dashed border-slate-300 dark:border-slate-700 px-4 py-8 text-center">
+          <Landmark className="mx-auto h-7 w-7 text-slate-300 dark:text-slate-600" />
+          <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">Bạn chưa lưu tài khoản ngân hàng nào.</p>
           {!showForm && <button type="button" className="btn-primary mt-3" onClick={() => setShowForm(true)}><Plus className="h-4 w-4" /> Thêm tài khoản đầu tiên</button>}
         </div>
       ) : (
         <ul className="space-y-3">
           {accounts.map((a) => (
-            <li key={a.id} className="rounded-xl border border-slate-200 p-4">
+            <li key={a.id} className="rounded-xl border border-slate-200 dark:border-slate-800 p-4">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="flex flex-wrap items-center gap-2 font-medium text-slate-900">
+                  <p className="flex flex-wrap items-center gap-2 font-medium text-slate-900 dark:text-slate-100">
                     {a.bank_name}
-                    {a.is_default && <span className="badge bg-brand-50 text-brand-800"><Star className="mr-1 h-3 w-3" /> Mặc định</span>}
+                    {a.is_default && <span className="badge bg-brand-50 dark:bg-brand-900/40 text-brand-800 dark:text-brand-300"><Star className="mr-1 h-3 w-3" /> Mặc định</span>}
                   </p>
-                  <p className="mt-1 font-mono text-sm text-slate-700">{a.account_number}</p>
-                  <p className="text-sm text-slate-500">{a.account_name}</p>
+                  <p className="mt-1 font-mono text-sm text-slate-700 dark:text-slate-200">{a.account_number}</p>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">{a.account_name}</p>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
                   {!a.is_default && (
@@ -545,7 +545,7 @@ function BankAccountsSection({
                       <button type="button" className="btn-ghost" onClick={() => setConfirmId(null)}>Hủy</button>
                     </>
                   ) : (
-                    <button type="button" className="btn-ghost text-red-600 hover:bg-red-50" aria-label={`Xóa tài khoản ${a.bank_name}`} onClick={() => setConfirmId(a.id)}>
+                    <button type="button" className="btn-ghost text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/60" aria-label={`Xóa tài khoản ${a.bank_name}`} onClick={() => setConfirmId(a.id)}>
                       <Trash2 className="h-4 w-4" /> Xóa
                     </button>
                   )}
@@ -556,9 +556,9 @@ function BankAccountsSection({
         </ul>
       )}
 
-      <p className="text-xs text-slate-500">
+      <p className="text-xs text-slate-500 dark:text-slate-400">
         Thông tin ngân hàng chỉ bạn (và quản trị viên khi giải ngân) xem được. Người mua không thấy số tài khoản của bạn.{' '}
-        <Link to="/sell" className="text-brand-700 hover:underline">Đăng bán ngay</Link>
+        <Link to="/sell" className="text-brand-700 dark:text-brand-400 hover:underline">Đăng bán ngay</Link>
       </p>
     </section>
   );

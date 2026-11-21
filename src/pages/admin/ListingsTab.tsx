@@ -89,11 +89,11 @@ export default function ListingsTab() {
 
   return (
     <div className="space-y-4">
-      <p className="text-sm text-slate-600">Chỉnh trực tiếp giá bán và giá gốc để chạy deal nhanh mà không cần người bán sửa tay. Giá gốc phải lớn hơn giá bán; để trống để bỏ giảm giá.</p>
+      <p className="text-sm text-slate-600 dark:text-slate-400">Chỉnh trực tiếp giá bán và giá gốc để chạy deal nhanh mà không cần người bán sửa tay. Giá gốc phải lớn hơn giá bán; để trống để bỏ giảm giá.</p>
 
       <div className="flex flex-col gap-2 sm:flex-row">
         <div className="relative flex-1">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
           <input className="input pl-9" placeholder="Tìm theo tên sản phẩm" value={search} onChange={(e) => setSearch(e.target.value)} aria-label="Tìm tin đăng" />
         </div>
         <select className="input sm:w-44" value={status} onChange={(e) => setStatus(e.target.value)} aria-label="Lọc trạng thái">
@@ -108,12 +108,12 @@ export default function ListingsTab() {
         <PageLoader />
       ) : items.length === 0 ? (
         <div className="card flex flex-col items-center px-4 py-12 text-center">
-          <Tag className="h-8 w-8 text-slate-300" />
-          <p className="mt-2 text-sm text-slate-600">Không có tin đăng nào.</p>
+          <Tag className="h-8 w-8 text-slate-300 dark:text-slate-600" />
+          <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">Không có tin đăng nào.</p>
         </div>
       ) : (
         <>
-          <p className="text-sm text-slate-500">{total} tin đăng</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400">{total} tin đăng</p>
           <ul className="space-y-3">
             {items.map((l) => <ListingRow key={l.id} listing={l} seller={sellers[l.seller_id]} onSaved={replaceItem} />)}
           </ul>
@@ -166,33 +166,33 @@ function ListingRow({ listing, seller, onSaved }: { listing: Listing; seller?: P
   return (
     <li className="card p-4">
       <div className="flex gap-3">
-        <div className="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-slate-100">
+        <div className="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-slate-100 dark:bg-slate-800">
           {listing.images[0] && <img src={cldUrl(listing.images[0].url, { width: 160, height: 160, crop: 'fill' })} alt="" className="h-full w-full object-cover" />}
         </div>
         <div className="min-w-0 flex-1">
-          <p className="line-clamp-2 text-sm font-medium text-slate-900">{listing.title}</p>
-          <p className="mt-0.5 flex flex-wrap items-center gap-2 text-xs text-slate-500">
+          <p className="line-clamp-2 text-sm font-medium text-slate-900 dark:text-slate-100">{listing.title}</p>
+          <p className="mt-0.5 flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
             <span>{seller?.display_name ?? '—'}</span>
             {seller?.is_mod && <ModBadge />}
             <span className="badge">{STATUS_LABEL[listing.status]}</span>
-            <Link to={`/listing/${listing.id}`} className="text-brand-700 hover:underline">Xem tin</Link>
+            <Link to={`/listing/${listing.id}`} className="text-brand-700 dark:text-brand-400 hover:underline">Xem tin</Link>
           </p>
           <div className="mt-1"><PriceTag display={listing.price} strike={listing.original_price} percent={discountPercent(listing.price, listing.original_price)} /></div>
         </div>
       </div>
 
       {editable ? (
-        <div className="mt-3 space-y-2 border-t border-slate-100 pt-3">
+        <div className="mt-3 space-y-2 border-t border-slate-100 dark:border-slate-800 pt-3">
           <div className="grid gap-2 sm:grid-cols-2">
-            <label className="text-xs font-medium text-slate-600">Giá bán (đ)
+            <label className="text-xs font-medium text-slate-600 dark:text-slate-400">Giá bán (đ)
               <input className="input mt-1 text-right font-mono" inputMode="numeric" value={fmt(priceText)} onChange={(e) => setPriceText(e.target.value.replace(/\D/g, '').slice(0, 10))} />
             </label>
-            <label className="text-xs font-medium text-slate-600">Giá gốc (đ) — trống = không giảm giá
+            <label className="text-xs font-medium text-slate-600 dark:text-slate-400">Giá gốc (đ) — trống = không giảm giá
               <input className="input mt-1 text-right font-mono" inputMode="numeric" value={fmt(origText)} onChange={(e) => setOrigText(e.target.value.replace(/\D/g, '').slice(0, 10))} />
             </label>
           </div>
-          {!priceOk && <p className="text-xs text-red-600">Giá bán từ {formatVND(MIN)} đến {formatVND(MAX)}.</p>}
-          {priceOk && !origOk && <p className="text-xs text-red-600">Giá gốc phải lớn hơn giá bán.</p>}
+          {!priceOk && <p className="text-xs text-red-600 dark:text-red-400">Giá bán từ {formatVND(MIN)} đến {formatVND(MAX)}.</p>}
+          {priceOk && !origOk && <p className="text-xs text-red-600 dark:text-red-400">Giá gốc phải lớn hơn giá bán.</p>}
           {msg && <Alert kind={msg.kind}>{msg.text}</Alert>}
           <div className="flex flex-wrap justify-end gap-2">
             {listing.original_price !== null && (
@@ -204,7 +204,7 @@ function ListingRow({ listing, seller, onSaved }: { listing: Listing; seller?: P
           </div>
         </div>
       ) : (
-        <p className="mt-3 border-t border-slate-100 pt-3 text-xs text-slate-500">Tin đang {STATUS_LABEL[listing.status].toLowerCase()} nên không chỉnh giá được.</p>
+        <p className="mt-3 border-t border-slate-100 dark:border-slate-800 pt-3 text-xs text-slate-500 dark:text-slate-400">Tin đang {STATUS_LABEL[listing.status].toLowerCase()} nên không chỉnh giá được.</p>
       )}
     </li>
   );

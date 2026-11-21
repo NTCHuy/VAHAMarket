@@ -51,7 +51,7 @@ export default function AdminDashboard() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Quản trị</h1>
-        <p className="mt-1 text-sm text-slate-600">Giải ngân, xử lý khiếu nại và tra soát biến động số dư.</p>
+        <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">Giải ngân, xử lý khiếu nại và tra soát biến động số dư.</p>
       </div>
 
       {error && <Alert kind="error">{error}</Alert>}
@@ -65,11 +65,11 @@ export default function AdminDashboard() {
 
       <FeeSettingsCard />
 
-      <div role="tablist" className="-mx-4 flex gap-1 overflow-x-auto border-b border-slate-200 px-4 sm:mx-0 sm:px-0">
+      <div role="tablist" className="-mx-4 flex gap-1 overflow-x-auto border-b border-slate-200 dark:border-slate-800 px-4 sm:mx-0 sm:px-0">
         {tabs.map((t) => (
           <button key={t.id} type="button" role="tab" aria-selected={tab === t.id}
             onClick={() => setParams({ tab: t.id }, { replace: true })}
-            className={`-mb-px flex shrink-0 items-center gap-2 border-b-2 px-3 py-2.5 text-sm font-medium transition-colors ${tab === t.id ? 'border-brand-700 text-brand-800' : 'border-transparent text-slate-500 hover:text-slate-800'}`}>
+            className={`-mb-px flex shrink-0 items-center gap-2 border-b-2 px-3 py-2.5 text-sm font-medium transition-colors ${tab === t.id ? 'border-brand-700 dark:border-brand-500 text-brand-800 dark:text-brand-300' : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'}`}>
             {t.id === 'transactions' && <Landmark className="h-4 w-4" />}
             {t.label}
             {t.badge !== undefined && t.badge > 0 && <span className="rounded-full bg-red-600 px-1.5 text-[11px] font-semibold leading-5 text-white">{t.badge}</span>}
@@ -93,11 +93,11 @@ function StatCard({ icon: Icon, label, value, sub, tone = 'normal' }: {
 }) {
   return (
     <div className="card p-4">
-      <div className="flex items-center gap-2 text-xs font-medium text-slate-500">
-        <Icon className={`h-4 w-4 ${tone === 'danger' ? 'text-red-500' : 'text-brand-600'}`} /> {label}
+      <div className="flex items-center gap-2 text-xs font-medium text-slate-500 dark:text-slate-400">
+        <Icon className={`h-4 w-4 ${tone === 'danger' ? 'text-red-500' : 'text-brand-600 dark:text-brand-400'}`} /> {label}
       </div>
-      <p className={`mt-2 text-xl font-semibold tracking-tight sm:text-2xl ${tone === 'danger' ? 'text-red-700' : 'text-slate-900'}`}>{value}</p>
-      {sub && <p className="mt-0.5 text-xs text-slate-500">{sub}</p>}
+      <p className={`mt-2 text-xl font-semibold tracking-tight sm:text-2xl ${tone === 'danger' ? 'text-red-700 dark:text-red-400' : 'text-slate-900 dark:text-slate-100'}`}>{value}</p>
+      {sub && <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">{sub}</p>}
     </div>
   );
 }

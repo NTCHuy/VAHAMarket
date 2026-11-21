@@ -6,7 +6,6 @@ async function copyText(text: string): Promise<boolean> {
     await navigator.clipboard.writeText(text);
     return true;
   } catch {
-    // Dự phòng cho trình duyệt/HTTP không hỗ trợ Clipboard API
     const ta = document.createElement('textarea');
     ta.value = text;
     ta.style.position = 'fixed';
@@ -32,10 +31,10 @@ export default function CopyButton({ value, label = 'Sao chép' }: { value: stri
     <button
       type="button"
       onClick={async () => setCopied(await copyText(value))}
-      className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-medium text-slate-600 hover:bg-slate-50"
+      className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-medium text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
       aria-label={`${label}: ${value}`}
     >
-      {copied ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5" />}
+      {copied ? <Check className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
       {copied ? 'Đã chép' : label}
     </button>
   );
