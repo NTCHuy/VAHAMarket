@@ -23,6 +23,7 @@ interface NotificationContextValue {
   browserSupported: boolean;
   permission: BrowserPermission;
   browserEnabled: boolean;
+  requestBrowserPermission: () => Promise<BrowserPermission>;
   toggleBrowserNotifications: () => Promise<void>;
   pushToast: (toast: Omit<AppToast, 'id'>, browserTag?: string) => void;
   dismissToast: (id: string) => void;
@@ -112,29 +113,14 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     [browserEnabled, navigate],
   );
 
-  const toggleBrowserNotifications = useCallback(async () => {
+  const requestBrowserPermission = useCallback(async (): Promise<BrowserPermission> => {
     if (!browserSupported) {
       pushToast({
         title: 'Trình duyệt không hỗ trợ',
         body: 'Trình duyệt hiện tại không hỗ trợ thông báo đẩy hệ thống (Web Notification API).',
         kind: 'warning',
       });
-      return;
-    }
-
-    if (browserEnabled) {
-      setPrefEnabled(false);
-      try {
-        localStorage.setItem(STORAGE_KEY, 'off');
-      } catch {
-        // ignore
-      }
-      pushToast({
-        title: 'Đã tắt thông báo đẩy trình duyệt',
-        body: 'Bạn vẫn sẽ nhận pop-up trong web khi đang mở VAHA Market.',
-        kind: 'info',
-      });
-      return;
+      return 'unsupported';
     }
 
     let nextPerm: NotificationPermission = Notification.permission;
@@ -172,7 +158,26 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         kind: 'warning',
       });
     }
-  }, [browserSupported, browserEnabled, pushToast]);
+    return nextPerm;
+  }, [browserSupported, pushToast]);
+
+  const toggleBrowserNotifications = useCallback(async () => {
+    if (browserEnabled) {
+      setPrefEnabled(false);
+      try {
+        localStorage.setItem(STORAGE_KEY, 'off');
+      } catch {
+        // ignore
+      }
+      pushToast({
+        title: 'Đã tắt thông báo đẩy trình duyệt',
+        body: 'Bạn vẫn sẽ nhận pop-up trong web khi đang mở VAHA Market.',
+        kind: 'info',
+      });
+      return;
+    }
+    await requestBrowserPermission();
+  }, [browserEnabled, pushToast, requestBrowserPermission]);
 
   // Dọn timer khi unmount
   useEffect(() => {
@@ -316,11 +321,12 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       browserSupported,
       permission,
       browserEnabled,
+      requestBrowserPermission,
       toggleBrowserNotifications,
       pushToast,
       dismissToast,
     }),
-    [browserSupported, permission, browserEnabled, toggleBrowserNotifications, pushToast, dismissToast],
+    [browserSupported, permission, browserEnabled, requestBrowserPermission, toggleBrowserNotifications, pushToast, dismissToast],
   );
 
   return (

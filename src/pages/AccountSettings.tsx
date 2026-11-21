@@ -287,7 +287,18 @@ function ProfileSection({ identityLock }: { identityLock: IdentityLock }) {
         </Field>
       </div>
 
-      {user?.email && <p className="text-xs text-slate-500 dark:text-slate-400">Email đăng nhập: {user.email}</p>}
+      {user?.email && (
+        <div className="space-y-1 text-xs text-slate-500 dark:text-slate-400">
+          <p>Email đăng nhập: <strong className="font-medium text-slate-700 dark:text-slate-300">{user.email}</strong></p>
+          <p>
+            Thông báo đơn hàng và kết quả duyệt tin sẽ gửi tự động về email này từ{' '}
+            <code className="rounded bg-slate-100 px-1 py-0.5 text-[11px] text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+              vahamarket.vn@gmail.com
+            </code>
+            . Nếu chưa thấy, hãy kiểm tra mục <strong>Thư rác / Spam</strong> và đánh dấu <em>&lsquo;Không phải thư rác&rsquo;</em>.
+          </p>
+        </div>
+      )}
       {result && <Alert kind={result.kind}>{result.text}</Alert>}
 
       <div className="flex justify-end">

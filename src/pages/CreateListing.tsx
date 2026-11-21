@@ -11,6 +11,7 @@ import { BOX_STATUS_OPTIONS, CATEGORIES, LISTING_CONDITIONS, type BoxStatus, typ
 import { FEE_PAYER_OPTIONS, type FeePayer } from '@/constants/fees';
 import { PROVINCES } from '@/constants/provinces';
 import { Alert, Field, PageLoader } from '@/components/ui';
+import NotificationHint from '@/components/NotificationHint';
 import ModBadge from '@/components/ModBadge';
 import { usePlatformSettings } from '@/context/PlatformSettingsContext';
 import type { BankAccount, Listing, ListingStatus } from '@/types';
@@ -432,6 +433,8 @@ function ListingForm({ listingId }: { listingId?: string }) {
       {!canAutoApprove && listingStatus !== 'rejected' && listingStatus !== 'pending_review' && (
         <Alert kind="info">Tin mới cần Admin duyệt trước khi hiển thị công khai. Với tin đã duyệt, sửa tiêu đề / mô tả / ảnh / tài khoản nhận tiền sẽ phải duyệt lại.</Alert>
       )}
+
+      <NotificationHint />
 
       {/* Ảnh */}
       <section className="card space-y-3 p-5 sm:p-6">

@@ -3,7 +3,7 @@
 // (Được gọi nội bộ từ Database Trigger thông qua pg_net, xác thực bằng SB_SECRET_KEY.)
 //
 // Secrets cần đặt (KHÔNG commit):
-//   npx supabase secrets set GMAIL_USER="your_email@gmail.com" GMAIL_APP_PASSWORD="xxxx xxxx xxxx xxxx" SITE_URL="https://vahamarket.vercel.app"
+//   npx supabase secrets set GMAIL_USER="vahamarket.vn@gmail.com" GMAIL_APP_PASSWORD="xxxx xxxx xxxx xxxx" SITE_URL="https://vahamarket.vercel.app"
 //   (SB_SECRET_KEY đã được đặt từ bước deploy sepay-webhook)
 import nodemailer from 'npm:nodemailer@6';
 
@@ -11,6 +11,8 @@ const SECRET_KEY = Deno.env.get('SB_SECRET_KEY') ?? Deno.env.get('SUPABASE_SERVI
 const GMAIL_USER = Deno.env.get('GMAIL_USER') ?? '';
 const GMAIL_APP_PASSWORD = (Deno.env.get('GMAIL_APP_PASSWORD') ?? '').replace(/\s+/g, '');
 const SITE_URL = (Deno.env.get('SITE_URL') ?? 'https://vahamarket.vercel.app').replace(/\/+$/, '');
+
+const EMAIL_FOOTER_REASON = 'Bạn nhận được email này do có hoạt động giao dịch hoặc tin đăng trên VAHA Market.';
 
 type EmailEvent =
   | 'ORDER_PAID'
@@ -104,9 +106,13 @@ function renderLayout(opts: {
               </td>
             </tr>
             <tr>
-              <td style="border-top:1px solid #e2e8f0;padding:16px 24px;background-color:#f8fafc;font-size:12px;line-height:1.5;color:#64748b;">
-                Email tự động từ <strong>VAHA Market</strong>. Mọi giao dịch đều được bảo vệ theo
-                <a href="${escapeHtml(SITE_URL)}/terms" style="color:#1d3bc5;text-decoration:underline;">Điều khoản dịch vụ</a>.
+              <td style="border-top:1px solid #e2e8f0;padding:16px 24px;background-color:#f8fafc;font-size:12px;line-height:1.6;color:#64748b;">
+                <div>${escapeHtml(EMAIL_FOOTER_REASON)}</div>
+                <div style="margin-top:4px;">
+                  Mọi giao dịch đều được bảo vệ theo
+                  <a href="${escapeHtml(SITE_URL)}/terms" style="color:#1d3bc5;text-decoration:underline;">Điều khoản dịch vụ</a>
+                  của <strong>VAHA Market</strong>.
+                </div>
               </td>
             </tr>
           </table>
@@ -117,16 +123,31 @@ function renderLayout(opts: {
 </html>`;
 }
 
-function buildEmail(payload: EmailPayload): { subject: string; html: string } {
+function renderPlainText(lines: string[], ctaLabel: string, ctaUrl: string): string {
+  return [
+    ...lines,
+    '',
+    `${ctaLabel}: ${ctaUrl}`,
+    '',
+    '---',
+    EMAIL_FOOTER_REASON,
+    `Điều khoản dịch vụ: ${SITE_URL}/terms`,
+  ].join('\n');
+}
+
+function buildEmail(payload: EmailPayload): { subject: string; html: string; text: string } {
   const name = payload.recipientName?.trim() || 'bạn';
-  const title = escapeHtml(payload.listingTitle?.trim() || 'Sản phẩm');
-  const code = escapeHtml(payload.paymentCode?.trim() || '');
+  const rawTitle = payload.listingTitle?.trim() || 'Sản phẩm';
+  const rawCode = payload.paymentCode?.trim() || '';
+  const title = escapeHtml(rawTitle);
+  const code = escapeHtml(rawCode);
   const orderUrl = payload.orderId ? `${SITE_URL}/orders/${payload.orderId}` : `${SITE_URL}/orders`;
 
   switch (payload.event) {
-    case 'ORDER_PAID':
+    case 'ORDER_PAID': {
+      const ctaLabel = 'Mở chi tiết đơn hàng';
       return {
-        subject: `[VAHA Market] Bạn có đơn hàng mới đã thanh toán! (${payload.paymentCode ?? ''})`.trim(),
+        subject: `[VAHA Market] Bạn có đơn hàng mới đã thanh toán! (${rawCode})`.trim(),
         html: renderLayout({
           badgeText: 'Đã thanh toán · Chờ gửi hàng',
           badgeBg: '#eff4ff',
@@ -143,19 +164,35 @@ function buildEmail(payload: EmailPayload): { subject: string; html: string } {
               <strong>Lưu ý quan trọng trước khi gửi hàng:</strong> Vui lòng quay <strong>video test chức năng &amp; đóng gói liền mạch 6 mặt</strong> gói hàng, sau đó cập nhật đơn vị vận chuyển, mã vận đơn và link video lên VAHA Market.
             </div>
           `,
-          ctaLabel: 'Mở chi tiết đơn hàng',
+          ctaLabel,
           ctaUrl: orderUrl,
         }),
+        text: renderPlainText(
+          [
+            `Xin chào ${name},`,
+            `Người mua đã chuyển khoản thành công cho sản phẩm "${rawTitle}"${rawCode ? ` (Mã đơn: ${rawCode})` : ''}.`,
+            `- Số tiền sàn đang giữ: ${formatVnd(payload.amount)}`,
+            `- Thực nhận dự kiến sau khi hoàn tất: ${formatVnd(payload.sellerPayout)}`,
+            'Lưu ý: Vui lòng quay video test chức năng & đóng gói liền mạch 6 mặt gói hàng, sau đó cập nhật đơn vị vận chuyển, mã vận đơn và link video lên VAHA Market.',
+          ],
+          ctaLabel,
+          orderUrl,
+        ),
       };
+    }
 
     case 'ORDER_SHIPPED': {
-      const carrier = escapeHtml(payload.carrier?.trim() || 'Chưa cập nhật');
-      const tracking = escapeHtml(payload.trackingCode?.trim() || 'Chưa cập nhật');
-      const videoLink = payload.packingVideoUrl?.trim()
-        ? `<div style="margin-top:6px;"><strong>Video test &amp; đóng gói của người bán:</strong> <a href="${escapeHtml(payload.packingVideoUrl.trim())}" style="color:#1d3bc5;">Xem video</a></div>`
+      const rawCarrier = payload.carrier?.trim() || 'Chưa cập nhật';
+      const rawTracking = payload.trackingCode?.trim() || 'Chưa cập nhật';
+      const rawVideo = payload.packingVideoUrl?.trim() || '';
+      const carrier = escapeHtml(rawCarrier);
+      const tracking = escapeHtml(rawTracking);
+      const videoLink = rawVideo
+        ? `<div style="margin-top:6px;"><strong>Video test &amp; đóng gói của người bán:</strong> <a href="${escapeHtml(rawVideo)}" style="color:#1d3bc5;">Xem video</a></div>`
         : '';
+      const ctaLabel = 'Theo dõi & xác nhận đơn hàng';
       return {
-        subject: `[VAHA Market] Đơn hàng của bạn đang được giao! (${payload.paymentCode ?? ''})`.trim(),
+        subject: `[VAHA Market] Đơn hàng của bạn đang được giao! (${rawCode})`.trim(),
         html: renderLayout({
           badgeText: 'Đang giao hàng',
           badgeBg: '#f0f9ff',
@@ -173,15 +210,28 @@ function buildEmail(payload: EmailPayload): { subject: string; html: string } {
               <strong>Bắt buộc khi nhận hàng:</strong> Hãy quay <strong>video mở hộp liền mạch 6 mặt</strong> từ lúc bưu kiện còn nguyên vẹn chưa cắt băng dính. Đây là căn cứ bắt buộc để VAHA Market giải quyết khiếu nại nếu có sự cố.
             </div>
           `,
-          ctaLabel: 'Theo dõi & xác nhận đơn hàng',
+          ctaLabel,
           ctaUrl: orderUrl,
         }),
+        text: renderPlainText(
+          [
+            `Xin chào ${name},`,
+            `Người bán đã gửi đi sản phẩm "${rawTitle}"${rawCode ? ` (Mã đơn: ${rawCode})` : ''}.`,
+            `- Đơn vị vận chuyển: ${rawCarrier}`,
+            `- Mã vận đơn: ${rawTracking}`,
+            ...(rawVideo ? [`- Video test & đóng gói của người bán: ${rawVideo}`] : []),
+            'Bắt buộc khi nhận hàng: Hãy quay video mở hộp liền mạch 6 mặt từ lúc bưu kiện còn nguyên vẹn chưa cắt băng dính để làm căn cứ giải quyết khiếu nại nếu có sự cố.',
+          ],
+          ctaLabel,
+          orderUrl,
+        ),
       };
     }
 
-    case 'ORDER_COMPLETED':
+    case 'ORDER_COMPLETED': {
+      const ctaLabel = 'Xem trạng thái giải ngân';
       return {
-        subject: `[VAHA Market] Người mua đã xác nhận nhận hàng! (${payload.paymentCode ?? ''})`.trim(),
+        subject: `[VAHA Market] Người mua đã xác nhận nhận hàng! (${rawCode})`.trim(),
         html: renderLayout({
           badgeText: 'Đã nhận hàng · Chờ giải ngân',
           badgeBg: '#ecfdf5',
@@ -195,20 +245,34 @@ function buildEmail(payload: EmailPayload): { subject: string; html: string } {
               <span style="font-size:13px;">Yêu cầu giải ngân đã được mở khóa. Admin VAHA Market sẽ chuyển khoản vào tài khoản ngân hàng bạn đã đăng ký trong thời gian sớm nhất.</span>
             </div>
           `,
-          ctaLabel: 'Xem trạng thái giải ngân',
+          ctaLabel,
           ctaUrl: orderUrl,
         }),
+        text: renderPlainText(
+          [
+            `Xin chào ${name},`,
+            `Đơn hàng "${rawTitle}"${rawCode ? ` (Mã đơn: ${rawCode})` : ''} đã được người mua xác nhận nhận hàng ổn định.`,
+            `- Số tiền thực nhận: ${formatVnd(payload.sellerPayout)}`,
+            'Yêu cầu giải ngân đã được mở khóa. Admin VAHA Market sẽ chuyển khoản vào tài khoản ngân hàng bạn đã đăng ký trong thời gian sớm nhất.',
+          ],
+          ctaLabel,
+          orderUrl,
+        ),
       };
+    }
 
     case 'PAYOUT_DONE': {
-      const bank = escapeHtml(payload.bankName?.trim() || 'Ngân hàng đã đăng ký');
-      const accNo = escapeHtml(payload.accountNumber?.trim() || '');
-      const accName = escapeHtml(payload.accountName?.trim() || '');
-      const refHtml = payload.reference?.trim()
-        ? `<div style="margin-top:4px;"><strong>Mã tham chiếu:</strong> ${escapeHtml(payload.reference.trim())}</div>`
-        : '';
+      const rawBank = payload.bankName?.trim() || 'Ngân hàng đã đăng ký';
+      const rawAccNo = payload.accountNumber?.trim() || '';
+      const rawAccName = payload.accountName?.trim() || '';
+      const rawRef = payload.reference?.trim() || '';
+      const bank = escapeHtml(rawBank);
+      const accNo = escapeHtml(rawAccNo);
+      const accName = escapeHtml(rawAccName);
+      const refHtml = rawRef ? `<div style="margin-top:4px;"><strong>Mã tham chiếu:</strong> ${escapeHtml(rawRef)}</div>` : '';
+      const ctaLabel = 'Xem chi tiết đơn hàng';
       return {
-        subject: `[VAHA Market] Đã giải ngân thành công ${formatVnd(payload.amount)}! (${payload.paymentCode ?? ''})`.trim(),
+        subject: `[VAHA Market] Đã giải ngân thành công ${formatVnd(payload.amount)}! (${rawCode})`.trim(),
         html: renderLayout({
           badgeText: 'Giải ngân thành công',
           badgeBg: '#ecfdf5',
@@ -225,20 +289,35 @@ function buildEmail(payload: EmailPayload): { subject: string; html: string } {
               ${refHtml}
             </div>
           `,
-          ctaLabel: 'Xem chi tiết đơn hàng',
+          ctaLabel,
           ctaUrl: orderUrl,
         }),
+        text: renderPlainText(
+          [
+            `Xin chào ${name},`,
+            `Khoản tiền bán sản phẩm "${rawTitle}"${rawCode ? ` (Mã đơn: ${rawCode})` : ''} đã được Admin VAHA Market chuyển khoản thành công.`,
+            `- Số tiền đã chuyển: ${formatVnd(payload.amount)}`,
+            `- Ngân hàng nhận: ${rawBank}`,
+            ...(rawAccNo ? [`- Số tài khoản: ${rawAccNo}`] : []),
+            ...(rawAccName ? [`- Chủ tài khoản: ${rawAccName}`] : []),
+            ...(rawRef ? [`- Mã tham chiếu: ${rawRef}`] : []),
+          ],
+          ctaLabel,
+          orderUrl,
+        ),
       };
     }
 
     case 'LISTING_REVIEWED': {
       const approved = payload.reviewStatus === 'active';
       const listingUrl = approved && payload.listingId ? `${SITE_URL}/listing/${payload.listingId}` : `${SITE_URL}/my-listings`;
-      const reason = escapeHtml(payload.rejectionReason?.trim() || 'Vui lòng kiểm tra lại ảnh xác thực chính chủ và nội dung tin đăng.');
+      const rawReason = payload.rejectionReason?.trim() || 'Vui lòng kiểm tra lại ảnh xác thực chính chủ và nội dung tin đăng.';
+      const reason = escapeHtml(rawReason);
+      const ctaLabel = approved ? 'Xem tin đăng trên sàn' : 'Sửa & gửi duyệt lại';
       return {
         subject: approved
-          ? `[VAHA Market] Tin đăng "${payload.listingTitle ?? ''}" đã được duyệt lên sàn!`
-          : `[VAHA Market] Tin đăng "${payload.listingTitle ?? ''}" cần chỉnh sửa lại`,
+          ? `[VAHA Market] Tin đăng "${rawTitle}" đã được duyệt lên sàn!`
+          : `[VAHA Market] Tin đăng "${rawTitle}" cần chỉnh sửa lại`,
         html: renderLayout({
           badgeText: approved ? 'Đã duyệt lên sàn' : 'Bị từ chối duyệt',
           badgeBg: approved ? '#ecfdf5' : '#fef2f2',
@@ -254,9 +333,24 @@ function buildEmail(payload: EmailPayload): { subject: string; html: string } {
               </div>
               <p style="margin:12px 0 0;font-size:13px;">Bạn có thể bấm nút bên dưới để chỉnh sửa và gửi duyệt lại ngay.</p>
             `,
-          ctaLabel: approved ? 'Xem tin đăng trên sàn' : 'Sửa & gửi duyệt lại',
+          ctaLabel,
           ctaUrl: listingUrl,
         }),
+        text: renderPlainText(
+          approved
+            ? [
+                `Xin chào ${name},`,
+                `Tin đăng "${rawTitle}" đã vượt qua bước kiểm duyệt chính chủ và hiện đang hiển thị công khai trên VAHA Market.`,
+              ]
+            : [
+                `Xin chào ${name},`,
+                `Tin đăng "${rawTitle}" chưa đạt yêu cầu kiểm duyệt.`,
+                `- Lý do từ Admin: ${rawReason}`,
+                'Bạn có thể truy cập đường dẫn bên dưới để chỉnh sửa và gửi duyệt lại ngay.',
+              ],
+          ctaLabel,
+          listingUrl,
+        ),
       };
     }
   }
@@ -288,7 +382,7 @@ Deno.serve(async (req) => {
     return json({ success: false, message: 'Missing event or recipient email' }, 400);
   }
 
-  const { subject, html } = buildEmail(payload);
+  const { subject, html, text } = buildEmail(payload);
 
   try {
     const transporter = nodemailer.createTransport({
@@ -302,9 +396,11 @@ Deno.serve(async (req) => {
     });
 
     const info = await transporter.sendMail({
-      from: `"VAHA Market" <${GMAIL_USER}>`,
+      from: `VAHA Market <${GMAIL_USER}>`,
+      replyTo: GMAIL_USER,
       to: payload.to,
       subject,
+      text,
       html,
     });
 

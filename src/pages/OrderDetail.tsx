@@ -20,6 +20,7 @@ import ErrorBoundary from '@/components/ErrorBoundary';
 import ModBadge from '@/components/ModBadge';
 import PriceBreakdown from '@/components/PriceBreakdown';
 import OrderStatusBadge from '@/components/OrderStatusBadge';
+import NotificationHint from '@/components/NotificationHint';
 import { Alert, Avatar, Field, PageLoader } from '@/components/ui';
 import type { Order, OrderPayout, OrderStatus, Profile } from '@/types';
 
@@ -217,6 +218,10 @@ function OrderDetailContent() {
             </li>
           ))}
         </ol>
+      )}
+
+      {['PENDING_PAYMENT', 'PAID_HELD', 'SHIPPED'].includes(order.status) && (
+        <NotificationHint prominent />
       )}
 
       {actionError && <Alert kind="error">{actionError}</Alert>}

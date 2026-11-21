@@ -10,6 +10,7 @@ import { formatVND } from '@/lib/money';
 import { getErrorMessage } from '@/lib/errors';
 import { ORDER_FILTERS } from '@/constants/orderStatus';
 import OrderStatusBadge from '@/components/OrderStatusBadge';
+import NotificationHint from '@/components/NotificationHint';
 import { Alert, PageLoader } from '@/components/ui';
 import type { Order } from '@/types';
 
@@ -61,6 +62,8 @@ export default function Orders() {
   return (
     <div className="mx-auto max-w-3xl space-y-5">
       <h1 className="text-2xl font-semibold tracking-tight">Đơn hàng của tôi</h1>
+
+      <NotificationHint />
 
       <div role="tablist" className="grid grid-cols-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-1">
         {([['buy', 'Đơn mua của tôi'], ['sell', 'Đơn bán của tôi']] as const).map(([id, label]) => (

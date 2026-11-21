@@ -7,6 +7,7 @@ import { cldUrl } from '@/lib/cloudinary';
 import { getErrorMessage } from '@/lib/errors';
 import { Alert, PageLoader } from '@/components/ui';
 import PriceTag from '@/components/PriceTag';
+import NotificationHint from '@/components/NotificationHint';
 import { discountPercent } from '@/lib/money';
 import type { Listing, ListingStatus } from '@/types';
 
@@ -66,6 +67,8 @@ export default function MyListings() {
         <h1 className="text-2xl font-semibold tracking-tight">Tin đăng của tôi</h1>
         <Link to="/sell" className="btn-primary"><Plus className="h-4 w-4" /> Đăng bán</Link>
       </div>
+
+      <NotificationHint prominent={items.some((i) => i.status === 'pending_review')} />
 
       {error && <Alert kind="error">{error}</Alert>}
 
