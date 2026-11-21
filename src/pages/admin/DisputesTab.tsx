@@ -85,8 +85,8 @@ function Party({ title, profile, contact, extraPhone }: { title: string; profile
         {extraPhone && extraPhone !== contact?.phone && (
           <p className="flex items-center gap-2 text-xs text-slate-500">SĐT nhận hàng trong đơn: <span className="font-mono">{extraPhone}</span> <CopyButton value={extraPhone} /></p>
         )}
-        {contact?.facebook_url && (
-          <a href={contact.facebook_url} target="_blank" rel="noopener noreferrer nofollow" className="inline-flex items-center gap-1.5 text-brand-700 hover:underline">
+        {(profile?.facebook_url ?? contact?.facebook_url) && (
+          <a href={(profile?.facebook_url ?? contact?.facebook_url) as string} target="_blank" rel="noopener noreferrer nofollow" className="inline-flex items-center gap-1.5 text-brand-700 hover:underline">
             <Facebook className="h-3.5 w-3.5" /> Facebook <ExternalLink className="h-3 w-3" />
           </a>
         )}

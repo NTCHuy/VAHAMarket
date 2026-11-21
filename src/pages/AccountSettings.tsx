@@ -1,6 +1,17 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
-import { Check, Landmark, Loader2, Plus, Star, Trash2 } from 'lucide-react';
+import {
+  Check,
+  CheckCircle2,
+  Circle,
+  Landmark,
+  Loader2,
+  Lock,
+  Plus,
+  ShieldAlert,
+  Star,
+  Trash2,
+} from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { getErrorMessage, isBankInUseError } from '@/lib/errors';
@@ -13,27 +24,144 @@ import type { BankAccount } from '@/types';
 const PHONE_RE = /^[0-9+ ]{8,15}$/;
 const FACEBOOK_RE = /^https?:\/\/([a-z0-9-]+\.)?(facebook\.com|fb\.com|fb\.me)\/.+$/i;
 
+interface IdentityLock {
+  locked: boolean;
+  listings: number;
+  orders: number;
+}
+
+const EMPTY_LOCK: IdentityLock = { locked: false, listings: 0, orders: 0 };
+
 /** Tên chủ TK: IN HOA, không dấu, chỉ chữ cái và khoảng trắng. */
 const toAccountName = (v: string) =>
   removeVietnameseTones(v).replace(/[^A-Za-z ]/g, '').replace(/^\s+/, '').replace(/\s+/g, ' ').toUpperCase().slice(0, 50);
 
+function formatLockSummary(lock: IdentityLock): string {
+  const parts: string[] = [];
+  if (lock.listings > 0) parts.push(`${lock.listings} tin đang hiển thị/chờ duyệt`);
+  if (lock.orders > 0) parts.push(`${lock.orders} đơn bán đang xử lý`);
+  return parts.length > 0 ? parts.join(' và ') : 'tin đăng hoặc đơn hàng đang hoạt động';
+}
+
 export default function AccountSettings() {
+  const { user, profile, contact, loading } = useAuth();
+  const [identityLock, setIdentityLock] = useState<IdentityLock>(EMPTY_LOCK);
+  const [bankCount, setBankCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!user) {
+      setIdentityLock(EMPTY_LOCK);
+      return;
+    }
+    let active = true;
+    supabase.rpc('my_identity_lock').then(({ data, error }) => {
+      if (!active || error || !data || typeof data !== 'object') return;
+      const d = data as Partial<IdentityLock>;
+      setIdentityLock({
+        locked: Boolean(d.locked),
+        listings: Number(d.listings ?? 0),
+        orders: Number(d.orders ?? 0),
+      });
+    });
+    return () => {
+      active = false;
+    };
+  }, [user]);
+
+  const hasPhone = Boolean(contact?.phone?.trim());
+  const hasFacebook = Boolean(profile?.facebook_url?.trim());
+  const hasBank = bankCount !== null && bankCount > 0;
+  const checklistReady = !loading && bankCount !== null;
+  const sellerReady = hasPhone && hasFacebook && hasBank;
+
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Cài đặt tài khoản</h1>
         <p className="mt-1 text-sm text-slate-600">Quản lý thông tin liên hệ và tài khoản ngân hàng nhận tiền khi bán hàng.</p>
       </div>
-      <ProfileSection />
-      <BankAccountsSection />
+
+      {checklistReady && (
+        <SellerChecklist hasPhone={hasPhone} hasFacebook={hasFacebook} hasBank={hasBank} ready={sellerReady} />
+      )}
+
+      <ProfileSection identityLock={identityLock} />
+      <BankAccountsSection identityLock={identityLock} onCountChange={setBankCount} />
     </div>
+  );
+}
+
+/* ----------------------------------------------------------------------------
+ *  0. Checklist hồ sơ người bán (khớp listing_seller_missing ở migration 007)
+ * -------------------------------------------------------------------------- */
+function SellerChecklist({
+  hasPhone,
+  hasFacebook,
+  hasBank,
+  ready,
+}: {
+  hasPhone: boolean;
+  hasFacebook: boolean;
+  hasBank: boolean;
+  ready: boolean;
+}) {
+  const items = [
+    { label: 'Số điện thoại liên hệ', done: hasPhone },
+    { label: 'Link Facebook cá nhân', done: hasFacebook },
+    { label: 'Ít nhất 1 tài khoản ngân hàng nhận tiền', done: hasBank },
+  ];
+
+  return (
+    <section
+      className={`rounded-2xl border p-4 sm:p-5 ${
+        ready ? 'border-emerald-200 bg-emerald-50/70' : 'border-amber-200 bg-amber-50/80'
+      }`}
+    >
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 className={`text-sm font-semibold ${ready ? 'text-emerald-900' : 'text-amber-900'}`}>
+            {ready ? 'Hồ sơ người bán đã đầy đủ' : 'Hoàn tất hồ sơ để mở quyền đăng bán'}
+          </h2>
+          <p className={`mt-0.5 text-xs ${ready ? 'text-emerald-800' : 'text-amber-800'}`}>
+            {ready
+              ? 'Bạn đã đủ điều kiện định danh để đăng tin trên VAHA Market.'
+              : 'Để chống lừa đảo, hệ thống yêu cầu đủ 3 thông tin dưới đây trước khi mở form đăng tin.'}
+          </p>
+        </div>
+        {ready && (
+          <Link to="/sell" className="btn-primary shrink-0 text-xs">
+            Đăng bán ngay
+          </Link>
+        )}
+      </div>
+
+      <ul className="mt-3 grid gap-2 sm:grid-cols-3">
+        {items.map((item) => (
+          <li
+            key={item.label}
+            className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-medium ${
+              item.done
+                ? 'border-emerald-200 bg-white/80 text-emerald-900'
+                : 'border-amber-200 bg-white/80 text-slate-700'
+            }`}
+          >
+            {item.done ? (
+              <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />
+            ) : (
+              <Circle className="h-4 w-4 shrink-0 text-amber-500" />
+            )}
+            <span>{item.label}</span>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }
 
 /* ----------------------------------------------------------------------------
  *  1. Thông tin cá nhân & liên hệ
  * -------------------------------------------------------------------------- */
-function ProfileSection() {
+function ProfileSection({ identityLock }: { identityLock: IdentityLock }) {
   const { user, profile, contact, loading, refresh } = useAuth();
   const [displayName, setDisplayName] = useState('');
   const [phone, setPhone] = useState('');
@@ -44,11 +172,15 @@ function ProfileSection() {
   const [saving, setSaving] = useState(false);
   const [result, setResult] = useState<{ kind: 'success' | 'error'; text: string } | null>(null);
 
+  const fbLocked = identityLock.locked && Boolean(profile?.facebook_url?.trim());
+
   useEffect(() => {
-    if (profile) setDisplayName(profile.display_name);
+    if (profile) {
+      setDisplayName(profile.display_name);
+      setFacebook(profile.facebook_url ?? '');
+    }
     if (contact) {
       setPhone(contact.phone ?? '');
-      setFacebook(contact.facebook_url ?? '');
       setProvince(contact.province ?? '');
       setAddress(contact.shipping_address ?? '');
     }
@@ -66,7 +198,9 @@ function ProfileSection() {
     const next: Record<string, string> = {};
     if (name.length < 1 || name.length > 60) next.displayName = 'Tên hiển thị từ 1 đến 60 ký tự.';
     if (phone.trim() && !PHONE_RE.test(phone.trim())) next.phone = 'Số điện thoại gồm 8–15 chữ số (có thể có dấu + và khoảng trắng).';
-    if (fbUrl && (!FACEBOOK_RE.test(fbUrl) || fbUrl.length > 200)) next.facebook = 'Hãy dán link trang cá nhân Facebook (facebook.com/...).';
+    if (!fbLocked && fbUrl && (!FACEBOOK_RE.test(fbUrl) || fbUrl.length > 200)) {
+      next.facebook = 'Hãy dán link trang cá nhân Facebook (facebook.com/...).';
+    }
     if (address.trim().length > 400) next.address = 'Địa chỉ tối đa 400 ký tự.';
     setErrors(next);
     if (Object.keys(next).length > 0) return;
@@ -74,18 +208,22 @@ function ProfileSection() {
     setSaving(true);
     setResult(null);
     try {
-      const r1 = await supabase.from('profiles').update({ display_name: name }).eq('id', user.id);
+      const profileUpdate: { display_name: string; facebook_url?: string | null } = { display_name: name };
+      if (!fbLocked) profileUpdate.facebook_url = fbUrl || null;
+
+      const r1 = await supabase.from('profiles').update(profileUpdate).eq('id', user.id);
       if (r1.error) throw r1.error;
+
       const r2 = await supabase
         .from('profile_contacts')
         .update({
           phone: phone.trim() || null,
-          facebook_url: fbUrl || null,
           province: province || null,
           shipping_address: address.trim() || null,
         })
         .eq('user_id', user.id);
       if (r2.error) throw r2.error;
+
       await refresh();
       setResult({ kind: 'success', text: 'Đã lưu thông tin.' });
     } catch (err) {
@@ -103,14 +241,37 @@ function ProfileSection() {
         <Field label="Tên hiển thị" htmlFor="displayName" required error={errors.displayName}>
           <input id="displayName" className="input" value={displayName} maxLength={60} onChange={(e) => setDisplayName(e.target.value)} />
         </Field>
-        <Field label="Số điện thoại (Zalo)" htmlFor="phone" error={errors.phone} hint="Người mua/bán dùng số này để liên hệ qua Zalo.">
+        <Field label="Số điện thoại (Zalo)" htmlFor="phone" error={errors.phone} hint="Bắt buộc để đăng bán. Dùng để liên hệ xử lý đơn hàng khi cần.">
           <input id="phone" className="input" inputMode="tel" placeholder="0912 345 678" value={phone} maxLength={15} onChange={(e) => setPhone(e.target.value)} />
         </Field>
       </div>
 
-      <Field label="Link Facebook cá nhân" htmlFor="facebook" error={errors.facebook} hint="Hiển thị công khai trên tin đăng của bạn để người mua kiểm tra uy tín. Ví dụ: https://facebook.com/ten.cua.ban">
-        <input id="facebook" className="input" inputMode="url" placeholder="https://facebook.com/..." value={facebook} maxLength={200} onChange={(e) => setFacebook(e.target.value)} />
+      <Field
+        label="Link Facebook cá nhân"
+        htmlFor="facebook"
+        error={errors.facebook}
+        hint="Hiển thị công khai trên tin đăng của bạn để người mua kiểm tra uy tín. Ví dụ: https://facebook.com/ten.cua.ban"
+      >
+        <input
+          id="facebook"
+          className="input disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500"
+          inputMode="url"
+          placeholder="https://facebook.com/..."
+          value={facebook}
+          maxLength={200}
+          disabled={fbLocked}
+          onChange={(e) => setFacebook(e.target.value)}
+        />
       </Field>
+
+      {fbLocked && (
+        <div className="flex items-start gap-2.5 rounded-xl border border-amber-200 bg-amber-50 px-3.5 py-2.5 text-xs text-amber-900">
+          <Lock className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
+          <p>
+            Link Facebook đang bị khóa vì bạn có <strong>{formatLockSummary(identityLock)}</strong>. Thông tin định danh được giữ cố định để bảo vệ người mua; hãy liên hệ Admin nếu cần chỉnh sửa.
+          </p>
+        </div>
+      )}
 
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label="Tỉnh / Thành phố" htmlFor="province">
@@ -142,10 +303,16 @@ function ProfileSection() {
  *  2. Tài khoản ngân hàng nhận tiền
  * -------------------------------------------------------------------------- */
 const BANK_IN_USE_MESSAGE =
-  'Không thể xóa: tài khoản này đang được gắn với tin đăng (đang bán, nháp hoặc đang ẩn). ' +
+  'Không thể xóa: tài khoản này đang được gắn với tin đăng (đang bán, chờ duyệt, nháp hoặc đang ẩn). ' +
   'Hãy đổi tài khoản nhận tiền của tin đó sang tài khoản khác, hoặc xóa tin, rồi thử lại.';
 
-function BankAccountsSection() {
+function BankAccountsSection({
+  identityLock,
+  onCountChange,
+}: {
+  identityLock: IdentityLock;
+  onCountChange: (count: number) => void;
+}) {
   const { user } = useAuth();
   const [accounts, setAccounts] = useState<BankAccount[]>([]);
   const [loading, setLoading] = useState(true);
@@ -169,13 +336,20 @@ function BankAccountsSection() {
       .order('is_default', { ascending: false })
       .order('created_at', { ascending: true });
     if (error) throw error;
-    setAccounts((data ?? []) as BankAccount[]);
+    const rows = (data ?? []) as BankAccount[];
+    setAccounts(rows);
+    onCountChange(rows.length);
   };
 
   useEffect(() => {
     let active = true;
     load()
-      .catch((e) => active && setLoadError(getErrorMessage(e)))
+      .catch((e) => {
+        if (active) {
+          setLoadError(getErrorMessage(e));
+          onCountChange(0);
+        }
+      })
       .finally(() => active && setLoading(false));
     return () => {
       active = false;
@@ -270,6 +444,20 @@ function BankAccountsSection() {
         )}
       </div>
 
+      <div className="flex items-start gap-2.5 rounded-xl border border-amber-300 bg-amber-50 px-3.5 py-3 text-sm text-amber-950">
+        <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
+        <div className="space-y-1">
+          <p className="font-medium">
+            Tên chủ tài khoản ngân hàng phải là tên chính chủ, khớp với Facebook/CCCD để được giải ngân.
+          </p>
+          {identityLock.locked && (
+            <p className="text-xs text-amber-900">
+              Bạn đang có <strong>{formatLockSummary(identityLock)}</strong>: thông tin tài khoản ngân hàng đã lưu đang được khóa chỉnh sửa để chống gian lận. Liên hệ Admin nếu cần hỗ trợ.
+            </p>
+          )}
+        </div>
+      </div>
+
       {notice && <Alert kind={notice.kind}>{notice.text}</Alert>}
 
       {showForm && (
@@ -293,7 +481,7 @@ function BankAccountsSection() {
                 onChange={(e) => setAccountNumber(e.target.value.replace(/\D/g, '').slice(0, 19))}
               />
             </Field>
-            <Field label="Tên chủ tài khoản" htmlFor="accName" required error={formErrors.accountName} hint="Viết HOA không dấu, đúng như trên thẻ.">
+            <Field label="Tên chủ tài khoản" htmlFor="accName" required error={formErrors.accountName} hint="Viết HOA không dấu, đúng tên chính chủ khớp Facebook/CCCD.">
               <input
                 id="accName"
                 className="input uppercase"

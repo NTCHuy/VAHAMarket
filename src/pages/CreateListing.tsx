@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { AlertTriangle, ArrowLeft, ArrowRight, ImagePlus, Landmark, Loader2, RefreshCw, Truck, X } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, ArrowRight, Camera, CheckCircle2, ImagePlus, Landmark, Loader2, RefreshCw, Truck, X, XCircle } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { cldUrl, uploadImage, validateImage } from '@/lib/cloudinary';
 import { calcFees, formatVND } from '@/lib/money';
 import { getErrorMessage } from '@/lib/errors';
+import { validateListingContent } from '@/lib/moderation';
 import { BOX_STATUS_OPTIONS, CATEGORIES, LISTING_CONDITIONS, type BoxStatus, type ListingCondition } from '@/constants/categories';
 import { FEE_PAYER_OPTIONS, type FeePayer } from '@/constants/fees';
 import { PROVINCES } from '@/constants/provinces';
@@ -38,6 +39,15 @@ interface ImageItem {
   isObjectUrl: boolean;
 }
 
+interface VerificationItem {
+  url: string | null;
+  preview: string;
+  progress: number;
+  state: 'uploading' | 'done' | 'error';
+  error?: string;
+  isObjectUrl: boolean;
+}
+
 type EditableStatus = Extract<ListingStatus, 'draft' | 'active' | 'hidden'>;
 
 const STATUS_LABEL: Record<EditableStatus, string> = {
@@ -50,7 +60,7 @@ let keySeq = 0;
 const nextKey = () => `img-${Date.now()}-${keySeq++}`;
 
 function ListingForm({ listingId }: { listingId?: string }) {
-  const { user, profile } = useAuth();
+  const { user, profile, contact, isAdmin } = useAuth();
   const { feeBp } = usePlatformSettings();
   const navigate = useNavigate();
   const isEdit = Boolean(listingId);
@@ -75,6 +85,10 @@ function ListingForm({ listingId }: { listingId?: string }) {
   const [description, setDescription] = useState('');
   const [bankAccountId, setBankAccountId] = useState('');
   const [status, setStatus] = useState<EditableStatus>('active');
+  const [listingStatus, setListingStatus] = useState<ListingStatus | null>(null); // trạng thái hiện tại khi sửa tin
+  const [rejectionReason, setRejectionReason] = useState<string | null>(null);
+  const [verification, setVerification] = useState<VerificationItem | null>(null);
+  const [verificationNotice, setVerificationNotice] = useState<string | null>(null);
 
   const [submitted, setSubmitted] = useState(false);
   const [saving, setSaving] = useState<'publish' | 'draft' | 'save' | null>(null);
@@ -82,11 +96,14 @@ function ListingForm({ listingId }: { listingId?: string }) {
 
   const imagesRef = useRef<ImageItem[]>([]);
   imagesRef.current = images;
+  const verificationRef = useRef<VerificationItem | null>(null);
+  verificationRef.current = verification;
 
   // Giải phóng object URL khi rời trang
   useEffect(
     () => () => {
       imagesRef.current.forEach((i) => i.isObjectUrl && URL.revokeObjectURL(i.preview));
+      if (verificationRef.current?.isObjectUrl) URL.revokeObjectURL(verificationRef.current.preview);
     },
     [],
   );
@@ -113,7 +130,7 @@ function ListingForm({ listingId }: { listingId?: string }) {
           const l = res.data as Listing | null;
           if (!l || l.seller_id !== user.id) throw new Error('Không tìm thấy tin đăng hoặc bạn không có quyền sửa.');
           if (!active) return;
-          if (!['draft', 'active', 'hidden'].includes(l.status)) {
+          if (!['draft', 'pending_review', 'active', 'hidden', 'rejected'].includes(l.status)) {
             setLocked(l.status);
             return;
           }
@@ -128,7 +145,12 @@ function ListingForm({ listingId }: { listingId?: string }) {
           setProvince(l.province ?? '');
           setShipCod(l.ship_cod);
           setDescription(l.description);
-          setStatus(l.status as EditableStatus);
+          setStatus(l.status === 'hidden' ? 'hidden' : 'active');
+          setListingStatus(l.status);
+          setRejectionReason(l.rejection_reason);
+          if (l.verification_image_url) {
+            setVerification({ url: l.verification_image_url, preview: cldUrl(l.verification_image_url, { width: 600 }), progress: 100, state: 'done', isObjectUrl: false });
+          }
           setBankAccountId(l.bank_account_id ?? banks[0]?.id ?? '');
           setImages(
             l.images.map((img) => ({
@@ -228,6 +250,35 @@ function ListingForm({ listingId }: { listingId?: string }) {
     });
   };
 
+  /* ----------------------------- Ảnh xác thực chính chủ ----------------------------- */
+  const onPickVerification = async (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    const invalid = validateImage(file);
+    if (invalid) {
+      setVerificationNotice(invalid);
+      return;
+    }
+    setVerificationNotice(null);
+    if (verificationRef.current?.isObjectUrl) URL.revokeObjectURL(verificationRef.current.preview);
+    setVerification({ url: null, preview: URL.createObjectURL(file), progress: 0, state: 'uploading', isObjectUrl: true });
+    try {
+      const r = await uploadImage(file, {
+        folder: 'verification',
+        onProgress: (p) => setVerification((v) => (v ? { ...v, progress: p } : v)),
+      });
+      setVerification((v) => (v ? { ...v, url: r.url, state: 'done', progress: 100 } : v));
+    } catch (err) {
+      setVerification((v) => (v ? { ...v, state: 'error', error: getErrorMessage(err) } : v));
+    }
+  };
+
+  const removeVerification = () => {
+    if (verificationRef.current?.isObjectUrl) URL.revokeObjectURL(verificationRef.current.preview);
+    setVerification(null);
+  };
+
   /* ----------------------------- Giá & phí ----------------------------- */
   const price = priceText ? parseInt(priceText, 10) : 0;
   const priceValid = Number.isInteger(price) && price >= MIN_PRICE && price <= MAX_PRICE;
@@ -238,6 +289,9 @@ function ListingForm({ listingId }: { listingId?: string }) {
   /* ----------------------------- Validate ----------------------------- */
   const uploading = images.some((i) => i.state === 'uploading');
   const uploadFailed = images.some((i) => i.state === 'error');
+
+  // Bộ lọc dẫn dụ giao dịch ngoài sàn (cùng quy tắc với trigger trong DB)
+  const contentErrors = useMemo(() => validateListingContent(title, description), [title, description]);
 
   const errors = useMemo(() => {
     const e: Record<string, string> = {};
@@ -253,11 +307,20 @@ function ListingForm({ listingId }: { listingId?: string }) {
     const d = description.trim();
     if (d.length < 10 || d.length > 5000) e.description = 'Mô tả từ 10 đến 5000 ký tự.';
     if (!bankAccountId) e.bank = 'Chọn tài khoản ngân hàng nhận tiền.';
+    if (!verification) e.verification = 'Bắt buộc có ảnh xác thực chính chủ.';
+    else if (verification.state === 'uploading') e.verification = 'Đang tải ảnh xác thực lên, vui lòng đợi.';
+    else if (verification.state === 'error' || !verification.url) e.verification = 'Ảnh xác thực tải lên thất bại. Hãy chọn lại ảnh.';
+    if (contentErrors.title) e.title = contentErrors.title;
+    if (contentErrors.description) e.description = contentErrors.description;
     return e;
-  }, [images.length, uploading, uploadFailed, title, category, condition, priceValid, province, shipCod, description, bankAccountId]);
+  }, [verification, contentErrors, images.length, uploading, uploadFailed, title, category, condition, priceValid, province, shipCod, description, bankAccountId]);
 
   /* ----------------------------- Lưu ----------------------------- */
-  const save = async (targetStatus: EditableStatus, mode: 'publish' | 'draft' | 'save') => {
+  // Mod/Admin được đăng thẳng; người thường gửi 'pending_review' (DB cũng ép như vậy)
+  const canAutoApprove = isAdmin || (profile?.is_mod ?? false);
+  const publishStatus: ListingStatus = canAutoApprove ? 'active' : 'pending_review';
+
+  const save = async (targetStatus: ListingStatus, mode: 'publish' | 'draft' | 'save') => {
     setSubmitted(true);
     setSaveError(null);
     if (Object.keys(errors).length > 0 || !condition) return;
@@ -277,6 +340,7 @@ function ListingForm({ listingId }: { listingId?: string }) {
         images: images.map((i) => ({ url: i.url, publicId: i.publicId, width: i.width, height: i.height })),
         bank_account_id: bankAccountId,
         fee_payer: feePayer,
+        verification_image_url: verification?.url ?? '',
         status: targetStatus,
       };
       const res = listingId
@@ -293,7 +357,9 @@ function ListingForm({ listingId }: { listingId?: string }) {
 
   const onSubmit = (e: FormEvent) => {
     e.preventDefault();
-    void save(isEdit ? status : 'active', isEdit ? 'save' : 'publish');
+    if (!isEdit || listingStatus === 'draft') void save(publishStatus, 'publish');
+    else if (listingStatus === 'active' || listingStatus === 'hidden') void save(status, 'save');
+    else void save(publishStatus, 'save'); // đang chờ duyệt / bị từ chối → gửi duyệt lại
   };
 
   /* ----------------------------- Render ----------------------------- */
@@ -319,6 +385,36 @@ function ListingForm({ listingId }: { listingId?: string }) {
     );
   }
 
+  // Hồ sơ người bán bắt buộc: SĐT + Facebook + tài khoản ngân hàng
+  const checklist = [
+    { label: 'Số điện thoại (Zalo)', ok: Boolean(contact?.phone?.trim()) },
+    { label: 'Link Facebook cá nhân', ok: Boolean(profile?.facebook_url?.trim()) },
+    { label: 'Tài khoản ngân hàng nhận giải ngân', ok: accounts.length > 0 },
+  ];
+  if (checklist.some((c) => !c.ok)) {
+    return (
+      <div className="card mx-auto mt-6 max-w-lg space-y-4 p-6">
+        <div className="flex items-start gap-3">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-50 text-amber-600"><AlertTriangle className="h-5 w-5" /></span>
+          <div>
+            <h1 className="text-lg font-semibold">Hoàn tất hồ sơ người bán trước khi đăng tin</h1>
+            <p className="mt-1 text-sm text-slate-600">VAHA Market yêu cầu xác thực danh tính người bán để bảo vệ cộng đồng khỏi lừa đảo.</p>
+          </div>
+        </div>
+        <ul className="space-y-2 text-sm">
+          {checklist.map((c) => (
+            <li key={c.label} className="flex items-center gap-2">
+              {c.ok ? <CheckCircle2 className="h-4 w-4 text-emerald-600" /> : <XCircle className="h-4 w-4 text-red-500" />}
+              <span className={c.ok ? 'text-slate-500 line-through' : 'font-medium text-slate-900'}>{c.label}</span>
+            </li>
+          ))}
+        </ul>
+        <p className="text-xs text-slate-500">Tên chủ tài khoản ngân hàng phải là tên chính chủ, khớp với Facebook/CCCD thì mới được giải ngân.</p>
+        <Link to="/settings" className="btn-primary w-full"><Landmark className="h-4 w-4" /> Đến Cài đặt tài khoản để hoàn tất</Link>
+      </div>
+    );
+  }
+
   const show = (key: string) => (submitted ? errors[key] : undefined);
   const busy = saving !== null;
 
@@ -328,6 +424,14 @@ function ListingForm({ listingId }: { listingId?: string }) {
         <h1 className="text-2xl font-semibold tracking-tight">{isEdit ? 'Sửa tin đăng' : 'Đăng bán đồ audio'}</h1>
         <p className="mt-1 text-sm text-slate-600">Mô tả trung thực, ảnh rõ nét sẽ giúp bạn bán nhanh và tránh tranh chấp.</p>
       </div>
+
+      {listingStatus === 'rejected' && rejectionReason && (
+        <Alert kind="error"><strong>Tin bị từ chối:</strong> {rejectionReason}. Hãy sửa lại rồi bấm gửi duyệt lại.</Alert>
+      )}
+      {listingStatus === 'pending_review' && <Alert kind="info">Tin đang chờ Admin duyệt. Bạn vẫn có thể chỉnh sửa; tin sẽ hiển thị công khai sau khi được duyệt.</Alert>}
+      {!canAutoApprove && listingStatus !== 'rejected' && listingStatus !== 'pending_review' && (
+        <Alert kind="info">Tin mới cần Admin duyệt trước khi hiển thị công khai. Với tin đã duyệt, sửa tiêu đề / mô tả / ảnh / tài khoản nhận tiền sẽ phải duyệt lại.</Alert>
+      )}
 
       {/* Ảnh */}
       <section className="card space-y-3 p-5 sm:p-6">
@@ -391,11 +495,52 @@ function ListingForm({ listingId }: { listingId?: string }) {
         {show('images') && <p className="text-xs text-red-600">{show('images')}</p>}
       </section>
 
+      {/* Ảnh xác thực chính chủ */}
+      <section className="card space-y-3 p-5 sm:p-6">
+        <h2 className="text-base font-semibold">Ảnh xác thực chính chủ (Bắt buộc) <span className="text-red-500">*</span></h2>
+        <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+          <p><strong>Chụp sản phẩm đặt cạnh mảnh giấy viết tay</strong> ghi rõ chữ <strong>“VAHA + Ngày hôm nay + Tên Facebook của bạn”</strong>.</p>
+          <p className="mt-1 text-xs">Ví dụ: <span className="font-mono font-semibold">VAHA {new Date().toLocaleDateString('vi-VN')} Nguyễn Văn A</span> — chữ phải rõ nét, nằm cùng khung hình với sản phẩm thật. Ảnh chỉ dùng để Admin kiểm duyệt.</p>
+        </div>
+
+        {verification ? (
+          <div className="flex flex-wrap items-start gap-3">
+            <div className="relative h-40 w-40 shrink-0 overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
+              <img src={verification.preview} alt="Ảnh xác thực chính chủ" className="h-full w-full object-cover" />
+              {verification.state === 'uploading' && (
+                <div className="absolute inset-x-0 bottom-0 bg-white/90 px-2 py-1.5">
+                  <div className="h-1.5 overflow-hidden rounded-full bg-slate-200"><div className="h-full rounded-full bg-brand-600 transition-all" style={{ width: `${verification.progress}%` }} /></div>
+                </div>
+              )}
+            </div>
+            <div className="space-y-2 text-sm">
+              {verification.state === 'done' && <p className="flex items-center gap-1.5 text-emerald-700"><CheckCircle2 className="h-4 w-4" /> Đã tải lên</p>}
+              {verification.state === 'error' && <p className="text-red-600">{verification.error}</p>}
+              <div className="flex flex-wrap gap-2">
+                <label className="btn-secondary cursor-pointer">
+                  <Camera className="h-4 w-4" /> Chọn ảnh khác
+                  <input type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" className="sr-only" onChange={onPickVerification} />
+                </label>
+                <button type="button" className="btn-ghost" onClick={removeVerification}>Xóa</button>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <label className="flex cursor-pointer flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed border-slate-300 px-4 py-8 text-slate-500 transition-colors hover:border-brand-400 hover:bg-brand-50 hover:text-brand-700">
+            <Camera className="h-6 w-6" />
+            <span className="text-sm font-medium">Tải ảnh xác thực chính chủ</span>
+            <input type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" className="sr-only" onChange={onPickVerification} />
+          </label>
+        )}
+        {verificationNotice && <p className="text-xs text-amber-700">{verificationNotice}</p>}
+        {show('verification') && <p className="text-xs text-red-600">{show('verification')}</p>}
+      </section>
+
       {/* Thông tin sản phẩm */}
       <section className="card space-y-4 p-5 sm:p-6">
         <h2 className="text-base font-semibold">Thông tin sản phẩm</h2>
 
-        <Field label="Tiêu đề" htmlFor="title" required error={show('title')} hint="Ghi rõ hãng + model, ví dụ: Sennheiser HD 650 fullbox.">
+        <Field label="Tiêu đề" htmlFor="title" required error={contentErrors.title ?? show('title')} hint="Ghi rõ hãng + model, ví dụ: Sennheiser HD 650 fullbox.">
           <input id="title" className="input" value={title} maxLength={120} onChange={(e) => setTitle(e.target.value)} />
         </Field>
 
@@ -440,7 +585,7 @@ function ListingForm({ listingId }: { listingId?: string }) {
           </select>
         </Field>
 
-        <Field label="Mô tả chi tiết" htmlFor="description" required error={show('description')} hint={`${description.trim().length}/5000 ký tự. Nêu rõ lý do bán, thời gian sử dụng, lỗi (nếu có).`}>
+        <Field label="Mô tả chi tiết" htmlFor="description" required error={contentErrors.description ?? show('description')} hint={`${description.trim().length}/5000 ký tự. Nêu rõ lý do bán, thời gian sử dụng, lỗi (nếu có).`}>
           <textarea id="description" rows={6} className="input" value={description} maxLength={5000} onChange={(e) => setDescription(e.target.value)} />
         </Field>
       </section>
@@ -555,7 +700,7 @@ function ListingForm({ listingId }: { listingId?: string }) {
         )}
       </section>
 
-      {isEdit && (
+      {isEdit && (listingStatus === 'active' || listingStatus === 'hidden') && (
         <section className="card p-5 sm:p-6">
           <Field label="Trạng thái tin" htmlFor="status">
             <select id="status" className="input" value={status} onChange={(e) => setStatus(e.target.value as EditableStatus)}>
@@ -572,9 +717,10 @@ function ListingForm({ listingId }: { listingId?: string }) {
 
       <div className="sticky bottom-0 -mx-4 flex flex-col-reverse gap-2 border-t border-slate-200 bg-white/95 px-4 py-3 backdrop-blur sm:static sm:mx-0 sm:flex-row sm:justify-end sm:border-0 sm:bg-transparent sm:p-0">
         <Link to="/my-listings" className="btn-ghost">Hủy</Link>
-        {isEdit ? (
+        {isEdit && listingStatus !== 'draft' ? (
           <button type="submit" className="btn-primary" disabled={busy}>
-            {saving === 'save' && <Loader2 className="h-4 w-4 animate-spin" />} Lưu thay đổi
+            {saving === 'save' && <Loader2 className="h-4 w-4 animate-spin" />}{' '}
+            {listingStatus === 'rejected' || listingStatus === 'pending_review' ? (canAutoApprove ? 'Lưu & đăng' : 'Lưu & gửi duyệt lại') : 'Lưu thay đổi'}
           </button>
         ) : (
           <>
@@ -582,7 +728,7 @@ function ListingForm({ listingId }: { listingId?: string }) {
               {saving === 'draft' && <Loader2 className="h-4 w-4 animate-spin" />} Lưu nháp
             </button>
             <button type="submit" className="btn-primary" disabled={busy}>
-              {saving === 'publish' && <Loader2 className="h-4 w-4 animate-spin" />} Đăng bán
+              {saving === 'publish' && <Loader2 className="h-4 w-4 animate-spin" />} {canAutoApprove ? 'Đăng bán' : 'Gửi duyệt'}
             </button>
           </>
         )}

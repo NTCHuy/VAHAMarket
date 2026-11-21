@@ -13,13 +13,15 @@ import type { Listing, ListingStatus } from '@/types';
 const STATUS_BADGE: Record<ListingStatus, { label: string; cls: string }> = {
   active: { label: 'Đang bán', cls: 'bg-emerald-50 text-emerald-700' },
   draft: { label: 'Nháp', cls: 'bg-slate-100 text-slate-700' },
+  pending_review: { label: 'Chờ duyệt', cls: 'bg-amber-50 text-amber-700' },
+  rejected: { label: 'Bị từ chối', cls: 'bg-red-50 text-red-700' },
   hidden: { label: 'Đang ẩn', cls: 'bg-amber-50 text-amber-700' },
   reserved: { label: 'Đang giữ chỗ', cls: 'bg-brand-50 text-brand-800' },
   sold: { label: 'Đã bán', cls: 'bg-slate-100 text-slate-500' },
   removed: { label: 'Đã gỡ', cls: 'bg-red-50 text-red-700' },
 };
 
-const EDITABLE: ListingStatus[] = ['draft', 'active', 'hidden'];
+const EDITABLE: ListingStatus[] = ['draft', 'pending_review', 'rejected', 'active', 'hidden'];
 
 export default function MyListings() {
   const { user } = useAuth();
@@ -85,9 +87,13 @@ export default function MyListings() {
                   <p className="line-clamp-2 text-sm font-medium text-slate-900">{l.title}</p>
                   <div className="mt-0.5"><PriceTag display={l.price} strike={l.original_price} percent={discountPercent(l.price, l.original_price)} /></div>
                   <span className={`badge mt-1 ${badge.cls}`}>{badge.label}</span>
+                  {l.status === 'pending_review' && <p className="mt-1 text-xs text-slate-500">Đang chờ Admin duyệt — chưa hiển thị công khai.</p>}
+                  {l.status === 'rejected' && l.rejection_reason && (
+                    <p className="mt-1.5 rounded-lg bg-red-50 px-2.5 py-1.5 text-xs text-red-800"><strong>Lý do từ chối:</strong> {l.rejection_reason}</p>
+                  )}
                   {editable && (
                     <div className="mt-2 flex flex-wrap items-center gap-2">
-                      <Link to={`/sell/${l.id}/edit`} className="btn-secondary px-3 py-1.5"><Pencil className="h-3.5 w-3.5" /> Sửa</Link>
+                      <Link to={`/sell/${l.id}/edit`} className="btn-secondary px-3 py-1.5"><Pencil className="h-3.5 w-3.5" /> {l.status === 'rejected' ? 'Sửa & gửi lại' : 'Sửa'}</Link>
                       {confirmId === l.id ? (
                         <>
                           <button type="button" className="btn bg-red-600 px-3 py-1.5 text-white hover:bg-red-700" disabled={busyId === l.id} onClick={() => onDelete(l.id)}>

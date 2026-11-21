@@ -464,8 +464,8 @@ function ShipForm({ order, busy, onSubmit }: {
           <input id="otherCarrier" className="input" value={otherCarrier} maxLength={60} onChange={(e) => setOtherCarrier(e.target.value)} />
         </Field>
       )}
-      <Field label="Link video test tai nghe trước khi đóng gói" htmlFor="video" required error={errors.video}
-        hint="Tải video lên YouTube (không công khai), Google Drive hoặc Facebook rồi dán link. Video là bằng chứng nếu có khiếu nại.">
+      <Field label="Link video test & đóng gói liền mạch" htmlFor="video" required error={errors.video}
+        hint="Bắt buộc. Quay liền mạch từ lúc test sản phẩm đến khi đóng gói xong, tải lên YouTube (không công khai), Google Drive hoặc Facebook rồi dán link. Đây là bằng chứng nếu có khiếu nại.">
         <input id="video" className="input" inputMode="url" placeholder="https://..." value={video} maxLength={500} onChange={(e) => setVideo(e.target.value)} />
       </Field>
 
@@ -543,6 +543,12 @@ function ShippedPanel({ order, isBuyer, busy, onConfirm, onDispute }: {
         </form>
       ) : (
         <div className="space-y-3 border-t border-slate-100 pt-4">
+          <div role="alert" className="flex gap-3 rounded-xl border-2 border-amber-400 bg-amber-50 p-4 text-amber-950">
+            <AlertTriangle className="mt-0.5 h-6 w-6 shrink-0 text-amber-600" />
+            <p className="text-sm font-semibold leading-relaxed sm:text-base">
+              QUY TẮC BẮT BUỘC: Vui lòng quay video mở hộp liền mạch từ lúc gói hàng còn nguyên niêm phong 6 mặt đến khi cắm test âm thanh. VAHA Market từ chối giải quyết khiếu nại hoàn tiền nếu không có video mở hộp nguyên vẹn.
+            </p>
+          </div>
           <label className="flex cursor-pointer items-start gap-2 text-sm text-slate-700">
             <input type="checkbox" checked={checked} onChange={(e) => setChecked(e.target.checked)} className="mt-0.5 h-4 w-4 rounded border-slate-300 text-brand-700" />
             <span>Tôi đã quay video mở hộp liền mạch và kiểm tra tai nghe hoạt động đúng mô tả.</span>

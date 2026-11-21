@@ -5,6 +5,7 @@ import { getAdminStats, type AdminStats } from '@/lib/admin';
 import { formatVND } from '@/lib/money';
 import { getErrorMessage } from '@/lib/errors';
 import { Alert } from '@/components/ui';
+import ReviewTab from './admin/ReviewTab';
 import PayoutsTab from './admin/PayoutsTab';
 import DisputesTab from './admin/DisputesTab';
 import TransactionsTab from './admin/TransactionsTab';
@@ -13,12 +14,12 @@ import ListingsTab from './admin/ListingsTab';
 import MembersTab from './admin/MembersTab';
 import FeeSettingsCard from './admin/FeeSettingsCard';
 
-type TabId = 'payouts' | 'disputes' | 'transactions' | 'orders' | 'listings' | 'members';
-const TAB_IDS: TabId[] = ['payouts', 'disputes', 'transactions', 'orders', 'listings', 'members'];
+type TabId = 'review' | 'payouts' | 'disputes' | 'transactions' | 'orders' | 'listings' | 'members';
+const TAB_IDS: TabId[] = ['review', 'payouts', 'disputes', 'transactions', 'orders', 'listings', 'members'];
 
 export default function AdminDashboard() {
   const [params, setParams] = useSearchParams();
-  const tab = (TAB_IDS.includes(params.get('tab') as TabId) ? params.get('tab') : 'payouts') as TabId;
+  const tab = (TAB_IDS.includes(params.get('tab') as TabId) ? params.get('tab') : 'review') as TabId;
 
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -37,6 +38,7 @@ export default function AdminDashboard() {
   }, [refreshStats]);
 
   const tabs: { id: TabId; label: string; badge?: number }[] = [
+    { id: 'review', label: 'Duyệt tin', badge: stats?.pending_review_count },
     { id: 'payouts', label: 'Giải ngân', badge: stats?.payout_pending_count },
     { id: 'disputes', label: 'Khiếu nại', badge: stats?.dispute_count },
     { id: 'transactions', label: 'Giao dịch lệch', badge: stats?.flagged_tx_count },
@@ -75,6 +77,7 @@ export default function AdminDashboard() {
         ))}
       </div>
 
+      {tab === 'review' && <ReviewTab onChanged={refreshStats} />}
       {tab === 'payouts' && <PayoutsTab onChanged={refreshStats} />}
       {tab === 'disputes' && <DisputesTab onChanged={refreshStats} />}
       {tab === 'transactions' && <TransactionsTab onChanged={refreshStats} />}

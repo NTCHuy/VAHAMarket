@@ -29,7 +29,4 @@ export const ORDER_FILTERS: readonly OrderFilter[] = [
 ] as const;
 
 /** Danh sách đơn vị vận chuyển phổ biến (người bán có thể chọn "Khác"). */
-export const CARRIERS: readonly string[] = [
-  'Giao Hàng Nhanh (GHN)', 'Giao Hàng Tiết Kiệm (GHTK)', 'Viettel Post', 'J&T Express',
-  'VNPost', 'SPX Express', 'Ahamove / Grab', 'Khác',
-] as const;
+export const CARRIERS: readonly string[] = ['GHTK', 'GHN', 'Viettel Post', 'J&T', 'SPX', 'Khác'] as const;

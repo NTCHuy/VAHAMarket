@@ -14,7 +14,7 @@ import type { Listing, ListingStatus, Profile } from '@/types';
 const PAGE = 30;
 const EDITABLE: ListingStatus[] = ['draft', 'active', 'hidden'];
 const STATUS_LABEL: Record<ListingStatus, string> = {
-  active: 'Đang bán', draft: 'Nháp', hidden: 'Ẩn', reserved: 'Giữ chỗ', sold: 'Đã bán', removed: 'Đã gỡ',
+  active: 'Đang bán', draft: 'Nháp', pending_review: 'Chờ duyệt', rejected: 'Bị từ chối', hidden: 'Ẩn', reserved: 'Giữ chỗ', sold: 'Đã bán', removed: 'Đã gỡ',
 };
 const MIN = 10_000;
 const MAX = 1_000_000_000;

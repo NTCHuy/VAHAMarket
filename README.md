@@ -10,7 +10,8 @@ React + Vite + TypeScript + Tailwind · Supabase (Auth, Postgres/RLS, Realtime, 
 ## Bước 0 — Chuẩn bị Supabase (làm 1 lần)
 
 1. Supabase Dashboard → **SQL Editor** → chạy lần lượt, mỗi file 1 lần:
-   `supabase/schema.sql` → `supabase/migrations/002_ui_fields.sql` → `003_order_dispute_fields.sql` → `004_admin_actions.sql` → `005_vaha_rebrand_and_fees.sql` → `006_platform_settings_and_ux.sql`
+   `supabase/schema.sql` → `supabase/migrations/002_ui_fields.sql` → `003_order_dispute_fields.sql` → `004_admin_actions.sql` → `005_vaha_rebrand_and_fees.sql` → `006_platform_settings_and_ux.sql` → `007_bulletproof_moderation.sql`
+   *(Lưu ý: nếu SQL Editor báo lỗi liên quan đến giá trị enum mới ở `007`, hãy chạy riêng 2 dòng `alter type public.listing_status add value ...` trước, rồi chạy phần còn lại.)*
 2. **Authentication → Providers → Google**: bật và nhập Client ID/Secret (Google Cloud Console → OAuth client, loại Web).
    *Authorized redirect URI* trên Google phải là `https://<PROJECT_REF>.supabase.co/auth/v1/callback`.
 3. Đăng nhập vào web 1 lần, rồi lấy UUID của bạn ở **Authentication → Users** và chạy trên SQL Editor:
@@ -29,6 +30,17 @@ React + Vite + TypeScript + Tailwind · Supabase (Auth, Postgres/RLS, Realtime, 
 - **Phí trung gian**: mặc định 5% giá niêm yết. Người bán chọn khi đăng tin: *Người bán chịu* (mặc định) / *Người mua chịu* / *Chia đôi*. Người bán có huy hiệu **Mod** được miễn phí (0%). Gắn/gỡ Mod ở **Admin → Mod**.
 - **Giảm giá**: chỉ Admin đặt `original_price` (Admin → Tin đăng & giá); người bán không tự nhập được, và nếu họ đổi giá bán thì giá ưu đãi do Admin đặt tự gỡ.
 - Mã thanh toán vẫn bắt đầu bằng `CNTH` (không đổi để không ảnh hưởng webhook/đơn cũ).
+
+## Kiểm duyệt chống lừa đảo (Migration 007)
+
+- **Định danh người bán bắt buộc**: người dùng phải có đủ **Số điện thoại**, **Link Facebook cá nhân** (`profiles.facebook_url`) và **ít nhất 1 tài khoản ngân hàng nhận tiền** mới mở được form đăng tin (kiểm tra ở cả UI lẫn trigger DB `listings_review_guard`). Tên chủ tài khoản ngân hàng phải chính chủ, khớp Facebook/CCCD để được giải ngân.
+- **Tiền kiểm bài đăng & ảnh xác thực chính chủ**:
+  - Tin đăng mới bắt buộc có **ảnh xác thực** (`verification_image_url`): chụp sản phẩm đặt cạnh mảnh giấy viết tay ghi `VAHA + Ngày tháng + Tên Facebook`.
+  - Tin của thành viên thường mặc định vào trạng thái `pending_review` (ẩn khỏi trang chủ). Admin duyệt tại **Admin → Duyệt tin** (chấp nhận sang `active`, hoặc từ chối kèm lý do để người bán sửa và gửi lại). Tin của **Mod/Admin** được đăng thẳng `active`.
+  - Tin đã duyệt chỉ ẩn/hiện lại hoặc sửa giá thì không cần duyệt lại; nếu sửa tiêu đề, mô tả, ảnh sản phẩm, ảnh xác thực hoặc tài khoản nhận tiền, tin tự quay về `pending_review`.
+- **Bộ lọc chống dẫn dụ ngoài sàn**: chặn số điện thoại (9–11 chữ số liền hoặc có phân cách) và các từ khóa lách luật (`zalo`, `ck trực tiếp`, `bank trực tiếp`, `không qua sàn`...) trong tiêu đề và mô tả. Chạy đồng thời ở frontend (`src/lib/moderation.ts`) và trigger DB (`trg_listings_moderation`).
+- **Khóa thông tin định danh**: khi người bán đang có tin ở trạng thái `pending_review` / `active` / `reserved` hoặc đơn bán đang xử lý, hệ thống tự khóa không cho đổi `profiles.facebook_url` đã lưu và thông tin tài khoản ngân hàng (`bank_bin`, `bank_code`, `account_number`, `account_name`). Nếu người bán gõ nhầm hợp lệ và cần sửa, Admin cập nhật trực tiếp qua **SQL Editor** (role hệ thống bỏ qua trigger khóa).
+- **Siết quy trình gửi hàng & mở hộp**: người bán bắt buộc chọn đơn vị vận chuyển (GHTK, GHN, Viettel Post, J&T, SPX, Khác), nhập mã vận đơn và dán link video test/đóng gói. Khi đơn ở trạng thái `SHIPPED`, người mua nhận cảnh báo bắt buộc quay video mở hộp liền mạch 6 mặt để làm căn cứ giải quyết khiếu nại.
 
 ## Link Preview (Open Graph)
 
@@ -73,7 +85,7 @@ Function nhận biến động số dư từ SePay và đặt đơn sang `PAID_H
    ```bash
    curl -X POST "https://<PROJECT_REF>.supabase.co/functions/v1/sepay-webhook" \
      -H "Authorization: Apikey chuoi_bi_mat_cua_ban" -H "Content-Type: application/json" \
-     -d '{"id":1,"transferType":"in","transferAmount":10000,"content":"test khong ma","accountNumber":"9936916346"}'
+     -d '{"id":1,"transferType":"in","transferAmount":10000,"content":"test khong ma","accountNumber":"96247VAHA"}'
    ```
    Kết quả đúng: `"result":"UNMATCHED"` và có 1 dòng mới trong bảng `transactions` (xóa dòng thử sau khi kiểm tra).
    Gọi sai key sẽ nhận `401`. Xem log: Dashboard → Edge Functions → sepay-webhook → Logs.
@@ -82,11 +94,11 @@ Function nhận biến động số dư từ SePay và đặt đơn sang `PAID_H
 
 (Tên mục trên SePay có thể khác đôi chút theo phiên bản giao diện.)
 
-1. Đăng nhập [sepay.vn](https://sepay.vn), liên kết tài khoản **Vietcombank** nhận tiền của sàn (đúng STK trong `src/constants/payment.ts`).
+1. Đăng nhập [sepay.vn](https://sepay.vn), liên kết tài khoản **BIDV** (và tài khoản ảo VA) nhận tiền của sàn (đúng STK trong `src/constants/payment.ts`).
 2. Vào **Tích hợp Webhooks → Thêm webhooks** và điền:
    - **Gọi đến URL**: URL ở Bước 2.4
    - **Sự kiện**: *Có tiền vào*
-   - **Tài khoản ngân hàng**: tài khoản Vietcombank ở trên
+   - **Tài khoản ngân hàng**: tài khoản BIDV ở trên
    - **Kiểu chứng thực**: *API Key* → nhập đúng `SEPAY_WEBHOOK_KEY`
    - **Content-Type**: `application/json`
    - Không bật "Bỏ qua nếu không có code thanh toán" (hệ thống tự tìm mã `CNTH…` trong nội dung chuyển khoản).
@@ -109,14 +121,18 @@ Function nhận biến động số dư từ SePay và đặt đơn sang `PAID_H
 
 ## Kiểm tra toàn bộ trước khi mở cho cộng đồng
 
-- [ ] Đăng nhập Google trên domain thật, lưu tài khoản ngân hàng, đăng 1 tin có ảnh
+- [ ] Đăng nhập Google trên domain thật, kiểm tra tài khoản thiếu SĐT/Facebook/ngân hàng bị chặn mở form đăng tin
+- [ ] Hoàn tất hồ sơ người bán, đăng tin kèm ảnh xác thực giấy viết tay → tin vào `pending_review` (ẩn khỏi trang chủ) → Admin duyệt ở **Admin → Duyệt tin** → tin lên `active`
+- [ ] Thử từ chối 1 tin kèm lý do → người bán thấy lý do ở **Tin của tôi**, sửa và gửi duyệt lại; thử sửa mô tả tin đã duyệt → tin quay về `pending_review`
+- [ ] Thử đăng tin chứa SĐT hoặc từ khóa `"zalo"` / `"ck trực tiếp"` → bị chặn ngay ở form (và chặn ở DB)
+- [ ] Khi đang có tin `pending_review` / `active`, vào **Cài đặt tài khoản** → ô Facebook bị khóa, cảnh báo ngân hàng hiển thị rõ
 - [ ] Tài khoản thứ 2 đặt mua → quét QR → đơn tự sang `PAID_HELD`
-- [ ] Người bán nhập vận đơn + link video → người mua xác nhận → Admin thấy đơn trong **Giải ngân** → quét QR chuyển tiền → bấm "Xác nhận đã chuyển tiền"
+- [ ] Người bán nhập đơn vị vận chuyển + mã vận đơn + link video → người mua thấy cảnh báo quay video unbox 6 mặt → xác nhận nhận hàng → Admin thấy đơn trong **Giải ngân** → quét QR chuyển tiền → bấm "Xác nhận đã chuyển tiền"
 - [ ] Thử 1 khiếu nại và xử lý ở **Admin → Khiếu nại**
 - [ ] Đăng 3 tin thử với 3 cách chia phí, đặt mua và kiểm tra số tiền chuyển khoản khớp bảng giá
 - [ ] Đổi phí sàn về 0% rồi đặt mua 1 tin "người mua chịu phí": số tiền ở trang chủ = trang chi tiết = mã QR
 - [ ] Đơn chờ thanh toán / chờ gửi hàng làm hiện chấm đỏ ở Navbar và tab tương ứng
-- [ ] Gắn Mod cho 1 người bán → đơn mới của họ không tính phí; đặt giá gốc cho 1 tin → thấy giá gạch ngang
+- [ ] Gắn Mod cho 1 người bán → đơn mới của họ không tính phí và đăng tin vào thẳng `active`; đặt giá gốc cho 1 tin → thấy giá gạch ngang
 - [ ] Đơn không thanh toán sau 15 phút tự hết hạn và tin được mở bán lại
 - [ ] `sb_secret_...` chỉ nằm trong Supabase secrets (không có trong `.env`, GitHub hay Vercel)
 

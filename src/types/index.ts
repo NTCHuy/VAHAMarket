@@ -11,6 +11,7 @@ export interface Profile {
   sold_count: number;   // chỉ hệ thống cập nhật
   bought_count: number; // chỉ hệ thống cập nhật
   is_mod: boolean;      // Mod Group: phí trung gian 0% (chỉ admin gán)
+  facebook_url: string | null; // link Facebook cá nhân (công khai, bắt buộc để đăng tin)
   created_at: string;
   updated_at: string;
 }
@@ -45,7 +46,7 @@ export interface ListingImage {
   height?: number;
 }
 
-export type ListingStatus = 'draft' | 'active' | 'hidden' | 'reserved' | 'sold' | 'removed';
+export type ListingStatus = 'draft' | 'pending_review' | 'rejected' | 'active' | 'hidden' | 'reserved' | 'sold' | 'removed';
 
 export interface Listing {
   id: string;
@@ -65,6 +66,11 @@ export interface Listing {
   bank_account_id: string | null;
   status: ListingStatus;
   moderation_note: string | null;
+  verification_image_url: string; // ảnh sản phẩm cạnh giấy viết tay ('' = tin cũ chưa có)
+  rejection_reason: string | null;
+  approved_at: string | null;
+  reviewed_by: string | null;
+  reviewed_at: string | null;
   created_at: string;
   updated_at: string;
 }

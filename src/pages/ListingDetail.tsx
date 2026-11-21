@@ -1,7 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import {
-  ArrowLeft, ChevronLeft, ChevronRight, ExternalLink, Facebook, Loader2, MapPin, Package, ShieldCheck, Truck, Video, X,
+  ArrowLeft, ChevronLeft, ChevronRight, BadgeCheck, ExternalLink, Facebook, Loader2, MapPin, Package, ShieldCheck, Truck, Video, X,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/lib/supabase';
@@ -18,6 +18,16 @@ import PriceTag from '@/components/PriceTag';
 import { usePlatformSettings } from '@/context/PlatformSettingsContext';
 import TrustBadge from '@/components/TrustBadge';
 import type { Listing, Profile } from '@/types';
+
+const STATUS_TEXT: Partial<Record<Listing['status'], string>> = {
+  pending_review: 'Tin đang chờ Admin duyệt nên chưa hiển thị công khai.',
+  rejected: listingRejectedText(),
+  draft: 'Tin đang ở trạng thái nháp, chỉ mình bạn nhìn thấy.',
+  hidden: 'Tin đang bị ẩn, chỉ mình bạn nhìn thấy.',
+};
+function listingRejectedText() {
+  return 'Tin bị từ chối. Hãy mở “Sửa” để xem lý do và gửi duyệt lại.';
+}
 
 const PHONE_RE = /^[0-9+ ]{8,15}$/;
 
@@ -141,13 +151,14 @@ export default function ListingDetail() {
             <div className="mt-2 flex flex-wrap gap-2 text-xs text-slate-600">
               {listing.province && <span className="badge"><MapPin className="mr-1 h-3 w-3" />{listing.province}</span>}
               {listing.ship_cod && <span className="badge"><Truck className="mr-1 h-3 w-3" />Ship COD</span>}
+              {listing.verification_image_url && <span className="badge bg-emerald-50 text-emerald-700"><BadgeCheck className="mr-1 h-3 w-3" />Đã xác thực ảnh chính chủ</span>}
             </div>
           </div>
 
           {/* Nút mua */}
           <div className="card space-y-3 p-4">
             {listing.status !== 'active' ? (
-              <Alert kind="info">{isOwner ? `Tin của bạn đang ở trạng thái “${listing.status}”.` : 'Sản phẩm này hiện không thể mua.'}</Alert>
+              <Alert kind="info">{isOwner ? STATUS_TEXT[listing.status] ?? `Tin của bạn đang ở trạng thái “${listing.status}”.` : 'Sản phẩm này hiện không thể mua.'}</Alert>
             ) : isOwner ? (
               <>
                 <Alert kind="info">Đây là tin đăng của bạn.</Alert>
@@ -210,6 +221,18 @@ export default function ListingDetail() {
           </dl>
           <h2 className="pt-2 text-base font-semibold">Mô tả</h2>
           <p className="whitespace-pre-line text-sm leading-relaxed text-slate-700">{listing.description}</p>
+          {listing.verification_image_url && (
+            <div className="space-y-2 border-t border-slate-100 pt-4">
+              <h2 className="flex flex-wrap items-center gap-2 text-base font-semibold">
+                Ảnh xác thực chính chủ
+                <span className="badge bg-emerald-50 text-emerald-700"><BadgeCheck className="mr-1 h-3 w-3" />Đã xác thực ảnh chính chủ</span>
+              </h2>
+              <a href={listing.verification_image_url} target="_blank" rel="noopener noreferrer" className="block overflow-hidden rounded-xl border border-slate-200">
+                <img src={cldUrl(listing.verification_image_url, { width: 900 })} alt="Ảnh sản phẩm cạnh giấy viết tay xác thực chính chủ" loading="lazy" className="max-h-80 w-full object-contain bg-slate-50" />
+              </a>
+              <p className="text-xs text-slate-500">Người bán chụp sản phẩm cạnh giấy viết tay ghi “VAHA + ngày đăng + tên Facebook” để chứng minh sở hữu hàng thật.</p>
+            </div>
+          )}
         </section>
 
         <section className="card h-fit space-y-3 border-amber-200 bg-amber-50/50 p-5">

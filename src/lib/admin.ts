@@ -12,6 +12,7 @@ export interface AdminStats {
   payout_pending_count: number; // số đơn chờ giải ngân
   payout_pending_amount: number;
   flagged_tx_count: number;     // số giao dịch lệch chưa xử lý
+  pending_review_count: number; // số tin đăng chờ duyệt
 }
 
 export type DisputeDecision = 'RELEASE_TO_SELLER' | 'REFUND_TO_BUYER';
@@ -76,4 +77,15 @@ export async function setGlobalFeeRate(rate: number): Promise<{ global_fee_rate:
   const { data, error } = await supabase.rpc('admin_set_global_fee_rate', { p_rate: rate });
   if (error) throw new Error(error.message);
   return data as { global_fee_rate: number };
+}
+
+/** Duyệt (APPROVE) hoặc từ chối (REJECT, bắt buộc có lý do) một tin đang chờ duyệt. */
+export async function reviewListing(listingId: string, decision: 'APPROVE' | 'REJECT', reason?: string): Promise<Listing> {
+  const { data, error } = await supabase.rpc('admin_review_listing', {
+    p_listing_id: listingId,
+    p_decision: decision,
+    p_reason: reason?.trim() || null,
+  });
+  if (error) throw new Error(error.message);
+  return data as Listing;
 }
