@@ -46,7 +46,7 @@ const SHORT_CONDITION: Record<string, string> = {
   for_parts: 'Xác / Linh kiện',
 };
 
-const escapeLike = (s: string) => s.replace(/[\%_]/g, (c) => `\${c}`);
+const escapeLike = (s: string) => s.replace(/[\%_]/g, (c) => `${c}`);
 const digitsOnly = (s: string) => s.replace(/\D/g, '').slice(0, 10);
 
 export default function Home() {
