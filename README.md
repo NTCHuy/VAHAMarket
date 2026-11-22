@@ -10,7 +10,7 @@ React + Vite + TypeScript + Tailwind · Supabase (Auth, Postgres/RLS, Realtime, 
 ## Bước 0 — Chuẩn bị Supabase (làm 1 lần)
 
 1. Supabase Dashboard → **SQL Editor** → chạy lần lượt, mỗi file 1 lần:
-   `supabase/schema.sql` → `supabase/migrations/002_ui_fields.sql` → `003_order_dispute_fields.sql` → `004_admin_actions.sql` → `005_vaha_rebrand_and_fees.sql` → `006_platform_settings_and_ux.sql` → `007_bulletproof_moderation.sql` → `008_email_notifications.sql` → `009_ban_and_fingerprinting.sql`
+   `supabase/schema.sql` → `supabase/migrations/002_ui_fields.sql` → `003_order_dispute_fields.sql` → `004_admin_actions.sql` → `005_vaha_rebrand_and_fees.sql` → `006_platform_settings_and_ux.sql` → `007_bulletproof_moderation.sql` → `008_email_notifications.sql` → `009_ban_and_fingerprinting.sql` → `010_platform_fee_cap.sql`
    *(Lưu ý: nếu SQL Editor báo lỗi liên quan đến giá trị enum mới ở `007`, hãy chạy riêng 2 dòng `alter type public.listing_status add value ...` trước, rồi chạy phần còn lại.)*
 2. **Authentication → Providers → Google**: bật và nhập Client ID/Secret (Google Cloud Console → OAuth client, loại Web).
    *Authorized redirect URI* trên Google phải là `https://<PROJECT_REF>.supabase.co/auth/v1/callback`.
@@ -41,6 +41,12 @@ React + Vite + TypeScript + Tailwind · Supabase (Auth, Postgres/RLS, Realtime, 
 - **Bộ lọc chống dẫn dụ ngoài sàn**: chặn số điện thoại (9–11 chữ số liền hoặc có phân cách) và các từ khóa lách luật (`zalo`, `ck trực tiếp`, `bank trực tiếp`, `không qua sàn`...) trong tiêu đề và mô tả. Chạy đồng thời ở frontend (`src/lib/moderation.ts`) và trigger DB (`trg_listings_moderation`).
 - **Khóa thông tin định danh**: khi người bán đang có tin ở trạng thái `pending_review` / `active` / `reserved` hoặc đơn bán đang xử lý, hệ thống tự khóa không cho đổi `profiles.facebook_url` đã lưu và thông tin tài khoản ngân hàng (`bank_bin`, `bank_code`, `account_number`, `account_name`). Nếu người bán gõ nhầm hợp lệ và cần sửa, Admin cập nhật trực tiếp qua **SQL Editor** (role hệ thống bỏ qua trigger khóa).
 - **Siết quy trình gửi hàng & mở hộp**: người bán bắt buộc chọn đơn vị vận chuyển (GHTK, GHN, Viettel Post, J&T, SPX, Khác), nhập mã vận đơn và dán link video test/đóng gói. Khi đơn ở trạng thái `SHIPPED`, người mua nhận cảnh báo bắt buộc quay video mở hộp liền mạch 6 mặt để làm căn cứ giải quyết khiếu nại.
+
+## Bản cập nhật v1.9.1 — Trần phí sàn tối đa 500.000₫ (Migration 010)
+
+- **Trần phí giao dịch (`PLATFORM_FEE_CAP = 500_000`)**: Lưu trong `platform_settings.fee_cap_vnd` (mặc định `500000`, nhập `0` để tắt trần). Admin chỉnh trực tiếp trong **Admin → Cấu hình phí sàn & Trần phí tối đa** (`FeeSettingsCard.tsx`).
+- **Đồng bộ 100% Frontend ↔ Database**: Hàm `calcFees` (`src/lib/money.ts`) và RPC `create_order` (`010_platform_fee_cap.sql`) đều áp trần `LEAST(ROUND(list_price * bp / 10000.0), fee_cap_vnd)` **trước khi** chia `buyer_fee` / `seller_fee` theo `fee_payer` (`SELLER` / `BUYER` / `SPLIT`).
+- **Hiển thị minh bạch số tiền tiết kiệm**: Badge xanh ngọc ở form đăng tin (`CreateListing.tsx`), ghi chú trong `PriceBreakdown.tsx` / `ListingDetail.tsx` / `OrderDetail.tsx`, cùng dòng chúc mừng trong pop-up (`NotificationContext.tsx`) và email tự động (`send-order-email`).
 
 ## Bản cập nhật v1.9.0 — Cảnh báo 3 lần tự động Ban & Device Fingerprinting (Migration 009)
 

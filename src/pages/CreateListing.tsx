@@ -14,6 +14,8 @@ import { Alert, Field, PageLoader } from '@/components/ui';
 import NotificationHint from '@/components/NotificationHint';
 import ModBadge from '@/components/ModBadge';
 import { usePlatformSettings } from '@/context/PlatformSettingsContext';
+import { useNotifications } from '@/context/NotificationContext';
+import { PLATFORM_FEE_BP } from '@/constants/payment';
 import type { BankAccount, Listing, ListingStatus } from '@/types';
 
 const MAX_IMAGES = 6;
@@ -62,7 +64,8 @@ const nextKey = () => `img-${Date.now()}-${keySeq++}`;
 
 function ListingForm({ listingId }: { listingId?: string }) {
   const { user, profile, contact, isAdmin } = useAuth();
-  const { feeBp } = usePlatformSettings();
+  const { feeBp, feeCapVnd } = usePlatformSettings();
+  const { pushToast } = useNotifications();
   const navigate = useNavigate();
   const isEdit = Boolean(listingId);
 
@@ -284,7 +287,15 @@ function ListingForm({ listingId }: { listingId?: string }) {
   const price = priceText ? parseInt(priceText, 10) : 0;
   const priceValid = Number.isInteger(price) && price >= MIN_PRICE && price <= MAX_PRICE;
   const isMod = profile?.is_mod ?? false;
-  const fees = useMemo(() => (priceValid ? calcFees(price, feePayer, isMod, feeBp) : null), [price, priceValid, feePayer, isMod, feeBp]);
+  const fees = useMemo(
+    () => (priceValid ? calcFees(price, feePayer, isMod, feeBp, feeCapVnd) : null),
+    [price, priceValid, feePayer, isMod, feeBp, feeCapVnd],
+  );
+  // Tham khảo trần phí ở mức chuẩn 5% (dùng khi sàn đang chạy ưu đãi 0%)
+  const refStandardFees = useMemo(
+    () => (priceValid ? calcFees(price, feePayer, false, PLATFORM_FEE_BP, feeCapVnd) : null),
+    [price, priceValid, feePayer, feeCapVnd],
+  );
   const feePctText = `${Number(((isMod ? 0 : feeBp) / 100).toFixed(2))}%`;
 
   /* ----------------------------- Validate ----------------------------- */
@@ -348,6 +359,15 @@ function ListingForm({ listingId }: { listingId?: string }) {
         ? await supabase.from('listings').update(payload).eq('id', listingId).select('id').single()
         : await supabase.from('listings').insert(payload).select('id').single();
       if (res.error) throw res.error;
+      if (targetStatus !== 'draft' && fees?.isFeeCapped && fees.feeSavedAmount > 0) {
+        pushToast({
+          title: `🎉 Đã đạt trần phí sàn tối đa ${formatVND(fees.feeCapVnd)}!`,
+          body: `Tin đăng của bạn đã đạt mức trần phí sàn tối đa ${formatVND(fees.feeCapVnd)}, giúp tiết kiệm ${formatVND(fees.feeSavedAmount)} cho giao dịch này.`,
+          href: '/my-listings',
+          actionLabel: 'Xem tin đăng',
+          kind: 'success',
+        });
+      }
       navigate('/my-listings');
     } catch (e) {
       setSaveError(getErrorMessage(e));
@@ -621,7 +641,7 @@ function ListingForm({ listingId }: { listingId?: string }) {
           {!isMod && feeBp < 500 && <p className="mb-2 text-xs text-amber-700 dark:text-amber-300">Đang áp dụng ưu đãi phí sàn toàn hệ thống: {feePctText} (thay vì 5%).</p>}
           <div className="grid gap-2 sm:grid-cols-3">
             {FEE_PAYER_OPTIONS.map((o) => {
-              const f = priceValid ? calcFees(price, o.id, isMod, feeBp) : null;
+              const f = priceValid ? calcFees(price, o.id, isMod, feeBp, feeCapVnd) : null;
               return (
                 <label key={o.id} className={`cursor-pointer rounded-lg border p-3 transition-colors ${feePayer === o.id ? 'border-brand-600 dark:border-brand-500 bg-brand-50 dark:bg-brand-900/40 ring-1 ring-brand-600' : 'border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800'}`}>
                   <input type="radio" name="feePayer" value={o.id} checked={feePayer === o.id} onChange={() => setFeePayer(o.id)} className="sr-only" />
@@ -643,8 +663,15 @@ function ListingForm({ listingId }: { listingId?: string }) {
             <dt className="text-slate-600 dark:text-slate-400">Giá niêm yết</dt>
             <dd className="font-medium text-slate-900 dark:text-slate-100">{fees ? formatVND(fees.listPrice) : '—'}</dd>
           </div>
-          <div className="flex justify-between px-4 py-2.5">
-            <dt className="text-slate-600 dark:text-slate-400">Phí trung gian bạn chịu ({feePctText}{feePayer === 'SPLIT' ? ', chia đôi' : ''})</dt>
+          <div className="flex justify-between gap-2 px-4 py-2.5">
+            <dt className="text-slate-600 dark:text-slate-400">
+              Phí trung gian bạn chịu ({feePctText}{feePayer === 'SPLIT' ? ', chia đôi' : ''})
+              {fees?.isFeeCapped && (
+                <span className="ml-1 font-medium text-emerald-700 dark:text-emerald-400">
+                  (Đã áp trần tối đa {formatVND(fees.feeCapVnd)})
+                </span>
+              )}
+            </dt>
             <dd className="font-medium text-red-600 dark:text-red-400">{fees ? (fees.sellerFee > 0 ? `− ${formatVND(fees.sellerFee)}` : formatVND(0)) : '—'}</dd>
           </div>
           <div className="flex justify-between px-4 py-3">
@@ -656,6 +683,19 @@ function ListingForm({ listingId }: { listingId?: string }) {
             <dd className="font-medium text-slate-900 dark:text-slate-100">{fees ? formatVND(fees.buyerPays) : '—'}</dd>
           </div>
         </dl>
+        {fees?.isFeeCapped && fees.feeSavedAmount > 0 && (
+          <div className="rounded-xl border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-900 dark:border-emerald-700/80 dark:bg-emerald-950/50 dark:text-emerald-200">
+            🎉 Đã đạt trần phí sàn tối đa {formatVND(fees.feeCapVnd)} — Bạn đã tiết kiệm được{' '}
+            <strong className="font-bold text-emerald-700 dark:text-emerald-300">{formatVND(fees.feeSavedAmount)}</strong>!
+          </div>
+        )}
+        {!fees?.isFeeCapped && !isMod && feeBp === 0 && refStandardFees?.isFeeCapped && (
+          <div className="rounded-xl border border-emerald-200 bg-emerald-50/70 px-3.5 py-2.5 text-xs text-emerald-900 dark:border-emerald-800/70 dark:bg-emerald-950/40 dark:text-emerald-200">
+            Hiện sàn đang ưu đãi <strong>0% phí</strong>. Sau thời gian ưu đãi (mức 5%), đơn hàng này vẫn được bảo vệ bởi{' '}
+            <strong>trần phí tối đa {formatVND(refStandardFees.feeCapVnd)}</strong> (tiết kiệm{' '}
+            <strong>{formatVND(refStandardFees.feeSavedAmount)}</strong> so với phí 5% không trần).
+          </div>
+        )}
         <p className="text-xs text-slate-500 dark:text-slate-400">Người mua chuyển tiền vào tài khoản trung gian. Sau khi họ xác nhận nhận hàng, sàn giữ phần phí và chuyển số thực nhận cho bạn.</p>
       </section>
 

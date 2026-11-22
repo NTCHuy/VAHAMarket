@@ -137,6 +137,8 @@ export interface Order {
   fee_rate_bp: number;   // 500 = 5%, 0 = Mod
   buyer_fee: number;
   seller_fee: number;
+  fee_cap_vnd?: number;      // trần phí áp dụng tại thời điểm tạo đơn (0 = không trần)
+  fee_saved_amount?: number; // số tiền tiết kiệm được nhờ trần phí
   status: OrderStatus;
   paid_amount: number;
   paid_at: string | null;

@@ -205,9 +205,14 @@ export default function Terms() {
             cùng từ Admin.
           </li>
           <li>
-            <strong>Phí trung gian:</strong> Mức phí chuẩn là 5% giá niêm yết (hoặc theo mức ưu đãi toàn sàn đang áp
-            dụng; Mod Group được hưởng 0%). Người bán tự chọn phương thức chia phí (Người bán chịu / Người mua chịu /
-            Chia đôi); giá hiển thị cho người mua luôn là giá trọn gói.
+            <strong>Phí trung gian &amp; Chính sách trần phí tối đa 500.000₫/đơn:</strong> Mức phí chuẩn là 5% giá niêm
+            yết (hoặc theo mức ưu đãi toàn sàn đang áp dụng; Mod Group được hưởng 0%), nhưng{' '}
+            <strong className="text-emerald-700 dark:text-emerald-400">
+              tổng phí sàn được giới hạn trần tối đa 500.000₫ cho mỗi giao dịch
+            </strong>{' '}
+            (ví dụ với các thiết bị hi-end giá trên 10.000.000₫ ở mức 5%, phí vẫn chỉ tối đa 500.000₫). Người bán tự
+            chọn phương thức chia phí (Người bán chịu / Người mua chịu / Chia đôi) dựa trên mức phí đã áp trần; giá hiển
+            thị cho người mua luôn là giá trọn gói.
           </li>
           <li>
             <strong>Căn cứ giải quyết khiếu nại:</strong> Admin phân xử hoàn tiền hoặc giải ngân dựa trên đối chiếu{' '}

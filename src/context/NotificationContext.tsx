@@ -199,11 +199,16 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       const itemTitle = next.listing_snapshot?.title ?? next.payment_code ?? 'Đơn hàng';
       const href = `/orders/${next.id}`;
 
+      const capNote =
+        typeof next.fee_saved_amount === 'number' && next.fee_saved_amount > 0
+          ? ` Đơn hàng đã đạt mức trần phí sàn tối đa ${formatVND(next.fee_cap_vnd ?? 500_000)}, giúp bạn tiết kiệm ${formatVND(next.fee_saved_amount)}.`
+          : '';
+
       if (next.status === 'PAID_HELD') {
         pushToast(
           {
             title: 'Bạn có đơn hàng mới đã thanh toán!',
-            body: `Đơn "${itemTitle}" đã được sàn giữ tiền. Hãy quay video test & đóng gói 6 mặt rồi gửi hàng.`,
+            body: `Đơn "${itemTitle}" đã được sàn giữ tiền. Hãy quay video test & đóng gói 6 mặt rồi gửi hàng.${capNote}`,
             href,
             actionLabel: 'Mở đơn hàng',
             kind: 'success',
@@ -215,7 +220,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         pushToast(
           {
             title: 'Người mua đã xác nhận nhận hàng!',
-            body: `Đơn "${itemTitle}" đã hoàn tất. Tiền thực nhận${payoutText} đang chờ Admin giải ngân.`,
+            body: `Đơn "${itemTitle}" đã hoàn tất. Tiền thực nhận${payoutText} đang chờ Admin giải ngân.${capNote}`,
             href,
             actionLabel: 'Xem đơn hàng',
             kind: 'success',

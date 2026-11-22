@@ -34,7 +34,7 @@ const PHONE_RE = /^[0-9+ ]{8,15}$/;
 export default function ListingDetail() {
   const { id } = useParams<{ id: string }>();
   const { user, signIn } = useAuth();
-  const { feeBp } = usePlatformSettings();
+  const { feeBp, feeCapVnd } = usePlatformSettings();
   const [listing, setListing] = useState<Listing | null>(null);
   const [seller, setSeller] = useState<Profile | null>(null);
   const [facebook, setFacebook] = useState<string | null>(null);
@@ -106,8 +106,8 @@ export default function ListingDetail() {
   const canBuy = listing.status === 'active' && listing.ship_cod && !isOwner;
   const category = getCategory(listing.category);
   const sellerIsMod = seller?.is_mod ?? false;
-  const fees = calcFees(listing.price, listing.fee_payer, sellerIsMod, feeBp);
-  const dp = getDisplayPrice(listing, { isMod: sellerIsMod, globalBp: feeBp });
+  const fees = calcFees(listing.price, listing.fee_payer, sellerIsMod, feeBp, feeCapVnd);
+  const dp = getDisplayPrice(listing, { isMod: sellerIsMod, globalBp: feeBp, feeCapVnd });
 
   const specs: { label: string; value: string }[] = [
     { label: 'Phân loại', value: category?.label ?? listing.category },
@@ -195,7 +195,7 @@ export default function ListingDetail() {
             )}
             {canBuy && (
               <>
-                <PriceBreakdown listPrice={fees.listPrice} buyerFee={fees.buyerFee} total={fees.buyerPays} feePayer={listing.fee_payer} feeRateBp={fees.feeRateBp} waivedReason={sellerIsMod ? 'Mod Group' : undefined} />
+                <PriceBreakdown listPrice={fees.listPrice} buyerFee={fees.buyerFee} total={fees.buyerPays} feePayer={listing.fee_payer} feeRateBp={fees.feeRateBp} waivedReason={sellerIsMod ? 'Mod Group' : undefined} isFeeCapped={fees.isFeeCapped} feeCapVnd={fees.feeCapVnd} feeSavedAmount={fees.feeSavedAmount} />
                 <BuyerProtectionSteps compact />
                 <p className="text-xs text-slate-500 dark:text-slate-400">Phí ship trả cho bưu tá khi nhận hàng (không tính vào số tiền chuyển cho trung gian).</p>
               </>

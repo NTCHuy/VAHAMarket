@@ -86,6 +86,13 @@ export async function setGlobalFeeRate(rate: number): Promise<{ global_fee_rate:
   return data as { global_fee_rate: number };
 }
 
+/** Đổi trần phí tối đa mỗi đơn (VND; 0 = tắt trần). */
+export async function setFeeCapVnd(capVnd: number): Promise<{ fee_cap_vnd: number }> {
+  const { data, error } = await supabase.rpc('admin_set_fee_cap', { p_fee_cap_vnd: Math.floor(capVnd) });
+  if (error) throw new Error(error.message);
+  return data as { fee_cap_vnd: number };
+}
+
 /** Duyệt (APPROVE) hoặc từ chối (REJECT, bắt buộc có lý do) một tin đang chờ duyệt. */
 export async function reviewListing(listingId: string, decision: 'APPROVE' | 'REJECT', reason?: string): Promise<Listing> {
   const { data, error } = await supabase.rpc('admin_review_listing', {

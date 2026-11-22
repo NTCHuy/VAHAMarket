@@ -40,6 +40,9 @@ interface EmailPayload {
   reference?: string;
   reviewStatus?: 'active' | 'rejected';
   rejectionReason?: string;
+  isFeeCapped?: boolean;
+  feeCapVnd?: number;
+  feeSavedAmount?: number;
 }
 
 const json = (body: unknown, status = 200) =>
@@ -142,6 +145,16 @@ function buildEmail(payload: EmailPayload): { subject: string; html: string; tex
   const title = escapeHtml(rawTitle);
   const code = escapeHtml(rawCode);
   const orderUrl = payload.orderId ? `${SITE_URL}/orders/${payload.orderId}` : `${SITE_URL}/orders`;
+  const feeSaved = typeof payload.feeSavedAmount === 'number' && payload.feeSavedAmount > 0 ? payload.feeSavedAmount : 0;
+  const feeCapLabel = formatVnd(typeof payload.feeCapVnd === 'number' && payload.feeCapVnd > 0 ? payload.feeCapVnd : 500000);
+  const feeCapHtml =
+    payload.isFeeCapped && feeSaved > 0
+      ? `<div style="background-color:#ecfdf5;border:1px solid #6ee7b7;border-radius:10px;padding:12px 14px;margin-bottom:14px;color:#065f46;font-size:13px;"><strong>🎉 Ưu đãi trần phí sàn:</strong> Đơn hàng đã đạt mức trần phí sàn tối đa <strong>${feeCapLabel}</strong>, giúp bạn tiết kiệm <strong>${formatVnd(feeSaved)}</strong>.</div>`
+      : '';
+  const feeCapText =
+    payload.isFeeCapped && feeSaved > 0
+      ? `Đơn hàng đã đạt mức trần phí sàn tối đa ${feeCapLabel}, giúp bạn tiết kiệm ${formatVnd(feeSaved)}.`
+      : '';
 
   switch (payload.event) {
     case 'ORDER_PAID': {
@@ -160,6 +173,7 @@ function buildEmail(payload: EmailPayload): { subject: string; html: string; tex
               <div><strong>Số tiền sàn đang giữ:</strong> ${formatVnd(payload.amount)}</div>
               <div style="margin-top:4px;"><strong>Thực nhận dự kiến sau khi hoàn tất:</strong> <span style="color:#047857;font-weight:700;">${formatVnd(payload.sellerPayout)}</span></div>
             </div>
+            ${feeCapHtml}
             <div style="background-color:#fffbeb;border:1px solid #fcd34d;border-radius:10px;padding:12px 14px;color:#78350f;font-size:13px;">
               <strong>Lưu ý quan trọng trước khi gửi hàng:</strong> Vui lòng quay <strong>video test chức năng &amp; đóng gói liền mạch 6 mặt</strong> gói hàng, sau đó cập nhật đơn vị vận chuyển, mã vận đơn và link video lên VAHA Market.
             </div>
@@ -173,6 +187,7 @@ function buildEmail(payload: EmailPayload): { subject: string; html: string; tex
             `Người mua đã chuyển khoản thành công cho sản phẩm "${rawTitle}"${rawCode ? ` (Mã đơn: ${rawCode})` : ''}.`,
             `- Số tiền sàn đang giữ: ${formatVnd(payload.amount)}`,
             `- Thực nhận dự kiến sau khi hoàn tất: ${formatVnd(payload.sellerPayout)}`,
+            ...(feeCapText ? [feeCapText] : []),
             'Lưu ý: Vui lòng quay video test chức năng & đóng gói liền mạch 6 mặt gói hàng, sau đó cập nhật đơn vị vận chuyển, mã vận đơn và link video lên VAHA Market.',
           ],
           ctaLabel,
@@ -240,6 +255,7 @@ function buildEmail(payload: EmailPayload): { subject: string; html: string; tex
           greeting: `Xin chào ${name},`,
           bodyHtml: `
             <p style="margin:0 0 12px;">Đơn hàng <strong>${title}</strong>${code ? ` (Mã đơn: <strong>${code}</strong>)` : ''} đã được người mua xác nhận nhận hàng ổn định.</p>
+            ${feeCapHtml}
             <div style="background-color:#ecfdf5;border:1px solid #a7f3d0;border-radius:10px;padding:12px 14px;color:#065f46;">
               <strong>Số tiền thực nhận:</strong> <span style="font-size:16px;font-weight:700;">${formatVnd(payload.sellerPayout)}</span><br/>
               <span style="font-size:13px;">Yêu cầu giải ngân đã được mở khóa. Admin VAHA Market sẽ chuyển khoản vào tài khoản ngân hàng bạn đã đăng ký trong thời gian sớm nhất.</span>
@@ -253,6 +269,7 @@ function buildEmail(payload: EmailPayload): { subject: string; html: string; tex
             `Xin chào ${name},`,
             `Đơn hàng "${rawTitle}"${rawCode ? ` (Mã đơn: ${rawCode})` : ''} đã được người mua xác nhận nhận hàng ổn định.`,
             `- Số tiền thực nhận: ${formatVnd(payload.sellerPayout)}`,
+            ...(feeCapText ? [feeCapText] : []),
             'Yêu cầu giải ngân đã được mở khóa. Admin VAHA Market sẽ chuyển khoản vào tài khoản ngân hàng bạn đã đăng ký trong thời gian sớm nhất.',
           ],
           ctaLabel,

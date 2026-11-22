@@ -267,20 +267,39 @@ function OrderDetailContent() {
           <h2 className="text-base font-semibold">Thanh toán</h2>
           {isBuyer ? (
             <>
-              <PriceBreakdown listPrice={order.list_price} buyerFee={order.buyer_fee} total={order.amount} feePayer={order.fee_payer} feeRateBp={order.fee_rate_bp} waivedReason="Ưu đãi" />
+              <PriceBreakdown
+                listPrice={order.list_price}
+                buyerFee={order.buyer_fee}
+                total={order.amount}
+                feePayer={order.fee_payer}
+                feeRateBp={order.fee_rate_bp}
+                waivedReason="Ưu đãi"
+                isFeeCapped={(order.fee_saved_amount ?? 0) > 0}
+                feeCapVnd={order.fee_cap_vnd ?? 500_000}
+                feeSavedAmount={order.fee_saved_amount ?? 0}
+              />
               <p className="text-xs text-slate-500 dark:text-slate-400">Số tiền trên là số bạn chuyển khoản. Phí ship trả cho bưu tá khi nhận hàng.</p>
             </>
           ) : (
             <dl className="divide-y divide-slate-100 dark:divide-slate-800 text-sm">
               <Row label="Giá sản phẩm gốc" value={formatVND(order.list_price)} />
               {isSeller && (order.seller_fee > 0
-                ? <Row label="Phí bảo lãnh giao dịch (bên bạn chịu)" value={`− ${formatVND(order.seller_fee)}`} />
+                ? <Row
+                    label={`Phí bảo lãnh giao dịch (bên bạn chịu)${(order.fee_saved_amount ?? 0) > 0 ? ` · Đã áp trần tối đa ${formatVND(order.fee_cap_vnd ?? 500_000)}` : ''}`}
+                    value={`− ${formatVND(order.seller_fee)}`}
+                  />
                 : <Row label="Phí bảo lãnh giao dịch (bên bạn chịu)" value="Miễn phí" />)}
               {isSeller && <Row label="Bạn thực nhận" value={formatVND(order.seller_payout)} strong />}
               {!isSeller && <Row label="Người mua chuyển" value={formatVND(order.amount)} />}
               {!isSeller && <Row label="Phí sàn" value={formatVND(order.platform_fee)} />}
               {!isSeller && <Row label="Người bán nhận" value={formatVND(order.seller_payout)} strong />}
             </dl>
+          )}
+          {(order.fee_saved_amount ?? 0) > 0 && (
+            <p className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-800 dark:border-emerald-800/70 dark:bg-emerald-950/50 dark:text-emerald-300">
+              🎉 Tiết kiệm <strong>{formatVND(order.fee_saved_amount ?? 0)}</strong> nhờ chính sách trần phí tối đa{' '}
+              <strong>{formatVND(order.fee_cap_vnd ?? 500_000)}</strong>.
+            </p>
           )}
           {order.fee_rate_bp === 0 && <ModBadge full />}
           {isSeller && payout && (

@@ -31,7 +31,7 @@ const escapeLike = (s: string) => s.replace(/[\\%_]/g, (c) => `\\${c}`);
 const digitsOnly = (s: string) => s.replace(/\D/g, '').slice(0, 10);
 
 export default function Home() {
-  const { feeBp } = usePlatformSettings();
+  const { feeBp, feeCapVnd } = usePlatformSettings();
   const [params, setParams] = useSearchParams();
   const q = params.get('q') ?? '';
   const category = params.get('category') ?? '';
@@ -232,7 +232,7 @@ export default function Home() {
                     </div>
                     <div className="space-y-1 p-3">
                       <p className="line-clamp-2 text-sm font-medium text-slate-900 dark:text-slate-100">{l.title}</p>
-                      <CardPrice l={l} feeBp={feeBp} />
+                      <CardPrice l={l} feeBp={feeBp} feeCapVnd={feeCapVnd} />
                       <p className="text-xs text-slate-500 dark:text-slate-400">{getCategory(l.category)?.label ?? l.category} · {getConditionLabel(l.condition)}</p>
                       <p className="text-xs text-slate-500 dark:text-slate-400">{getBoxStatusLabel(l.box_status)}</p>
                       <p className="flex flex-wrap items-center gap-x-3 text-xs text-slate-500 dark:text-slate-400">
@@ -259,8 +259,8 @@ export default function Home() {
 }
 
 /** Giá TRỌN GÓI người mua thực trả (đã gồm phần phí người mua chịu) + ưu đãi gạch ngang. */
-function CardPrice({ l, feeBp }: { l: ListingCard; feeBp: number }) {
-  const dp = getDisplayPrice(l, { isMod: l.profiles?.is_mod ?? false, globalBp: feeBp });
+function CardPrice({ l, feeBp, feeCapVnd }: { l: ListingCard; feeBp: number; feeCapVnd: number }) {
+  const dp = getDisplayPrice(l, { isMod: l.profiles?.is_mod ?? false, globalBp: feeBp, feeCapVnd });
   return (
     <PriceTag
       display={dp.display}
