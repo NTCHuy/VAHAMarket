@@ -12,8 +12,44 @@ export interface Profile {
   bought_count: number; // chỉ hệ thống cập nhật
   is_mod: boolean;      // Mod Group: phí trung gian 0% (chỉ admin gán)
   facebook_url: string | null; // link Facebook cá nhân (công khai, bắt buộc để đăng tin)
+  warning_count: number;       // số lần cảnh báo (3 lần tự động khóa vĩnh viễn)
+  is_banned: boolean;          // tài khoản bị khóa vĩnh viễn
+  banned_at: string | null;
+  ban_reason: string | null;
+  banned_by: string | null;
   created_at: string;
   updated_at: string;
+}
+
+export type BannedEntityType = 'fingerprint' | 'bank_account' | 'facebook_url' | 'phone' | 'email';
+
+export interface BannedEntity {
+  id: string;
+  entity_type: BannedEntityType;
+  entity_value: string;
+  reason: string;
+  source_user_id: string | null;
+  created_by: string | null;
+  created_at: string;
+}
+
+export interface UserDevice {
+  id: string;
+  user_id: string;
+  visitor_id: string;
+  user_agent: string | null;
+  first_seen_at: string;
+  last_seen_at: string;
+}
+
+export interface UserWarning {
+  id: string;
+  user_id: string;
+  reason: string;
+  listing_id: string | null;
+  order_id: string | null;
+  created_by: string | null;
+  created_at: string;
 }
 
 export interface ProfileContact {

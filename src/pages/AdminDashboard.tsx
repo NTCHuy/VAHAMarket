@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { AlertTriangle, Banknote, Landmark, Lock, Percent, type LucideIcon } from 'lucide-react';
+import { AlertTriangle, Banknote, Landmark, Lock, Percent, ShieldBan, type LucideIcon } from 'lucide-react';
 import { getAdminStats, type AdminStats } from '@/lib/admin';
 import { formatVND } from '@/lib/money';
 import { getErrorMessage } from '@/lib/errors';
@@ -12,10 +12,11 @@ import TransactionsTab from './admin/TransactionsTab';
 import OrdersTab from './admin/OrdersTab';
 import ListingsTab from './admin/ListingsTab';
 import MembersTab from './admin/MembersTab';
+import BansTab from './admin/BansTab';
 import FeeSettingsCard from './admin/FeeSettingsCard';
 
-type TabId = 'review' | 'payouts' | 'disputes' | 'transactions' | 'orders' | 'listings' | 'members';
-const TAB_IDS: TabId[] = ['review', 'payouts', 'disputes', 'transactions', 'orders', 'listings', 'members'];
+type TabId = 'review' | 'payouts' | 'disputes' | 'transactions' | 'orders' | 'listings' | 'members' | 'bans';
+const TAB_IDS: TabId[] = ['review', 'payouts', 'disputes', 'transactions', 'orders', 'listings', 'members', 'bans'];
 
 export default function AdminDashboard() {
   const [params, setParams] = useSearchParams();
@@ -45,6 +46,7 @@ export default function AdminDashboard() {
     { id: 'orders', label: 'Tất cả đơn hàng' },
     { id: 'listings', label: 'Tin đăng & giá' },
     { id: 'members', label: 'Mod' },
+    { id: 'bans', label: 'Cảnh báo & Ban', badge: stats?.banned_count },
   ];
 
   return (
@@ -71,6 +73,7 @@ export default function AdminDashboard() {
             onClick={() => setParams({ tab: t.id }, { replace: true })}
             className={`-mb-px flex shrink-0 items-center gap-2 border-b-2 px-3 py-2.5 text-sm font-medium transition-colors ${tab === t.id ? 'border-brand-700 dark:border-brand-500 text-brand-800 dark:text-brand-300' : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'}`}>
             {t.id === 'transactions' && <Landmark className="h-4 w-4" />}
+            {t.id === 'bans' && <ShieldBan className="h-4 w-4" />}
             {t.label}
             {t.badge !== undefined && t.badge > 0 && <span className="rounded-full bg-red-600 px-1.5 text-[11px] font-semibold leading-5 text-white">{t.badge}</span>}
           </button>
@@ -84,6 +87,7 @@ export default function AdminDashboard() {
       {tab === 'orders' && <OrdersTab onChanged={refreshStats} />}
       {tab === 'listings' && <ListingsTab />}
       {tab === 'members' && <MembersTab />}
+      {tab === 'bans' && <BansTab onChanged={refreshStats} />}
     </div>
   );
 }

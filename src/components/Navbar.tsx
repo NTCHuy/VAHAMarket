@@ -83,7 +83,8 @@ function NotificationToggleButton() {
 }
 
 export default function Navbar() {
-  const { user, profile, isAdmin, loading, signIn, signOut } = useAuth();
+  const { user, profile, isAdmin, isBanned, deviceBanned, loading, signIn, signOut } = useAuth();
+  const blocked = (isBanned || deviceBanned) && !isAdmin;
   const alerts = useOrderAlerts();
   const [menuOpen, setMenuOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -166,9 +167,11 @@ export default function Navbar() {
           {user && <NotificationToggleButton />}
           <ThemeToggleButton />
 
-          <Link to="/sell" className="btn-primary hidden sm:inline-flex">
-            <Plus className="h-4 w-4" /> Đăng bán
-          </Link>
+          {!blocked && (
+            <Link to="/sell" className="btn-primary hidden sm:inline-flex">
+              <Plus className="h-4 w-4" /> Đăng bán
+            </Link>
+          )}
 
           {loading ? (
             <span className="h-8 w-8 animate-pulse rounded-full bg-slate-100 dark:bg-slate-800" />
@@ -243,9 +246,11 @@ export default function Navbar() {
       {/* Mobile panel */}
       {mobileOpen && (
         <div className="border-t border-slate-200 bg-white px-4 pb-4 pt-2 dark:border-slate-800 dark:bg-slate-900 md:hidden">
-          <Link to="/sell" className="btn-primary mb-2 w-full">
-            <Plus className="h-4 w-4" /> Đăng bán
-          </Link>
+          {!blocked && (
+            <Link to="/sell" className="btn-primary mb-2 w-full">
+              <Plus className="h-4 w-4" /> Đăng bán
+            </Link>
+          )}
           {user ? (
             <div className="flex flex-col">
               <div className="flex items-center gap-2 px-1 py-2">

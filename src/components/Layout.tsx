@@ -1,18 +1,23 @@
 import { Link, Outlet, useLocation } from 'react-router-dom';
 import { BRAND_FULL_NAME, BRAND_NAME } from '@/constants/links';
+import { useAuth } from '@/context/AuthContext';
+import BannedScreen from './BannedScreen';
 import ErrorBoundary from './ErrorBoundary';
 import Navbar from './Navbar';
 import TrustBadge from './TrustBadge';
 
 export default function Layout() {
   const location = useLocation();
+  const { isBanned, deviceBanned, isAdmin } = useAuth();
+  const blocked = (isBanned || deviceBanned) && !isAdmin && location.pathname !== '/terms';
+
   return (
     <div className="flex min-h-screen flex-col">
       <Navbar />
       <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-6 sm:px-6 sm:py-8">
         {/* Lỗi ở 1 trang không làm mất Navbar/Footer; tự thoát lỗi khi chuyển trang */}
         <ErrorBoundary variant="inline" resetKey={location.pathname}>
-          <Outlet />
+          {blocked ? <BannedScreen /> : <Outlet />}
         </ErrorBoundary>
       </main>
       <footer className="border-t border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">

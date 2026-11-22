@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
-import { BadgeCheck, CheckCircle2, ExternalLink, Facebook, Landmark, Loader2, Phone, ShieldCheck, XCircle } from 'lucide-react';
+import { AlertTriangle, BadgeCheck, CheckCircle2, ExternalLink, Facebook, Landmark, Loader2, Phone, ShieldBan, ShieldCheck, XCircle } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
-import { reviewListing } from '@/lib/admin';
+import { issueWarning, reviewListing } from '@/lib/admin';
 import { cldUrl } from '@/lib/cloudinary';
 import { formatVND } from '@/lib/money';
 import { getErrorMessage } from '@/lib/errors';
@@ -86,15 +86,38 @@ function ReviewCard({ listing, seller, contact, bank, onDone }: {
   listing: Listing; seller?: Profile; contact?: ProfileContact; bank?: BankAccount; onDone: () => Promise<void>;
 }) {
   const [rejecting, setRejecting] = useState(false);
+  const [warningOpen, setWarningOpen] = useState(false);
   const [reason, setReason] = useState('');
-  const [busy, setBusy] = useState<'APPROVE' | 'REJECT' | null>(null);
+  const [warnReason, setWarnReason] = useState('');
+  const [busy, setBusy] = useState<'APPROVE' | 'REJECT' | 'WARN' | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [warnNotice, setWarnNotice] = useState<string | null>(null);
 
   const run = async (decision: 'APPROVE' | 'REJECT') => {
     setBusy(decision);
     setError(null);
     try {
       await reviewListing(listing.id, decision, decision === 'REJECT' ? reason : undefined);
+      await onDone();
+    } catch (e) {
+      setError(getErrorMessage(e));
+      setBusy(null);
+    }
+  };
+
+  const sendWarning = async () => {
+    if (warnReason.trim().length < 3) return;
+    setBusy('WARN');
+    setError(null);
+    try {
+      const res = await issueWarning(listing.seller_id, warnReason, { listingId: listing.id });
+      setWarningOpen(false);
+      setWarnReason('');
+      setWarnNotice(
+        res.auto_banned
+          ? `Đã gửi cảnh báo #${res.warning_count} — Người bán tự động bị Ban vĩnh viễn do đạt 3/3 cảnh báo!`
+          : `Đã gửi cảnh báo #${res.warning_count}/3 cho người bán.`,
+      );
       await onDone();
     } catch (e) {
       setError(getErrorMessage(e));
@@ -137,7 +160,15 @@ function ReviewCard({ listing, seller, contact, bank, onDone }: {
           <div className="flex items-center gap-3">
             <Avatar name={seller?.display_name ?? '?'} url={seller?.avatar_url ?? null} size={40} />
             <div className="min-w-0">
-              <p className="flex flex-wrap items-center gap-2 font-medium text-slate-900 dark:text-slate-100"><span className="truncate">{seller?.display_name ?? '—'}</span>{seller?.is_mod && <ModBadge />}</p>
+              <p className="flex flex-wrap items-center gap-2 font-medium text-slate-900 dark:text-slate-100">
+                <span className="truncate">{seller?.display_name ?? '—'}</span>
+                {seller?.is_mod && <ModBadge />}
+                {seller?.is_banned ? (
+                  <span className="badge bg-red-600 text-white dark:bg-red-600 dark:text-white"><ShieldBan className="mr-1 h-3 w-3" /> Đã bị Ban</span>
+                ) : (seller?.warning_count ?? 0) > 0 ? (
+                  <span className="badge bg-amber-100 text-amber-800 dark:bg-amber-950/70 dark:text-amber-300">⚠️ {seller?.warning_count}/3 cảnh báo</span>
+                ) : null}
+              </p>
               <p className="text-xs text-slate-500 dark:text-slate-400">{seller?.sold_count ?? 0} đơn bán thành công · tham gia {seller ? new Date(seller.created_at).toLocaleDateString('vi-VN') : '—'}</p>
             </div>
           </div>
@@ -185,7 +216,29 @@ function ReviewCard({ listing, seller, contact, bank, onDone }: {
         <p className="whitespace-pre-line rounded-lg bg-slate-50 dark:bg-slate-800/60 px-3 py-2 text-sm text-slate-700 dark:text-slate-200">{listing.description}</p>
       </div>
 
+      {warnNotice && <Alert kind="success">{warnNotice}</Alert>}
       {error && <Alert kind="error">{error}</Alert>}
+
+      {warningOpen && (
+        <div className="space-y-2 rounded-xl border border-amber-300 bg-amber-50/70 p-3 dark:border-amber-800/70 dark:bg-amber-950/40">
+          <p className="text-sm font-medium text-amber-900 dark:text-amber-200">
+            Cảnh báo người bán (hiện có {seller?.warning_count ?? 0}/3 cảnh báo — đạt 3 sẽ tự động Ban vĩnh viễn)
+          </p>
+          <input
+            className="input text-sm"
+            maxLength={1000}
+            placeholder="Nhập lý do cảnh báo (vd: Nghi vấn ảnh giả mạo, lách luật giao dịch ngoài sàn...)"
+            value={warnReason}
+            onChange={(e) => setWarnReason(e.target.value)}
+          />
+          <div className="flex justify-end gap-2">
+            <button type="button" className="btn-ghost" disabled={busy !== null} onClick={() => setWarningOpen(false)}>Hủy</button>
+            <button type="button" className="btn bg-amber-600 text-white hover:bg-amber-700" disabled={busy !== null || warnReason.trim().length < 3} onClick={() => void sendWarning()}>
+              {busy === 'WARN' && <Loader2 className="h-4 w-4 animate-spin" />} Xác nhận gửi cảnh báo (+1 gậy)
+            </button>
+          </div>
+        </div>
+      )}
 
       {rejecting ? (
         <div className="space-y-3 rounded-xl border border-red-200 dark:border-red-900/70 bg-red-50/40 dark:bg-red-950/30 p-3">
@@ -205,7 +258,12 @@ function ReviewCard({ listing, seller, contact, bank, onDone }: {
         </div>
       ) : (
         <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
-          <button type="button" className="btn-secondary text-red-700 dark:text-red-400" disabled={busy !== null} onClick={() => setRejecting(true)}><XCircle className="h-4 w-4" /> Từ chối</button>
+          {!seller?.is_banned && (
+            <button type="button" className="btn-secondary text-amber-800 dark:text-amber-300" disabled={busy !== null} onClick={() => { setWarningOpen((v) => !v); setRejecting(false); }}>
+              <AlertTriangle className="h-4 w-4" /> Cảnh báo người bán
+            </button>
+          )}
+          <button type="button" className="btn-secondary text-red-700 dark:text-red-400" disabled={busy !== null} onClick={() => { setRejecting(true); setWarningOpen(false); }}><XCircle className="h-4 w-4" /> Từ chối</button>
           <button type="button" className="btn-primary" disabled={busy !== null || !listing.verification_image_url} onClick={() => void run('APPROVE')}>
             {busy === 'APPROVE' ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />} Duyệt lên sàn
           </button>

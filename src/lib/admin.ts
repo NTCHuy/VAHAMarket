@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-import type { Listing, Order, Profile, Transaction } from '@/types';
+import type { BannedEntity, BannedEntityType, Listing, Order, Profile, Transaction } from '@/types';
 
 /** Các hàm RPC dành cho admin. Mỗi hàm tự kiểm tra is_admin() ở tầng DB. */
 
@@ -13,9 +13,16 @@ export interface AdminStats {
   payout_pending_amount: number;
   flagged_tx_count: number;     // số giao dịch lệch chưa xử lý
   pending_review_count: number; // số tin đăng chờ duyệt
+  banned_count: number;         // số tài khoản đang bị khóa vĩnh viễn
 }
 
 export type DisputeDecision = 'RELEASE_TO_SELLER' | 'REFUND_TO_BUYER';
+
+export interface IssueWarningResult {
+  profile: Profile;
+  warning_count: number;
+  auto_banned: boolean;
+}
 
 export async function getAdminStats(): Promise<AdminStats> {
   const { data, error } = await supabase.rpc('admin_stats');
@@ -88,4 +95,65 @@ export async function reviewListing(listingId: string, decision: 'APPROVE' | 'RE
   });
   if (error) throw new Error(error.message);
   return data as Listing;
+}
+
+/** Gửi 1 cảnh báo (+1 gậy) cho thành viên; tự động Ban toàn diện khi đạt >= 3 cảnh báo. */
+export async function issueWarning(
+  userId: string,
+  reason: string,
+  opts?: { listingId?: string | null; orderId?: string | null },
+): Promise<IssueWarningResult> {
+  const { data, error } = await supabase.rpc('admin_issue_warning', {
+    p_user_id: userId,
+    p_reason: reason.trim(),
+    p_listing_id: opts?.listingId ?? null,
+    p_order_id: opts?.orderId ?? null,
+  });
+  if (error) throw new Error(error.message);
+  return data as IssueWarningResult;
+}
+
+/** Khóa tài khoản vĩnh viễn và đưa toàn bộ dấu vết vào danh sách đen. */
+export async function banUser(userId: string, reason: string): Promise<Profile> {
+  const { data, error } = await supabase.rpc('admin_ban_user', {
+    p_user_id: userId,
+    p_reason: reason.trim(),
+  });
+  if (error) throw new Error(error.message);
+  return data as Profile;
+}
+
+/** Gỡ khóa tài khoản, reset cảnh báo về 0 và xóa dấu vết gắn với user khỏi danh sách đen. */
+export async function unbanUser(userId: string): Promise<Profile> {
+  const { data, error } = await supabase.rpc('admin_unban_user', { p_user_id: userId });
+  if (error) throw new Error(error.message);
+  return data as Profile;
+}
+
+/** Thêm trực tiếp 1 định danh (email, Facebook, STK ngân hàng, SĐT, fingerprint) vào danh sách đen. */
+export async function addBannedEntity(
+  entityType: BannedEntityType,
+  entityValue: string,
+  reason: string,
+): Promise<BannedEntity> {
+  const { data, error } = await supabase.rpc('admin_add_banned_entity', {
+    p_entity_type: entityType,
+    p_entity_value: entityValue.trim(),
+    p_reason: reason.trim(),
+  });
+  if (error) throw new Error(error.message);
+  return data as BannedEntity;
+}
+
+/** Xóa 1 bản ghi khỏi danh sách đen. */
+export async function removeBannedEntity(entityId: string): Promise<void> {
+  const { error } = await supabase.rpc('admin_remove_banned_entity', { p_entity_id: entityId });
+  if (error) throw new Error(error.message);
+}
+
+/** Lấy toàn bộ danh sách đen (chỉ Admin, qua RPC SECURITY DEFINER). */
+export async function listBannedEntities(): Promise<BannedEntity[]> {
+  const { data, error } = await supabase.rpc('admin_list_banned_entities');
+  if (error) throw new Error(error.message);
+  return (data ?? []) as BannedEntity[];
 }

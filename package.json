@@ -1,7 +1,7 @@
 {
   "name": "vaha-market",
   "private": true,
-  "version": "0.2.0",
+  "version": "1.9.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -12,6 +12,7 @@
     "functions:deploy:email": "supabase functions deploy send-order-email --no-verify-jwt"
   },
   "dependencies": {
+    "@fingerprintjs/fingerprintjs": "^4.5.1",
     "@supabase/supabase-js": "^2.45.0",
     "lucide-react": "^0.462.0",
     "react": "^18.3.1",

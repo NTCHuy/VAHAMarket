@@ -218,6 +218,36 @@ export default function Terms() {
         </ul>
       </section>
 
+      {/* 4. CƠ CHẾ CẢNH BÁO 3 LẦN TỰ ĐỘNG BAN & CHẶN THIẾT BỊ */}
+      <section className="card space-y-3 border-red-200 p-5 dark:border-red-900/70 sm:p-6">
+        <h2 className="flex items-center gap-2 text-base font-semibold text-slate-900 dark:text-slate-50">
+          <ShieldAlert className="h-5 w-5 text-red-600 dark:text-red-400" />
+          4. Cơ chế Cảnh báo 3 lần tự động khóa vĩnh viễn (3-Strike) &amp; Chặn thiết bị
+        </h2>
+        <ul className="list-disc space-y-2 pl-5 text-sm leading-relaxed text-slate-700 dark:text-slate-300">
+          <li>
+            <strong>Hệ thống 3 lần cảnh báo (3-Strike Auto-Ban):</strong> Mỗi hành vi vi phạm quy định sàn (đăng ảnh
+            không trung thực, cố tình dẫn dụ giao dịch ngoài sàn, giao hàng sai mô tả, thái độ thiếu hợp tác khi đối
+            soát...) sẽ bị Admin ghi nhận <strong>+1 cảnh báo</strong> vào lịch sử tài khoản. Khi đạt mốc{' '}
+            <strong className="text-red-700 dark:text-red-400">3/3 cảnh báo</strong>, hệ thống sẽ{' '}
+            <strong>tự động khóa tài khoản vĩnh viễn</strong> và gỡ bỏ toàn bộ tin đăng đang hoạt động.
+          </li>
+          <li>
+            <strong>Khóa thẳng không cần cảnh báo:</strong> Đối với các hành vi lừa đảo nghiêm trọng (hàng giả, tráo
+            hàng, giả mạo chứng từ, lừa đảo tay ba), Admin có quyền <strong>khóa vĩnh viễn ngay lập tức</strong> mà
+            không cần chờ đủ 3 cảnh báo.
+          </li>
+          <li>
+            <strong>Nhận diện thiết bị (Device Fingerprinting) &amp; Danh sách đen toàn sàn:</strong> Khi tài khoản bị
+            khóa vĩnh viễn, toàn bộ dấu vết định danh bao gồm <strong>mã định danh thiết bị</strong>,{' '}
+            <strong>tài khoản ngân hàng</strong>, <strong>link Facebook</strong>, <strong>số điện thoại</strong> và{' '}
+            <strong>email Google</strong> sẽ bị đưa vào danh sách đen. Mọi nỗ lực tạo tài khoản Google mới từ thiết bị
+            đã bị cấm hoặc sử dụng lại thông tin trùng danh sách đen đều sẽ bị hệ thống tự động phát hiện và khóa ngay
+            lập tức.
+          </li>
+        </ul>
+      </section>
+
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-4 text-xs text-slate-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400">
         <span>Cần hỗ trợ hoặc báo cáo gian lận? Liên hệ trực tiếp kênh chính thức của {BRAND_NAME}:</span>
         <div className="flex flex-wrap gap-2">

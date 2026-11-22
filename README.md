@@ -10,7 +10,7 @@ React + Vite + TypeScript + Tailwind · Supabase (Auth, Postgres/RLS, Realtime, 
 ## Bước 0 — Chuẩn bị Supabase (làm 1 lần)
 
 1. Supabase Dashboard → **SQL Editor** → chạy lần lượt, mỗi file 1 lần:
-   `supabase/schema.sql` → `supabase/migrations/002_ui_fields.sql` → `003_order_dispute_fields.sql` → `004_admin_actions.sql` → `005_vaha_rebrand_and_fees.sql` → `006_platform_settings_and_ux.sql` → `007_bulletproof_moderation.sql` → `008_email_notifications.sql`
+   `supabase/schema.sql` → `supabase/migrations/002_ui_fields.sql` → `003_order_dispute_fields.sql` → `004_admin_actions.sql` → `005_vaha_rebrand_and_fees.sql` → `006_platform_settings_and_ux.sql` → `007_bulletproof_moderation.sql` → `008_email_notifications.sql` → `009_ban_and_fingerprinting.sql`
    *(Lưu ý: nếu SQL Editor báo lỗi liên quan đến giá trị enum mới ở `007`, hãy chạy riêng 2 dòng `alter type public.listing_status add value ...` trước, rồi chạy phần còn lại.)*
 2. **Authentication → Providers → Google**: bật và nhập Client ID/Secret (Google Cloud Console → OAuth client, loại Web).
    *Authorized redirect URI* trên Google phải là `https://<PROJECT_REF>.supabase.co/auth/v1/callback`.
@@ -41,6 +41,13 @@ React + Vite + TypeScript + Tailwind · Supabase (Auth, Postgres/RLS, Realtime, 
 - **Bộ lọc chống dẫn dụ ngoài sàn**: chặn số điện thoại (9–11 chữ số liền hoặc có phân cách) và các từ khóa lách luật (`zalo`, `ck trực tiếp`, `bank trực tiếp`, `không qua sàn`...) trong tiêu đề và mô tả. Chạy đồng thời ở frontend (`src/lib/moderation.ts`) và trigger DB (`trg_listings_moderation`).
 - **Khóa thông tin định danh**: khi người bán đang có tin ở trạng thái `pending_review` / `active` / `reserved` hoặc đơn bán đang xử lý, hệ thống tự khóa không cho đổi `profiles.facebook_url` đã lưu và thông tin tài khoản ngân hàng (`bank_bin`, `bank_code`, `account_number`, `account_name`). Nếu người bán gõ nhầm hợp lệ và cần sửa, Admin cập nhật trực tiếp qua **SQL Editor** (role hệ thống bỏ qua trigger khóa).
 - **Siết quy trình gửi hàng & mở hộp**: người bán bắt buộc chọn đơn vị vận chuyển (GHTK, GHN, Viettel Post, J&T, SPX, Khác), nhập mã vận đơn và dán link video test/đóng gói. Khi đơn ở trạng thái `SHIPPED`, người mua nhận cảnh báo bắt buộc quay video mở hộp liền mạch 6 mặt để làm căn cứ giải quyết khiếu nại.
+
+## Bản cập nhật v1.9.0 — Cảnh báo 3 lần tự động Ban & Device Fingerprinting (Migration 009)
+
+- **Hệ thống Cảnh báo 3 lần (3-Strike Auto-Ban)**: Admin có thể gửi cảnh báo (+1 gậy) cho thành viên ngay trong **Admin → Duyệt tin**, **Admin → Khiếu nại**, hoặc **Admin → Cảnh báo & Ban**. Khi `profiles.warning_count >= 3`, DB tự động khóa vĩnh viễn tài khoản, chuyển toàn bộ tin đang mở sang `rejected` và đưa toàn bộ dấu vết định danh vào `banned_entities`.
+- **Device Fingerprinting & Blacklist chống lách luật**: Sử dụng `@fingerprintjs/fingerprintjs` (có cache `localStorage` và fallback hash) để ghi nhận `visitor_id` qua RPC `register_device_and_check_ban` / `check_device_banned`. Nếu phát hiện tạo tài khoản Google mới từ thiết bị đã bị cấm, hệ thống tự động khóa tài khoản mới ngay lập tức. Các trigger DB chặn lưu lại Facebook, SĐT hoặc tài khoản ngân hàng trùng danh sách đen.
+- **Màn hình khóa (`BannedScreen.tsx`)**: Khóa toàn bộ thao tác đăng tin, đặt mua, cài đặt khi tài khoản/thiết bị bị chặn (chỉ cho xem `/terms` và đăng xuất).
+- *(Lưu ý: nhớ chạy `npm install` để cài thêm gói `@fingerprintjs/fingerprintjs` trước khi `npm run build`.)*
 
 ## Bản cập nhật v8 — Điều khoản, Dark Mode & Hệ thống Thông báo
 
