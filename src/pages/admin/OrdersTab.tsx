@@ -156,7 +156,7 @@ function ManualConfirmDialog({ order, onClose, onDone }: { order: Order; onClose
 
   return (
     <div role="dialog" aria-modal="true" aria-label="Duyệt thanh toán thủ công" className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/50 sm:items-center sm:p-4">
-      <div className="w-full max-w-md space-y-4 rounded-t-2xl bg-white dark:bg-slate-900 p-5 shadow-pop sm:rounded-2xl">
+      <div className="w-full max-w-md space-y-4 rounded-t-lg bg-white dark:bg-slate-900 p-5 sm:rounded-lg">
         <div className="flex items-start justify-between gap-3">
           <h2 className="text-lg font-semibold">Duyệt thanh toán thủ công</h2>
           <button type="button" className="btn-ghost px-2" onClick={onClose} disabled={busy} aria-label="Đóng"><X className="h-5 w-5" /></button>

@@ -207,7 +207,7 @@ export default function BansTab({ onChanged }: { onChanged: () => void }) {
               onClick={() => setFormMode('user')}
               className={`rounded-md px-3 py-1.5 font-medium transition-colors ${
                 formMode === 'user'
-                  ? 'bg-white text-slate-900 shadow-sm dark:bg-slate-900 dark:text-slate-100'
+                  ? 'bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100'
                   : 'text-slate-600 dark:text-slate-400'
               }`}
             >
@@ -218,7 +218,7 @@ export default function BansTab({ onChanged }: { onChanged: () => void }) {
               onClick={() => setFormMode('entity')}
               className={`rounded-md px-3 py-1.5 font-medium transition-colors ${
                 formMode === 'entity'
-                  ? 'bg-white text-slate-900 shadow-sm dark:bg-slate-900 dark:text-slate-100'
+                  ? 'bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100'
                   : 'text-slate-600 dark:text-slate-400'
               }`}
             >

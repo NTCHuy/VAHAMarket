@@ -100,7 +100,7 @@ export default function Orders() {
         <ul className="space-y-3">
           {orders.map((o) => (
             <li key={o.id}>
-              <Link to={`/orders/${o.id}`} className="card flex gap-3 p-3 transition-shadow hover:shadow-pop sm:gap-4 sm:p-4">
+              <Link to={`/orders/${o.id}`} className="card flex gap-3 p-3 transition-shadow hover: sm:gap-4 sm:p-4">
                 <div className="h-20 w-20 shrink-0 overflow-hidden rounded-lg bg-slate-100 dark:bg-slate-800">
                   {o.listing_snapshot.image && <img src={cldUrl(o.listing_snapshot.image, { width: 200, height: 200, crop: 'fill' })} alt="" className="h-full w-full object-cover" />}
                 </div>

@@ -4,13 +4,11 @@ import {
   Bell,
   BellOff,
   ChevronDown,
-  Headphones,
   LogIn,
   LogOut,
   Menu,
   Monitor,
   Moon,
-  Package,
   Plus,
   Settings,
   Shield,
@@ -23,13 +21,14 @@ import { useOrderAlerts } from '@/context/OrderAlertsContext';
 import { useTheme, type ThemeMode } from '@/context/ThemeContext';
 import { useNotifications } from '@/context/NotificationContext';
 import CountBadge from './CountBadge';
+import SellerTermsModal, { hasAcceptedSellerTerms } from './SellerTermsModal';
 import { Avatar } from './ui';
 
 const navLinkClass = ({ isActive }: { isActive: boolean }) =>
-  `inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+  `inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm font-medium transition-colors ${
     isActive
-      ? 'bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-slate-50'
-      : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800/70 dark:hover:text-slate-50'
+      ? 'bg-neutral-100 text-neutral-950 dark:bg-neutral-800 dark:text-neutral-50'
+      : 'text-neutral-600 hover:bg-neutral-100/70 hover:text-neutral-950 dark:text-neutral-400 dark:hover:bg-neutral-800/70 dark:hover:text-neutral-50'
   }`;
 
 const THEME_LABEL: Record<ThemeMode, string> = {
@@ -47,9 +46,9 @@ function ThemeToggleButton() {
       onClick={cycleTheme}
       title={THEME_LABEL[theme]}
       aria-label={THEME_LABEL[theme]}
-      className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-50"
+      className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-neutral-200 bg-white text-neutral-600 transition-colors hover:bg-neutral-50 hover:text-neutral-950 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-neutral-100"
     >
-      <Icon className="h-4 w-4" />
+      <Icon size={16} strokeWidth={1.75} />
     </button>
   );
 }
@@ -68,15 +67,15 @@ function NotificationToggleButton() {
       title={label}
       aria-label={label}
       aria-pressed={browserEnabled}
-      className={`relative inline-flex h-9 w-9 items-center justify-center rounded-lg border transition-colors ${
+      className={`relative inline-flex h-8 w-8 items-center justify-center rounded-md border transition-colors ${
         browserEnabled
-          ? 'border-brand-300 bg-brand-50 text-brand-700 hover:bg-brand-100 dark:border-brand-700 dark:bg-brand-900/40 dark:text-brand-300 dark:hover:bg-brand-900/60'
-          : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-50'
+          ? 'border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100 dark:border-blue-800 dark:bg-blue-950/50 dark:text-blue-300'
+          : 'border-neutral-200 bg-white text-neutral-600 hover:bg-neutral-50 hover:text-neutral-950 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-neutral-100'
       }`}
     >
-      {browserEnabled ? <Bell className="h-4 w-4" /> : <BellOff className="h-4 w-4" />}
+      {browserEnabled ? <Bell size={16} strokeWidth={1.75} /> : <BellOff size={16} strokeWidth={1.75} />}
       {browserEnabled && (
-        <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-slate-900" aria-hidden="true" />
+        <span className="absolute right-1 top-1 h-1.5 w-1.5 rounded-full bg-emerald-500" aria-hidden="true" />
       )}
     </button>
   );
@@ -89,17 +88,16 @@ export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [signingIn, setSigningIn] = useState(false);
+  const [termsModalOpen, setTermsModalOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Đóng menu khi đổi trang
   useEffect(() => {
     setMenuOpen(false);
     setMobileOpen(false);
   }, [location.pathname]);
 
-  // Đóng menu tài khoản khi bấm ra ngoài / nhấn Esc
   useEffect(() => {
     if (!menuOpen) return;
     const onDown = (e: MouseEvent) => {
@@ -121,7 +119,7 @@ export default function Navbar() {
   const handleSignIn = async () => {
     setSigningIn(true);
     try {
-      await signIn(); // chuyển hướng sang Google
+      await signIn();
     } catch {
       setSigningIn(false);
     }
@@ -134,151 +132,183 @@ export default function Navbar() {
     navigate('/');
   };
 
+  const handleSellClick = () => {
+    setMobileOpen(false);
+    if (hasAcceptedSellerTerms()) {
+      navigate('/sell');
+    } else {
+      setTermsModalOpen(true);
+    }
+  };
+
   return (
-    <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/90 backdrop-blur dark:border-slate-800 dark:bg-slate-900/90">
-      <div className="mx-auto flex h-14 max-w-6xl items-center gap-2 px-4 sm:px-6">
-        <Link to="/" className="flex items-center gap-2 font-semibold tracking-tight text-slate-900 dark:text-slate-50">
-          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-700 text-white dark:bg-brand-600">
-            <Headphones className="h-[18px] w-[18px]" />
-          </span>
-          <span className="flex flex-col leading-tight">
-            <span>VAHA Market</span>
-            <span className="hidden text-[10px] font-normal text-slate-500 dark:text-slate-400 lg:block">
-              Vietnamese Association of Headphone Addicts Market
+    <>
+      <header className="sticky top-0 z-40 h-14 border-b border-neutral-200 bg-white/95 backdrop-blur dark:border-neutral-800 dark:bg-neutral-950/95">
+        <div className="mx-auto flex h-full max-w-6xl items-center gap-3 px-4 sm:px-6">
+          <Link to="/" className="flex items-center gap-2 tracking-tight text-neutral-950 dark:text-neutral-50">
+            <span className="text-sm font-bold tracking-wider">VAHA MARKET</span>
+            <span className="rounded border border-neutral-200 bg-neutral-100 px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wider text-neutral-600 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-400">
+              ESCROW
             </span>
-          </span>
-        </Link>
+          </Link>
 
-        {/* Desktop */}
-        <nav className="ml-4 hidden items-center gap-1 md:flex">
-          {user && (
-            <NavLink to="/orders" className={navLinkClass}>
-              <Package className="h-4 w-4" /> Đơn hàng của tôi <CountBadge count={alerts.total} />
+          {/* Desktop nav */}
+          <nav className="ml-3 hidden items-center gap-0.5 md:flex">
+            <NavLink to="/" end className={navLinkClass}>
+              Khám phá
             </NavLink>
-          )}
-          {isAdmin && (
-            <NavLink to="/admin" className={navLinkClass}>
-              <Shield className="h-4 w-4" /> Admin
-            </NavLink>
-          )}
-        </nav>
+            {user && (
+              <>
+                <NavLink to="/orders" className={navLinkClass}>
+                  Đơn hàng <CountBadge count={alerts.total} />
+                </NavLink>
+                <NavLink to="/my-listings" className={navLinkClass}>
+                  Tin của tôi
+                </NavLink>
+              </>
+            )}
+            {isAdmin && (
+              <NavLink to="/admin" className={navLinkClass}>
+                <Shield size={15} strokeWidth={1.75} /> Admin
+              </NavLink>
+            )}
+          </nav>
 
-        <div className="ml-auto flex items-center gap-2">
-          {user && <NotificationToggleButton />}
-          <ThemeToggleButton />
+          <div className="ml-auto flex items-center gap-2">
+            {user && <NotificationToggleButton />}
+            <ThemeToggleButton />
 
-          {!blocked && (
-            <Link to="/sell" className="btn-primary hidden sm:inline-flex">
-              <Plus className="h-4 w-4" /> Đăng bán
-            </Link>
-          )}
-
-          {loading ? (
-            <span className="h-8 w-8 animate-pulse rounded-full bg-slate-100 dark:bg-slate-800" />
-          ) : user ? (
-            <div ref={menuRef} className="relative hidden md:block">
+            {!blocked && (
               <button
                 type="button"
-                onClick={() => setMenuOpen((v) => !v)}
-                aria-haspopup="menu"
-                aria-expanded={menuOpen}
-                className="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-slate-50 dark:hover:bg-slate-800"
+                onClick={handleSellClick}
+                className="btn-primary hidden h-8 px-3 text-xs sm:inline-flex"
               >
-                <Avatar name={displayName} url={profile?.avatar_url ?? null} />
-                <span className="max-w-[9rem] truncate text-sm font-medium text-slate-700 dark:text-slate-200">{displayName}</span>
-                <ChevronDown className="h-4 w-4 text-slate-400" />
+                <Plus size={15} strokeWidth={2} /> Đăng bán
               </button>
-              {menuOpen && (
-                <div
-                  role="menu"
-                  className="absolute right-0 mt-2 w-56 overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-pop dark:border-slate-700 dark:bg-slate-900"
+            )}
+
+            {loading ? (
+              <span className="h-8 w-8 animate-pulse rounded-full bg-neutral-100 dark:bg-neutral-800" />
+            ) : user ? (
+              <div ref={menuRef} className="relative hidden md:block">
+                <button
+                  type="button"
+                  onClick={() => setMenuOpen((v) => !v)}
+                  aria-haspopup="menu"
+                  aria-expanded={menuOpen}
+                  className="flex items-center gap-1.5 rounded-md px-1.5 py-1 hover:bg-neutral-100 dark:hover:bg-neutral-800"
                 >
-                  <div className="border-b border-slate-100 px-3 py-2 dark:border-slate-800">
-                    <p className="truncate text-sm font-medium text-slate-900 dark:text-slate-100">{displayName}</p>
-                    <p className="truncate text-xs text-slate-500 dark:text-slate-400">{user.email}</p>
+                  <Avatar name={displayName} url={profile?.avatar_url ?? null} size={28} />
+                  <ChevronDown size={14} strokeWidth={1.75} className="text-neutral-400" />
+                </button>
+                {menuOpen && (
+                  <div
+                    role="menu"
+                    className="absolute right-0 mt-1.5 w-56 overflow-hidden rounded-lg border border-neutral-200 bg-white py-1 dark:border-neutral-800 dark:bg-neutral-900"
+                  >
+                    <div className="border-b border-neutral-100 px-3 py-2 dark:border-neutral-800">
+                      <p className="truncate text-sm font-medium text-neutral-900 dark:text-neutral-100">{displayName}</p>
+                      <p className="truncate text-xs text-neutral-500 dark:text-neutral-400">{user.email}</p>
+                    </div>
+                    <Link
+                      role="menuitem"
+                      to="/my-listings"
+                      className="flex items-center gap-2 px-3 py-2 text-sm text-neutral-700 hover:bg-neutral-50 dark:text-neutral-200 dark:hover:bg-neutral-800"
+                    >
+                      <Tag size={15} strokeWidth={1.75} className="text-neutral-400" /> Tin của tôi
+                    </Link>
+                    <Link
+                      role="menuitem"
+                      to="/settings"
+                      className="flex items-center gap-2 px-3 py-2 text-sm text-neutral-700 hover:bg-neutral-50 dark:text-neutral-200 dark:hover:bg-neutral-800"
+                    >
+                      <Settings size={15} strokeWidth={1.75} className="text-neutral-400" /> Cài đặt tài khoản
+                    </Link>
+                    <button
+                      role="menuitem"
+                      type="button"
+                      onClick={handleSignOut}
+                      className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-neutral-700 hover:bg-neutral-50 dark:text-neutral-200 dark:hover:bg-neutral-800"
+                    >
+                      <LogOut size={15} strokeWidth={1.75} className="text-neutral-400" /> Đăng xuất
+                    </button>
                   </div>
-                  <Link
-                    role="menuitem"
-                    to="/my-listings"
-                    className="flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800"
-                  >
-                    <Tag className="h-4 w-4 text-slate-400" /> Tin đăng của tôi
-                  </Link>
-                  <Link
-                    role="menuitem"
-                    to="/settings"
-                    className="flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800"
-                  >
-                    <Settings className="h-4 w-4 text-slate-400" /> Cài đặt tài khoản
-                  </Link>
+                )}
+              </div>
+            ) : (
+              <button type="button" onClick={handleSignIn} disabled={signingIn} className="btn-secondary hidden h-8 px-3 text-xs md:inline-flex">
+                <LogIn size={15} strokeWidth={1.75} /> Đăng nhập
+              </button>
+            )}
+
+            <button
+              type="button"
+              onClick={() => setMobileOpen((v) => !v)}
+              aria-label={mobileOpen ? 'Đóng menu' : 'Mở menu'}
+              aria-expanded={mobileOpen}
+              className="btn-ghost relative h-8 w-8 px-0 md:hidden"
+            >
+              {mobileOpen ? <X size={18} strokeWidth={1.75} /> : <Menu size={18} strokeWidth={1.75} />}
+              {!mobileOpen && alerts.total > 0 && (
+                <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-red-600" aria-hidden="true" />
+              )}
+            </button>
+          </div>
+        </div>
+
+        {/* Mobile panel */}
+        {mobileOpen && (
+          <div className="border-b border-neutral-200 bg-white px-4 pb-4 pt-2 dark:border-neutral-800 dark:bg-neutral-950 md:hidden">
+            {!blocked && (
+              <button type="button" onClick={handleSellClick} className="btn-primary mb-2 w-full">
+                <Plus size={16} strokeWidth={1.75} /> Đăng bán
+              </button>
+            )}
+            <div className="flex flex-col gap-0.5">
+              <NavLink to="/" end className={navLinkClass}>Khám phá</NavLink>
+              {user ? (
+                <>
+                  <div className="my-1 flex items-center gap-2 border-y border-neutral-100 py-2 dark:border-neutral-800">
+                    <Avatar name={displayName} url={profile?.avatar_url ?? null} size={32} />
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium text-neutral-900 dark:text-neutral-100">{displayName}</p>
+                      <p className="truncate text-xs text-neutral-500 dark:text-neutral-400">{user.email}</p>
+                    </div>
+                  </div>
+                  <NavLink to="/orders" className={navLinkClass}>Đơn hàng <CountBadge count={alerts.total} /></NavLink>
+                  <NavLink to="/my-listings" className={navLinkClass}>Tin của tôi</NavLink>
+                  {isAdmin && <NavLink to="/admin" className={navLinkClass}><Shield size={15} strokeWidth={1.75} /> Admin</NavLink>}
+                  <NavLink to="/settings" className={navLinkClass}>Cài đặt tài khoản</NavLink>
                   <button
-                    role="menuitem"
                     type="button"
                     onClick={handleSignOut}
-                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800"
+                    className="inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-left text-sm font-medium text-neutral-600 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:bg-neutral-800"
                   >
-                    <LogOut className="h-4 w-4 text-slate-400" /> Đăng xuất
+                    <LogOut size={15} strokeWidth={1.75} /> Đăng xuất
                   </button>
-                </div>
+                </>
+              ) : (
+                <button type="button" onClick={handleSignIn} disabled={signingIn} className="btn-secondary mt-2 w-full">
+                  <LogIn size={16} strokeWidth={1.75} /> Đăng nhập với Google
+                </button>
               )}
             </div>
-          ) : (
-            <button type="button" onClick={handleSignIn} disabled={signingIn} className="btn-secondary hidden md:inline-flex">
-              <LogIn className="h-4 w-4" /> Đăng nhập với Google
-            </button>
-          )}
+          </div>
+        )}
+      </header>
 
-          <button
-            type="button"
-            onClick={() => setMobileOpen((v) => !v)}
-            aria-label={mobileOpen ? 'Đóng menu' : 'Mở menu'}
-            aria-expanded={mobileOpen}
-            className="btn-ghost relative px-2 md:hidden"
-          >
-            {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-            {!mobileOpen && alerts.total > 0 && (
-              <span className="absolute right-1 top-1 h-2.5 w-2.5 rounded-full bg-red-600 ring-2 ring-white dark:ring-slate-900" aria-hidden="true" />
-            )}
-          </button>
-        </div>
-      </div>
-
-      {/* Mobile panel */}
-      {mobileOpen && (
-        <div className="border-t border-slate-200 bg-white px-4 pb-4 pt-2 dark:border-slate-800 dark:bg-slate-900 md:hidden">
-          {!blocked && (
-            <Link to="/sell" className="btn-primary mb-2 w-full">
-              <Plus className="h-4 w-4" /> Đăng bán
-            </Link>
-          )}
-          {user ? (
-            <div className="flex flex-col">
-              <div className="flex items-center gap-2 px-1 py-2">
-                <Avatar name={displayName} url={profile?.avatar_url ?? null} size={36} />
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-medium text-slate-900 dark:text-slate-100">{displayName}</p>
-                  <p className="truncate text-xs text-slate-500 dark:text-slate-400">{user.email}</p>
-                </div>
-              </div>
-              <NavLink to="/orders" className={navLinkClass}><Package className="h-4 w-4" /> Đơn hàng của tôi <CountBadge count={alerts.total} /></NavLink>
-              <NavLink to="/my-listings" className={navLinkClass}><Tag className="h-4 w-4" /> Tin đăng của tôi</NavLink>
-              {isAdmin && <NavLink to="/admin" className={navLinkClass}><Shield className="h-4 w-4" /> Admin</NavLink>}
-              <NavLink to="/settings" className={navLinkClass}><Settings className="h-4 w-4" /> Cài đặt tài khoản</NavLink>
-              <button
-                type="button"
-                onClick={handleSignOut}
-                className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800"
-              >
-                <LogOut className="h-4 w-4" /> Đăng xuất
-              </button>
-            </div>
-          ) : (
-            <button type="button" onClick={handleSignIn} disabled={signingIn} className="btn-secondary w-full">
-              <LogIn className="h-4 w-4" /> Đăng nhập với Google
-            </button>
-          )}
-        </div>
-      )}
-    </header>
+      <SellerTermsModal
+        open={termsModalOpen}
+        onAccept={() => {
+          setTermsModalOpen(false);
+          navigate('/sell');
+        }}
+        onCancel={() => {
+          setTermsModalOpen(false);
+          navigate('/');
+        }}
+      />
+    </>
   );
 }

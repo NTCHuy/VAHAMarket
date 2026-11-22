@@ -371,7 +371,7 @@ function ToastContainer({
         <div
           key={t.id}
           role="status"
-          className="pointer-events-auto overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 shadow-pop transition-all dark:border-slate-700 dark:bg-slate-900"
+          className="pointer-events-auto overflow-hidden rounded-lg border border-slate-200 bg-white p-4 transition-all dark:border-slate-700 dark:bg-slate-900"
         >
           <div className="flex items-start gap-3">
             <span className="mt-0.5 shrink-0">

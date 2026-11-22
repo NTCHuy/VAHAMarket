@@ -113,7 +113,7 @@ function SellerChecklist({
 
   return (
     <section
-      className={`rounded-2xl border p-4 sm:p-5 ${
+      className={`rounded-lg border p-4 sm:p-5 ${
         ready ? 'border-emerald-200 dark:border-emerald-800/70 bg-emerald-50/70 dark:bg-emerald-950/40' : 'border-amber-200 dark:border-amber-800/70 bg-amber-50/80 dark:bg-amber-950/50'
       }`}
     >

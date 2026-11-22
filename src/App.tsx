@@ -31,6 +31,7 @@ export default function App() {
         <Route element={<RequireAuth />}>
           <Route path="settings" element={<AccountSettings />} />
           <Route path="sell" element={<CreateListing />} />
+          <Route path="create-listing" element={<CreateListing />} />
           <Route path="sell/:id/edit" element={<CreateListing />} />
           <Route path="my-listings" element={<MyListings />} />
           <Route path="orders" element={<Orders />} />

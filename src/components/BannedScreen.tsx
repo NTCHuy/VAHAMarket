@@ -11,12 +11,10 @@ export default function BannedScreen() {
     <div className="mx-auto my-8 max-w-xl">
       <div
         role="alert"
-        className="rounded-2xl border-2 border-red-600 bg-red-50 p-6 text-red-950 shadow-sm dark:border-red-500/80 dark:bg-red-950/60 dark:text-red-50 sm:p-8"
+        className="rounded-lg border-2 border-red-600 bg-red-50 p-6 text-red-950 dark:border-red-500/80 dark:bg-red-950/60 dark:text-red-50 sm:p-8"
       >
         <div className="flex flex-col items-center text-center">
-          <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-red-600 text-white shadow-sm">
-            <ShieldBan className="h-7 w-7" />
-          </span>
+          <ShieldBan size={28} strokeWidth={1.75} className="text-red-600 dark:text-red-400" />
           <h1 className="mt-4 text-xl font-bold text-red-900 dark:text-red-100 sm:text-2xl">
             {isBanned ? 'Tài khoản của bạn đã bị khóa vĩnh viễn' : 'Thiết bị này đã bị cấm truy cập VAHA Market'}
           </h1>

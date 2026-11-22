@@ -149,7 +149,7 @@ function buildEmail(payload: EmailPayload): { subject: string; html: string; tex
   const feeCapLabel = formatVnd(typeof payload.feeCapVnd === 'number' && payload.feeCapVnd > 0 ? payload.feeCapVnd : 500000);
   const feeCapHtml =
     payload.isFeeCapped && feeSaved > 0
-      ? `<div style="background-color:#ecfdf5;border:1px solid #6ee7b7;border-radius:10px;padding:12px 14px;margin-bottom:14px;color:#065f46;font-size:13px;"><strong>🎉 Ưu đãi trần phí sàn:</strong> Đơn hàng đã đạt mức trần phí sàn tối đa <strong>${feeCapLabel}</strong>, giúp bạn tiết kiệm <strong>${formatVnd(feeSaved)}</strong>.</div>`
+      ? `<div style="background-color:#ecfdf5;border:1px solid #6ee7b7;border-radius:10px;padding:12px 14px;margin-bottom:14px;color:#065f46;font-size:13px;"><strong>Ưu đãi trần phí sàn:</strong> Đơn hàng đã đạt mức trần phí sàn tối đa <strong>${feeCapLabel}</strong>, giúp bạn tiết kiệm <strong>${formatVnd(feeSaved)}</strong>.</div>`
       : '';
   const feeCapText =
     payload.isFeeCapped && feeSaved > 0

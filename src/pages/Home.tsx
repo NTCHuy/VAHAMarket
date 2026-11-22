@@ -1,23 +1,26 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Headphones, Loader2, MapPin, Search, SlidersHorizontal, Truck, X } from 'lucide-react';
+import { Check, Loader2, Search, SlidersHorizontal, X } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { cldUrl } from '@/lib/cloudinary';
 import { getErrorMessage } from '@/lib/errors';
-import { BOX_STATUS_OPTIONS, CATEGORIES, LISTING_CONDITIONS, getBoxStatusLabel, getCategory, getConditionLabel } from '@/constants/categories';
+import { BOX_STATUS_OPTIONS, CATEGORIES, LISTING_CONDITIONS } from '@/constants/categories';
 import { PROVINCES } from '@/constants/provinces';
 import { Alert } from '@/components/ui';
-import PriceTag from '@/components/PriceTag';
 import { usePlatformSettings } from '@/context/PlatformSettingsContext';
-import { getDisplayPrice } from '@/lib/money';
+import { formatVND, getDisplayPrice } from '@/lib/money';
 import type { Listing } from '@/types';
 
-type ListingCard = Pick<Listing, 'id' | 'title' | 'price' | 'original_price' | 'fee_payer' | 'condition' | 'category' | 'province' | 'ship_cod' | 'box_status' | 'images'> & {
-  profiles: { is_mod: boolean } | null; // người bán (để biết Mod → phí 0%)
+type ListingCardItem = Pick<
+  Listing,
+  'id' | 'title' | 'price' | 'original_price' | 'fee_payer' | 'condition' | 'category' | 'province' | 'ship_cod' | 'box_status' | 'images' | 'verification_image_url'
+> & {
+  profiles: { display_name: string; is_mod: boolean; facebook_url: string | null } | null;
 };
 
 const PAGE_SIZE = 24;
-const COLUMNS = 'id,title,price,original_price,fee_payer,condition,category,province,ship_cod,box_status,images,profiles(is_mod)';
+const COLUMNS =
+  'id,title,price,original_price,fee_payer,condition,category,province,ship_cod,box_status,images,verification_image_url,profiles(display_name,is_mod,facebook_url)';
 
 type SortKey = 'new' | 'price_asc' | 'price_desc';
 const SORTS: { id: SortKey; label: string }[] = [
@@ -26,8 +29,24 @@ const SORTS: { id: SortKey; label: string }[] = [
   { id: 'price_desc', label: 'Giá giảm dần' },
 ];
 
-/** Escape ký tự đặc biệt của LIKE để người dùng gõ % hoặc _ không bị hiểu sai. */
-const escapeLike = (s: string) => s.replace(/[\\%_]/g, (c) => `\\${c}`);
+const QUICK_CATEGORIES: { id: string; label: string }[] = [
+  { id: '', label: 'Tất cả' },
+  { id: 'iem', label: 'IEM' },
+  { id: 'over-ear', label: 'Over-ear' },
+  { id: 'dac-amp', label: 'DAC/Amp' },
+  { id: 'cable-accessory', label: 'Dây dẫn & Phụ kiện' },
+  { id: 'tws', label: 'TWS' },
+  { id: 'dap', label: 'DAP' },
+];
+
+const SHORT_CONDITION: Record<string, string> = {
+  like_new: 'Like new 99%',
+  good: 'Tốt 90–98%',
+  fair: 'Khá',
+  for_parts: 'Xác / Linh kiện',
+};
+
+const escapeLike = (s: string) => s.replace(/[\%_]/g, (c) => `\${c}`);
 const digitsOnly = (s: string) => s.replace(/\D/g, '').slice(0, 10);
 
 export default function Home() {
@@ -42,11 +61,10 @@ export default function Home() {
   const max = params.get('max') ?? '';
   const sort = (params.get('sort') as SortKey | null) ?? 'new';
 
-  // Ô nhập có debounce để không gọi API mỗi phím bấm
   const [searchText, setSearchText] = useState(q);
   const [minText, setMinText] = useState(min);
   const [maxText, setMaxText] = useState(max);
-  const [showFilters, setShowFilters] = useState(false);
+  const [showMoreFilters, setShowMoreFilters] = useState(false);
 
   const setParam = useCallback(
     (key: string, value: string) => {
@@ -78,7 +96,7 @@ export default function Home() {
     return () => clearTimeout(t);
   }, [minText, maxText, min, max, setParam]);
 
-  const [items, setItems] = useState<ListingCard[]>([]);
+  const [items, setItems] = useState<ListingCardItem[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -90,7 +108,7 @@ export default function Home() {
       let query = supabase
         .from('listings')
         .select(COLUMNS, { count: 'exact' })
-        .eq('status', 'active'); // bắt buộc: RLS không tự lọc, query phải khớp policy
+        .eq('status', 'active');
 
       if (q) query = query.ilike('title', `%${escapeLike(q)}%`);
       if (category) query = query.eq('category', category);
@@ -109,16 +127,15 @@ export default function Home() {
     [q, category, province, condition, box, min, max, sort],
   );
 
-  // Tải lại từ đầu khi bộ lọc đổi
   useEffect(() => {
     const id = ++requestId.current;
     setLoading(true);
     setError(null);
     fetchPage(0).then(({ data, count, error: err }) => {
-      if (id !== requestId.current) return; // bỏ kết quả cũ
+      if (id !== requestId.current) return;
       if (err) setError(getErrorMessage(err));
       else {
-        setItems((data ?? []) as unknown as ListingCard[]);
+        setItems((data ?? []) as unknown as ListingCardItem[]);
         setTotal(count ?? 0);
       }
       setLoading(false);
@@ -131,10 +148,11 @@ export default function Home() {
     const { data, error: err } = await fetchPage(items.length);
     if (id !== requestId.current) return;
     if (err) setError(getErrorMessage(err));
-    else setItems((prev) => [...prev, ...((data ?? []) as unknown as ListingCard[])]);
+    else setItems((prev) => [...prev, ...((data ?? []) as unknown as ListingCardItem[])]);
     setLoadingMore(false);
   };
 
+  const extraFilterCount = [condition, box, min, max].filter(Boolean).length;
   const activeFilters = [category, province, condition, box, min, max].filter(Boolean).length;
   const clearFilters = () => {
     setMinText('');
@@ -150,104 +168,180 @@ export default function Home() {
     );
   };
 
-  return (
-    <div className="space-y-5">
-      <section className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-card sm:p-7">
-        <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">VAHA Market</h1>
-        <p className="text-xs font-medium uppercase tracking-wide text-brand-700 dark:text-brand-400">Vietnamese Association of Headphone Addicts Market</p>
-        <p className="mt-1.5 max-w-xl text-sm text-slate-600 dark:text-slate-400 sm:text-base">
-          Mua bán đồ âm thanh second-hand có trung gian giữ tiền — an tâm cho cả người mua lẫn người bán.
-        </p>
+  const feePctText = `${Number((feeBp / 100).toFixed(2))}%`;
+  const feeSummary =
+    feeBp === 0
+      ? 'Ưu đãi 0% phí sàn'
+      : `Phí sàn ${feePctText}${feeCapVnd > 0 ? ` (trần ${formatVND(feeCapVnd)}/đơn)` : ''}`;
 
-        <div className="mt-4 flex gap-2">
-          <div className="relative flex-1">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
+  return (
+    <div className="space-y-4">
+      {/* Compact Trust Strip — 1 dòng trạng thái nền tảng, không dùng Hero Banner */}
+      <div className="-mx-4 -mt-5 border-b border-neutral-200 bg-neutral-100 px-4 py-2.5 text-xs text-neutral-700 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-300 sm:-mx-6 sm:-mt-6 sm:px-6">
+        <div className="mx-auto flex flex-col gap-1.5 lg:flex-row lg:items-center lg:justify-between">
+          <p className="leading-snug">
+            <strong className="font-semibold text-neutral-900 dark:text-neutral-100">VAHA Market</strong> — Sàn giao dịch trung gian thiết bị âm thanh dành cho cộng đồng Hội người Việt nghiện tai nghe · Vận hành độc lập bởi{' '}
+            <span className="font-medium text-neutral-900 dark:text-neutral-100">Huy Nguyễn (HweeHiFi)</span>.
+          </p>
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 tabular-nums text-neutral-600 dark:text-neutral-400">
+            <span className="font-medium text-neutral-900 dark:text-neutral-100">{total} tin đang bán</span>
+            <span aria-hidden="true">·</span>
+            <span className={feeBp < 500 ? 'font-medium text-emerald-700 dark:text-emerald-400' : ''}>{feeSummary}</span>
+            <span aria-hidden="true">·</span>
+            <Link to="/terms" className="font-medium text-blue-700 hover:underline dark:text-blue-400">
+              Quy trình 3 bước &amp; Điều khoản
+            </Link>
+          </div>
+        </div>
+      </div>
+
+      {/* Thanh tìm kiếm & lọc ngang hàng mật độ cao */}
+      <section className="space-y-2.5" aria-label="Tìm kiếm và bộ lọc">
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="relative min-w-[220px] flex-1">
+            <Search size={16} strokeWidth={1.75} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" />
             <input
               type="search"
-              className="input pl-9"
-              placeholder="Tìm theo tên sản phẩm: HD650, Moondrop, DAC..."
+              className="input h-9 pl-9"
+              placeholder="Tìm IEM, Over-ear, DAC/Amp, thương hiệu..."
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
               aria-label="Tìm kiếm sản phẩm"
             />
           </div>
-          <button type="button" className="btn-secondary md:hidden" onClick={() => setShowFilters((v) => !v)} aria-expanded={showFilters}>
-            <SlidersHorizontal className="h-4 w-4" /> Lọc{activeFilters > 0 && ` (${activeFilters})`}
-          </button>
-        </div>
 
-        <div className={`${showFilters ? 'grid' : 'hidden'} mt-3 grid-cols-2 gap-2 md:grid md:grid-cols-4`}>
-          <select className="input" value={category} onChange={(e) => setParam('category', e.target.value)} aria-label="Phân loại">
-            <option value="">Mọi phân loại</option>
-            {CATEGORIES.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}
-          </select>
-          <select className="input" value={province} onChange={(e) => setParam('province', e.target.value)} aria-label="Tỉnh/Thành phố">
+          <select
+            className="input h-9 w-auto min-w-[140px]"
+            value={province}
+            onChange={(e) => setParam('province', e.target.value)}
+            aria-label="Khu vực"
+          >
             <option value="">Mọi khu vực</option>
-            {PROVINCES.map((p) => <option key={p} value={p}>{p}</option>)}
+            {PROVINCES.map((p) => (
+              <option key={p} value={p}>{p}</option>
+            ))}
           </select>
-          <select className="input" value={condition} onChange={(e) => setParam('condition', e.target.value)} aria-label="Tình trạng ngoại hình">
-            <option value="">Mọi tình trạng</option>
-            {LISTING_CONDITIONS.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}
+
+          <select
+            className="input h-9 w-auto min-w-[130px]"
+            value={sort}
+            onChange={(e) => setParam('sort', e.target.value)}
+            aria-label="Sắp xếp"
+          >
+            {SORTS.map((s) => (
+              <option key={s.id} value={s.id}>{s.label}</option>
+            ))}
           </select>
-          <select className="input" value={box} onChange={(e) => setParam('box', e.target.value)} aria-label="Hộp & phụ kiện">
-            <option value="">Mọi hộp/phụ kiện</option>
-            {BOX_STATUS_OPTIONS.map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}
-          </select>
-          <input className="input" inputMode="numeric" placeholder="Giá từ (đ)" value={minText ? new Intl.NumberFormat('vi-VN').format(parseInt(minText, 10)) : ''} onChange={(e) => setMinText(digitsOnly(e.target.value))} aria-label="Giá tối thiểu" />
-          <input className="input" inputMode="numeric" placeholder="Giá đến (đ)" value={maxText ? new Intl.NumberFormat('vi-VN').format(parseInt(maxText, 10)) : ''} onChange={(e) => setMaxText(digitsOnly(e.target.value))} aria-label="Giá tối đa" />
-          <select className="input" value={sort} onChange={(e) => setParam('sort', e.target.value)} aria-label="Sắp xếp">
-            {SORTS.map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}
-          </select>
+
+          <button
+            type="button"
+            className={`btn-secondary h-9 px-3 text-xs ${extraFilterCount > 0 ? 'border-blue-600 text-blue-700 dark:border-blue-500 dark:text-blue-400' : ''}`}
+            onClick={() => setShowMoreFilters((v) => !v)}
+            aria-expanded={showMoreFilters}
+          >
+            <SlidersHorizontal size={15} strokeWidth={1.75} />
+            Bộ lọc{extraFilterCount > 0 ? ` (${extraFilterCount})` : ''}
+          </button>
+
           {activeFilters > 0 && (
-            <button type="button" className="btn-ghost" onClick={clearFilters}><X className="h-4 w-4" /> Xóa bộ lọc</button>
+            <button type="button" className="btn-ghost h-9 px-2.5 text-xs" onClick={clearFilters}>
+              <X size={14} strokeWidth={1.75} /> Xóa lọc
+            </button>
           )}
         </div>
-      </section>
 
-      <section>
-        <div className="mb-3 flex items-baseline justify-between">
-          <h2 className="text-lg font-semibold">{q || activeFilters ? 'Kết quả' : 'Tin mới đăng'}</h2>
-          {!loading && !error && <span className="text-sm text-slate-500 dark:text-slate-400">{total} sản phẩm</span>}
+        {/* Dải nút lọc danh mục ngang */}
+        <div className="flex flex-wrap items-center gap-1.5">
+          {QUICK_CATEGORIES.map((c) => {
+            const active = category === c.id;
+            return (
+              <button
+                key={c.id || 'all'}
+                type="button"
+                onClick={() => setParam('category', c.id)}
+                className={`rounded-md border px-2.5 py-1 text-xs font-medium transition-colors ${
+                  active
+                    ? 'border-neutral-900 bg-neutral-900 text-white dark:border-neutral-100 dark:bg-neutral-100 dark:text-neutral-950'
+                    : 'border-neutral-200 bg-white text-neutral-700 hover:bg-neutral-100 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-800'
+                }`}
+              >
+                {c.label}
+              </button>
+            );
+          })}
+          <select
+            className="h-[26px] rounded-md border border-neutral-200 bg-white px-2 text-xs text-neutral-600 focus:border-blue-600 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-400"
+            value={QUICK_CATEGORIES.some((c) => c.id === category) ? '' : category}
+            onChange={(e) => setParam('category', e.target.value)}
+            aria-label="Danh mục khác"
+          >
+            <option value="">Danh mục khác...</option>
+            {CATEGORIES.filter((c) => !QUICK_CATEGORIES.some((q) => q.id === c.id)).map((c) => (
+              <option key={c.id} value={c.id}>{c.label}</option>
+            ))}
+          </select>
         </div>
 
+        {/* Bộ lọc mở rộng (tình trạng, hộp, khoảng giá) */}
+        {showMoreFilters && (
+          <div className="grid grid-cols-2 gap-2 rounded-lg border border-neutral-200 bg-white p-3 dark:border-neutral-800 dark:bg-neutral-900 sm:grid-cols-4">
+            <select className="input h-9 text-xs" value={condition} onChange={(e) => setParam('condition', e.target.value)} aria-label="Tình trạng">
+              <option value="">Mọi tình trạng</option>
+              {LISTING_CONDITIONS.map((c) => (
+                <option key={c.id} value={c.id}>{c.label}</option>
+              ))}
+            </select>
+            <select className="input h-9 text-xs" value={box} onChange={(e) => setParam('box', e.target.value)} aria-label="Hộp & phụ kiện">
+              <option value="">Mọi hộp / phụ kiện</option>
+              {BOX_STATUS_OPTIONS.map((o) => (
+                <option key={o.id} value={o.id}>{o.label}</option>
+              ))}
+            </select>
+            <input
+              className="input h-9 text-xs tabular-nums"
+              inputMode="numeric"
+              placeholder="Giá từ (₫)"
+              value={minText ? new Intl.NumberFormat('vi-VN').format(parseInt(minText, 10)) : ''}
+              onChange={(e) => setMinText(digitsOnly(e.target.value))}
+              aria-label="Giá tối thiểu"
+            />
+            <input
+              className="input h-9 text-xs tabular-nums"
+              inputMode="numeric"
+              placeholder="Giá đến (₫)"
+              value={maxText ? new Intl.NumberFormat('vi-VN').format(parseInt(maxText, 10)) : ''}
+              onChange={(e) => setMaxText(digitsOnly(e.target.value))}
+              aria-label="Giá tối đa"
+            />
+          </div>
+        )}
+      </section>
+
+      {/* Danh sách sản phẩm */}
+      <section aria-label="Danh sách sản phẩm đang bán">
         {loading ? (
-          <div className="flex justify-center py-16"><Loader2 className="h-7 w-7 animate-spin text-slate-400 dark:text-slate-500" /></div>
+          <div className="flex justify-center py-16">
+            <Loader2 size={24} strokeWidth={1.75} className="animate-spin text-neutral-400" />
+          </div>
         ) : error ? (
           <Alert kind="error">{error}</Alert>
         ) : items.length === 0 ? (
-          <div className="card flex flex-col items-center px-4 py-12 text-center">
-            <Headphones className="h-8 w-8 text-slate-300 dark:text-slate-600" />
-            <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">{q || activeFilters ? 'Không có sản phẩm nào khớp bộ lọc.' : 'Chưa có tin nào. Hãy là người đăng bán đầu tiên!'}</p>
+          <div className="card px-4 py-12 text-center text-sm text-neutral-600 dark:text-neutral-400">
+            {q || activeFilters ? 'Không tìm thấy sản phẩm phù hợp với bộ lọc hiện tại.' : 'Chưa có sản phẩm nào đang mở bán.'}
           </div>
         ) : (
           <>
-            <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4">
+            <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
               {items.map((l) => (
-                <li key={l.id}>
-                  <Link to={`/listing/${l.id}`} className="card block h-full overflow-hidden transition-shadow hover:shadow-pop">
-                    <div className="aspect-square bg-slate-100 dark:bg-slate-800">
-                      {l.images[0] && (
-                        <img src={cldUrl(l.images[0].url, { width: 480, height: 480, crop: 'fill' })} alt={l.title} loading="lazy" className="h-full w-full object-cover" />
-                      )}
-                    </div>
-                    <div className="space-y-1 p-3">
-                      <p className="line-clamp-2 text-sm font-medium text-slate-900 dark:text-slate-100">{l.title}</p>
-                      <CardPrice l={l} feeBp={feeBp} feeCapVnd={feeCapVnd} />
-                      <p className="text-xs text-slate-500 dark:text-slate-400">{getCategory(l.category)?.label ?? l.category} · {getConditionLabel(l.condition)}</p>
-                      <p className="text-xs text-slate-500 dark:text-slate-400">{getBoxStatusLabel(l.box_status)}</p>
-                      <p className="flex flex-wrap items-center gap-x-3 text-xs text-slate-500 dark:text-slate-400">
-                        {l.province && <span className="inline-flex items-center gap-1"><MapPin className="h-3 w-3" />{l.province}</span>}
-                        {l.ship_cod && <span className="inline-flex items-center gap-1"><Truck className="h-3 w-3" />Ship COD</span>}
-                      </p>
-                    </div>
-                  </Link>
-                </li>
+                <ListingCard key={l.id} listing={l} feeBp={feeBp} feeCapVnd={feeCapVnd} />
               ))}
             </ul>
+
             {items.length < total && (
               <div className="mt-6 flex justify-center">
                 <button type="button" className="btn-secondary" onClick={loadMore} disabled={loadingMore}>
-                  {loadingMore && <Loader2 className="h-4 w-4 animate-spin" />} Xem thêm
+                  {loadingMore && <Loader2 size={15} strokeWidth={1.75} className="animate-spin" />}
+                  Xem thêm ({total - items.length} sản phẩm)
                 </button>
               </div>
             )}
@@ -258,16 +352,90 @@ export default function Home() {
   );
 }
 
-/** Giá TRỌN GÓI người mua thực trả (đã gồm phần phí người mua chịu) + ưu đãi gạch ngang. */
-function CardPrice({ l, feeBp, feeCapVnd }: { l: ListingCard; feeBp: number; feeCapVnd: number }) {
-  const dp = getDisplayPrice(l, { isMod: l.profiles?.is_mod ?? false, globalBp: feeBp, feeCapVnd });
+function ListingCard({ listing: l, feeBp, feeCapVnd }: { listing: ListingCardItem; feeBp: number; feeCapVnd: number }) {
+  const isMod = l.profiles?.is_mod ?? false;
+  const dp = getDisplayPrice(l, { isMod, globalBp: feeBp, feeCapVnd });
+  const condTag = l.box_status === 'full' ? `${SHORT_CONDITION[l.condition] ?? l.condition} · Fullbox` : (SHORT_CONDITION[l.condition] ?? l.condition);
+  const feeSubline =
+    dp.fees.feeRateBp === 0
+      ? isMod
+        ? 'Mod · 0% phí sàn'
+        : 'Ưu đãi 0% phí sàn'
+      : dp.fees.buyerFee > 0
+        ? dp.fees.isFeeCapped
+          ? 'Đã gồm phí sàn (áp trần 500k)'
+          : 'Đã bao gồm phí sàn'
+        : 'Người bán chịu phí sàn';
+
   return (
-    <PriceTag
-      display={dp.display}
-      strike={dp.strike}
-      percent={dp.percent}
-      feePromo={dp.feePromo}
-      note={dp.fees.buyerFee > 0 ? 'Giá trọn gói, đã gồm phí bảo lãnh' : undefined}
-    />
+    <li>
+      <Link
+        to={`/listing/${l.id}`}
+        className="card group flex h-full flex-col overflow-hidden transition-colors hover:border-neutral-400 dark:hover:border-neutral-600"
+      >
+        {/* Khung ảnh 4:3 tràn viền trên */}
+        <div className="relative aspect-[4/3] w-full overflow-hidden bg-neutral-100 dark:bg-neutral-800">
+          {l.images[0] && (
+            <img
+              src={cldUrl(l.images[0].url, { width: 520, height: 390, crop: 'fill' })}
+              alt={l.title}
+              loading="lazy"
+              className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-[1.02]"
+            />
+          )}
+          <span className="absolute left-2 top-2 rounded bg-neutral-950/75 px-1.5 py-0.5 text-[11px] font-medium text-white backdrop-blur-[2px]">
+            {condTag}
+          </span>
+        </div>
+
+        {/* Thân thẻ 4 tầng thông tin */}
+        <div className="flex flex-1 flex-col p-3">
+          {/* Tầng 1: Tên sản phẩm */}
+          <p className="line-clamp-2 text-sm font-medium leading-snug text-neutral-950 dark:text-neutral-100">
+            {l.title}
+          </p>
+
+          {/* Tầng 2: Giá bán + dòng phụ phí */}
+          <div className="mt-2">
+            <div className="flex flex-wrap items-baseline gap-x-1.5 tabular-nums">
+              <span className="text-base font-semibold tracking-tight text-neutral-950 dark:text-neutral-50">
+                {formatVND(dp.display)}
+              </span>
+              {dp.strike && (
+                <span className="text-xs text-neutral-400 line-through dark:text-neutral-500">
+                  {formatVND(dp.strike)}
+                </span>
+              )}
+              {dp.percent > 0 && (
+                <span className="rounded bg-red-600 px-1 py-0.5 text-[10px] font-semibold leading-none text-white">
+                  −{dp.percent}%
+                </span>
+              )}
+            </div>
+            <p className="mt-0.5 text-[11px] text-neutral-500 dark:text-neutral-400">{feeSubline}</p>
+          </div>
+
+          {/* Tầng 3: Huy hiệu xác thực dạng chữ nhỏ gọn */}
+          <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] font-medium text-emerald-700 dark:text-emerald-400">
+            <span className="inline-flex items-center gap-0.5">
+              <Check size={12} strokeWidth={2.25} /> Đã đối chiếu FB &amp; NH
+            </span>
+            {l.verification_image_url && (
+              <span className="inline-flex items-center gap-0.5">
+                <Check size={12} strokeWidth={2.25} /> Ảnh viết tay
+              </span>
+            )}
+          </div>
+
+          {/* Tầng 4: Chân thẻ (Tên người bán · Tỉnh/thành phố) */}
+          <div className="mt-auto flex items-center justify-between gap-2 border-t border-neutral-100 pt-2 text-xs text-neutral-500 dark:border-neutral-800 dark:text-neutral-400">
+            <span className="truncate font-medium text-neutral-700 dark:text-neutral-300">
+              {l.profiles?.display_name ?? 'Thành viên VAHA'}
+            </span>
+            <span className="shrink-0 truncate">{l.province ?? 'Toàn quốc'}</span>
+          </div>
+        </div>
+      </Link>
+    </li>
   );
 }

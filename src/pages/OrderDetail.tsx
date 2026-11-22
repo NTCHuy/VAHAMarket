@@ -297,7 +297,7 @@ function OrderDetailContent() {
           )}
           {(order.fee_saved_amount ?? 0) > 0 && (
             <p className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-800 dark:border-emerald-800/70 dark:bg-emerald-950/50 dark:text-emerald-300">
-              🎉 Tiết kiệm <strong>{formatVND(order.fee_saved_amount ?? 0)}</strong> nhờ chính sách trần phí tối đa{' '}
+              Tiết kiệm <strong>{formatVND(order.fee_saved_amount ?? 0)}</strong> nhờ chính sách trần phí tối đa{' '}
               <strong>{formatVND(order.fee_cap_vnd ?? 500_000)}</strong>.
             </p>
           )}

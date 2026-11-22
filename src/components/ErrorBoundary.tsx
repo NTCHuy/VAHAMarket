@@ -33,10 +33,8 @@ export default class ErrorBoundary extends Component<Props, State> {
     const fullscreen = this.props.variant === 'fullscreen';
     return (
       <div className={fullscreen ? 'flex min-h-screen items-center justify-center bg-slate-50 p-4 dark:bg-slate-950' : 'flex justify-center py-10'}>
-        <div role="alert" className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 text-center shadow-sm dark:border-slate-800 dark:bg-slate-900">
-          <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-amber-50 text-amber-600 dark:bg-amber-950/60 dark:text-amber-400">
-            <AlertTriangle className="h-6 w-6" />
-          </span>
+        <div role="alert" className="w-full max-w-md rounded-lg border border-slate-200 bg-white p-6 text-center dark:border-slate-800 dark:bg-slate-900">
+          <AlertTriangle size={24} strokeWidth={1.75} className="mx-auto text-amber-600 dark:text-amber-400" />
           <h1 className="mt-3 text-lg font-semibold text-slate-900 dark:text-slate-50">Đã có lỗi hiển thị</h1>
           <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
             Trang gặp sự cố ngoài ý muốn. Dữ liệu và tiền của bạn không bị ảnh hưởng. Hãy tải lại trang hoặc quay về trang chủ.

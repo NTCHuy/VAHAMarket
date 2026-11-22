@@ -166,7 +166,7 @@ function ReviewCard({ listing, seller, contact, bank, onDone }: {
                 {seller?.is_banned ? (
                   <span className="badge bg-red-600 text-white dark:bg-red-600 dark:text-white"><ShieldBan className="mr-1 h-3 w-3" /> Đã bị Ban</span>
                 ) : (seller?.warning_count ?? 0) > 0 ? (
-                  <span className="badge bg-amber-100 text-amber-800 dark:bg-amber-950/70 dark:text-amber-300">⚠️ {seller?.warning_count}/3 cảnh báo</span>
+                  <span className="badge bg-amber-100 text-amber-800 dark:bg-amber-950/70 dark:text-amber-300">Cảnh báo {seller?.warning_count}/3</span>
                 ) : null}
               </p>
               <p className="text-xs text-slate-500 dark:text-slate-400">{seller?.sold_count ?? 0} đơn bán thành công · tham gia {seller ? new Date(seller.created_at).toLocaleDateString('vi-VN') : '—'}</p>

@@ -22,10 +22,8 @@ export default function Terms() {
         >
           <ArrowLeft className="h-4 w-4" /> Quay lại trang chủ
         </Link>
-        <div className="mt-3 flex items-center gap-2.5">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-700 dark:bg-brand-900/40 dark:text-brand-300">
-            <FileText className="h-5 w-5" />
-          </span>
+        <div className="mt-3 flex items-start gap-2.5">
+          <FileText size={18} strokeWidth={1.75} className="mt-1 shrink-0 text-blue-700 dark:text-blue-400" />
           <div>
             <h1 className="text-2xl font-semibold tracking-tight text-slate-900 dark:text-slate-50">
               Điều khoản dịch vụ &amp; Quy định giao dịch
@@ -40,12 +38,10 @@ export default function Terms() {
       {/* KHUNG CẢNH BÁO ĐỎ NỔI BẬT — PHỐI HỢP CƠ QUAN CHỨC NĂNG & LUẬT HÌNH SỰ */}
       <section
         aria-label="Cảnh báo chống lừa đảo và trách nhiệm hình sự"
-        className="rounded-2xl border-2 border-red-600 bg-red-50 p-5 text-red-950 shadow-sm dark:border-red-500/80 dark:bg-red-950/60 dark:text-red-50 sm:p-6"
+        className="rounded-lg border-2 border-red-600 bg-red-50 p-5 text-red-950 dark:border-red-500/80 dark:bg-red-950/60 dark:text-red-50 sm:p-6"
       >
-        <div className="flex items-start gap-3">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-red-600 text-white">
-            <ShieldAlert className="h-5 w-5" />
-          </span>
+        <div className="flex items-start gap-2.5">
+          <ShieldAlert size={18} strokeWidth={1.75} className="mt-0.5 shrink-0 text-red-600 dark:text-red-400" />
           <div className="min-w-0 space-y-3">
             <div>
               <p className="text-xs font-bold uppercase tracking-wider text-red-700 dark:text-red-300">
@@ -109,7 +105,7 @@ export default function Terms() {
       </section>
 
       {/* 1. VAI TRÒ TRUNG GIAN & MIỄN TRỪ TRÁCH NHIỆM */}
-      <section className="card space-y-3 p-5 sm:p-6">
+      <section id="video-rules" className="card space-y-3 p-5 sm:p-6">
         <h2 className="flex items-center gap-2 text-base font-semibold text-slate-900 dark:text-slate-50">
           <ShieldCheck className="h-5 w-5 text-brand-700 dark:text-brand-400" />
           1. Vai trò trung gian &amp; Miễn trừ trách nhiệm của Admin
@@ -193,7 +189,7 @@ export default function Terms() {
       </section>
 
       {/* 3. QUY TRÌNH TRANH CHẤP & PHÍ DỊCH VỤ */}
-      <section className="card space-y-3 p-5 sm:p-6">
+      <section id="fee-cap" className="card space-y-3 p-5 sm:p-6">
         <h2 className="flex items-center gap-2 text-base font-semibold text-slate-900 dark:text-slate-50">
           <Video className="h-5 w-5 text-brand-700 dark:text-brand-400" />
           3. Thanh toán, phí bảo lãnh &amp; giải quyết khiếu nại

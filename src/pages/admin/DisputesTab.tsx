@@ -79,7 +79,7 @@ function Party({ title, profile, contact, extraPhone }: { title: string; profile
             {profile?.is_banned ? (
               <span className="badge bg-red-600 text-white dark:bg-red-600 dark:text-white"><ShieldBan className="mr-1 h-3 w-3" /> Đã bị Ban</span>
             ) : (profile?.warning_count ?? 0) > 0 ? (
-              <span className="badge bg-amber-100 text-amber-800 dark:bg-amber-950/70 dark:text-amber-300">⚠️ {profile?.warning_count}/3 cảnh báo</span>
+              <span className="badge bg-amber-100 text-amber-800 dark:bg-amber-950/70 dark:text-amber-300">Cảnh báo {profile?.warning_count}/3</span>
             ) : null}
           </p>
           <p className="text-xs text-slate-500 dark:text-slate-400">{profile?.sold_count ?? 0} đơn bán · {profile?.bought_count ?? 0} đơn mua</p>

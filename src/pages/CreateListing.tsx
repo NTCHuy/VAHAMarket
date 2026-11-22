@@ -12,6 +12,7 @@ import { FEE_PAYER_OPTIONS, type FeePayer } from '@/constants/fees';
 import { PROVINCES } from '@/constants/provinces';
 import { Alert, Field, PageLoader } from '@/components/ui';
 import NotificationHint from '@/components/NotificationHint';
+import SellerTermsModal, { hasAcceptedSellerTerms } from '@/components/SellerTermsModal';
 import ModBadge from '@/components/ModBadge';
 import { usePlatformSettings } from '@/context/PlatformSettingsContext';
 import { useNotifications } from '@/context/NotificationContext';
@@ -68,6 +69,7 @@ function ListingForm({ listingId }: { listingId?: string }) {
   const { pushToast } = useNotifications();
   const navigate = useNavigate();
   const isEdit = Boolean(listingId);
+  const [termsAccepted, setTermsAccepted] = useState<boolean>(() => isEdit || hasAcceptedSellerTerms());
 
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -361,7 +363,7 @@ function ListingForm({ listingId }: { listingId?: string }) {
       if (res.error) throw res.error;
       if (targetStatus !== 'draft' && fees?.isFeeCapped && fees.feeSavedAmount > 0) {
         pushToast({
-          title: `🎉 Đã đạt trần phí sàn tối đa ${formatVND(fees.feeCapVnd)}!`,
+          title: `Đã đạt trần phí sàn tối đa ${formatVND(fees.feeCapVnd)}`,
           body: `Tin đăng của bạn đã đạt mức trần phí sàn tối đa ${formatVND(fees.feeCapVnd)}, giúp tiết kiệm ${formatVND(fees.feeSavedAmount)} cho giao dịch này.`,
           href: '/my-listings',
           actionLabel: 'Xem tin đăng',
@@ -384,6 +386,16 @@ function ListingForm({ listingId }: { listingId?: string }) {
   };
 
   /* ----------------------------- Render ----------------------------- */
+  if (!termsAccepted) {
+    return (
+      <SellerTermsModal
+        open
+        onAccept={() => setTermsAccepted(true)}
+        onCancel={() => navigate('/')}
+      />
+    );
+  }
+
   if (loading) return <PageLoader />;
 
   if (loadError) {
@@ -415,8 +427,8 @@ function ListingForm({ listingId }: { listingId?: string }) {
   if (checklist.some((c) => !c.ok)) {
     return (
       <div className="card mx-auto mt-6 max-w-lg space-y-4 p-6">
-        <div className="flex items-start gap-3">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400"><AlertTriangle className="h-5 w-5" /></span>
+        <div className="flex items-start gap-2.5">
+          <AlertTriangle size={18} strokeWidth={1.75} className="mt-0.5 shrink-0 text-amber-600 dark:text-amber-400" />
           <div>
             <h1 className="text-lg font-semibold">Hoàn tất hồ sơ người bán trước khi đăng tin</h1>
             <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">VAHA Market yêu cầu xác thực danh tính người bán để bảo vệ cộng đồng khỏi lừa đảo.</p>
@@ -685,7 +697,7 @@ function ListingForm({ listingId }: { listingId?: string }) {
         </dl>
         {fees?.isFeeCapped && fees.feeSavedAmount > 0 && (
           <div className="rounded-xl border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-900 dark:border-emerald-700/80 dark:bg-emerald-950/50 dark:text-emerald-200">
-            🎉 Đã đạt trần phí sàn tối đa {formatVND(fees.feeCapVnd)} — Bạn đã tiết kiệm được{' '}
+            Đã đạt trần phí sàn tối đa {formatVND(fees.feeCapVnd)} — Bạn đã tiết kiệm được{' '}
             <strong className="font-bold text-emerald-700 dark:text-emerald-300">{formatVND(fees.feeSavedAmount)}</strong>!
           </div>
         )}
