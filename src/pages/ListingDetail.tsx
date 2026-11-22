@@ -351,7 +351,7 @@ export default function ListingDetail() {
               </div>
             )}
 
-            {canBuy && <BuyerProtectionSteps compact />}
+            {canBuy && <BuyerProtectionSteps layout="compact" />}
           </div>
 
           {/* Thông tin người bán */}

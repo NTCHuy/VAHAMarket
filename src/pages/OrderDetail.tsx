@@ -381,7 +381,7 @@ function PaymentPanel({ order, secondsLeft, busy, onCancel }: {
 
   return (
     <section className="card space-y-4 p-5">
-      <BuyerProtectionSteps current={1} />
+      <BuyerProtectionSteps current={1} layout="wide" />
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="text-base font-semibold">Thanh toán qua tài khoản trung gian</h2>
         <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-semibold tabular-nums ${expired ? 'bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400' : urgent ? 'bg-red-50 dark:bg-red-950/50 text-red-700 dark:text-red-400' : 'bg-amber-50 dark:bg-amber-950/50 text-amber-800 dark:text-amber-300'}`}>

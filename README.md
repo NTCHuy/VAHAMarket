@@ -42,6 +42,11 @@ React + Vite + TypeScript + Tailwind · Supabase (Auth, Postgres/RLS, Realtime, 
 - **Khóa thông tin định danh**: khi người bán đang có tin ở trạng thái `pending_review` / `active` / `reserved` hoặc đơn bán đang xử lý, hệ thống tự khóa không cho đổi `profiles.facebook_url` đã lưu và thông tin tài khoản ngân hàng (`bank_bin`, `bank_code`, `account_number`, `account_name`). Nếu người bán gõ nhầm hợp lệ và cần sửa, Admin cập nhật trực tiếp qua **SQL Editor** (role hệ thống bỏ qua trigger khóa).
 - **Siết quy trình gửi hàng & mở hộp**: người bán bắt buộc chọn đơn vị vận chuyển (GHTK, GHN, Viettel Post, J&T, SPX, Khác), nhập mã vận đơn và dán link video test/đóng gói. Khi đơn ở trạng thái `SHIPPED`, người mua nhận cảnh báo bắt buộc quay video mở hộp liền mạch 6 mặt để làm căn cứ giải quyết khiếu nại.
 
+## Bản cập nhật v1.9.4 — Sửa lỗi cắt chữ trên BuyerProtectionSteps
+
+- **Bỏ hoàn toàn `truncate` ở `BuyerProtectionSteps.tsx`**: Hiển thị trọn vẹn 100% tiêu đề và mô tả của cả 3 bước bảo lãnh, không bị cắt dấu `...` trên mọi kích thước màn hình.
+- **Bổ sung prop `layout?: 'compact' | 'wide'`**: Mặc định `'compact'` xếp dọc gọn gàng từng dòng cho khung hẹp (`ListingDetail.tsx`), và `'wide'` xếp dọc trên mobile / chia 3 cột từ `md` trở lên cho khung rộng (`OrderDetail.tsx`).
+
 ## Bản cập nhật v1.9.3 — Chuẩn hóa Design System, Skeleton Loaders & Tối ưu UX sàn chuyên nghiệp
 
 - **Đồng nhất hoàn toàn hệ màu & bo góc trên toàn ứng dụng**: Hợp nhất toàn bộ 23 file còn sót từ `slate-*` sang `neutral-*` và `rounded-xl` sang `rounded-lg`/`rounded-md`, loại bỏ sự chênh lệch phong cách ("trust gap") giữa Trang chủ, Chi tiết đơn hàng, Cài đặt và Admin Panel.
