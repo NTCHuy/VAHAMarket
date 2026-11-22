@@ -28,7 +28,7 @@ export default function Layout() {
               © {new Date().getFullYear()} <strong className="text-slate-700 dark:text-slate-200">{BRAND_NAME}</strong> — {BRAND_FULL_NAME}
             </span>
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-              <span>Phí trung gian 5% (Mod Group: 0%) · Người mua trả phí ship khi nhận hàng.</span>
+              <span>Phí trung gian 5% · Người mua trả phí ship khi nhận hàng.</span>
               <Link to="/terms" className="font-medium text-brand-700 hover:underline dark:text-brand-400">
                 Điều khoản dịch vụ
               </Link>
