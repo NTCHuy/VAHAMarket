@@ -3,9 +3,14 @@
 @tailwind utilities;
 
 @layer base {
-  html { color-scheme: light; }
+  html {
+    color-scheme: light;
+    overflow-x: hidden;
+  }
   html.dark { color-scheme: dark; }
-  body { @apply bg-neutral-50 text-neutral-900 font-sans dark:bg-neutral-950 dark:text-neutral-100; }
+  body {
+    @apply overflow-x-hidden bg-neutral-50 text-neutral-900 font-sans dark:bg-neutral-950 dark:text-neutral-100;
+  }
   :focus-visible { @apply outline-none ring-2 ring-blue-600 ring-offset-2 ring-offset-white dark:ring-offset-neutral-950; }
 }
 

@@ -67,7 +67,7 @@ export default function AdminDashboard() {
 
       <FeeSettingsCard />
 
-      <div role="tablist" className="-mx-4 flex gap-1 overflow-x-auto border-b border-slate-200 dark:border-slate-800 px-4 sm:mx-0 sm:px-0">
+      <div role="tablist" className="flex max-w-full gap-1 overflow-x-auto border-b border-neutral-200 dark:border-neutral-800">
         {tabs.map((t) => (
           <button key={t.id} type="button" role="tab" aria-selected={tab === t.id}
             onClick={() => setParams({ tab: t.id }, { replace: true })}

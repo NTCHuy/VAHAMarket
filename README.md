@@ -42,6 +42,12 @@ React + Vite + TypeScript + Tailwind · Supabase (Auth, Postgres/RLS, Realtime, 
 - **Khóa thông tin định danh**: khi người bán đang có tin ở trạng thái `pending_review` / `active` / `reserved` hoặc đơn bán đang xử lý, hệ thống tự khóa không cho đổi `profiles.facebook_url` đã lưu và thông tin tài khoản ngân hàng (`bank_bin`, `bank_code`, `account_number`, `account_name`). Nếu người bán gõ nhầm hợp lệ và cần sửa, Admin cập nhật trực tiếp qua **SQL Editor** (role hệ thống bỏ qua trigger khóa).
 - **Siết quy trình gửi hàng & mở hộp**: người bán bắt buộc chọn đơn vị vận chuyển (GHTK, GHN, Viettel Post, J&T, SPX, Khác), nhập mã vận đơn và dán link video test/đóng gói. Khi đơn ở trạng thái `SHIPPED`, người mua nhận cảnh báo bắt buộc quay video mở hộp liền mạch 6 mặt để làm căn cứ giải quyết khiếu nại.
 
+## Bản cập nhật v1.9.2 — Đại tu giao diện (UI Overhaul) & Cam kết người bán
+
+- **Giao diện tối giản, thực dụng**: Bỏ Hero Banner trang chủ, mở thẳng vào Compact Trust Strip 1 dòng + thanh tìm kiếm/lọc ngang hàng + thẻ sản phẩm 4 tầng (`aspect-[4/3]`, `tabular-nums`, viền `1px` sắc nét, không emoji/shadow nặng/icon pastel).
+- **Blocking Gate cam kết người bán (`SellerTermsModal.tsx`)**: Bắt buộc xác nhận 4 nguyên tắc chống lừa đảo (lưu theo phiên trong `sessionStorage`) khi bấm **Đăng bán** hoặc truy cập `/sell` / `/create-listing`.
+- **Chi tiết sản phẩm & Layout**: Bố cục 2 cột `60%/40%` có tab xem riêng **Ảnh xác thực viết tay chính chủ**, khung đặt mua sticky, Navbar phẳng `h-14` kèm tag `ESCROW`, và Footer 3 cột tối giản.
+
 ## Bản cập nhật v1.9.1 — Trần phí sàn tối đa 500.000₫ (Migration 010)
 
 - **Trần phí giao dịch (`PLATFORM_FEE_CAP = 500_000`)**: Lưu trong `platform_settings.fee_cap_vnd` (mặc định `500000`, nhập `0` để tắt trần). Admin chỉnh trực tiếp trong **Admin → Cấu hình phí sàn & Trần phí tối đa** (`FeeSettingsCard.tsx`).

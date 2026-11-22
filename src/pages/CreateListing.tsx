@@ -778,7 +778,7 @@ function ListingForm({ listingId }: { listingId?: string }) {
         của VAHA Market.
       </p>
 
-      <div className="sticky bottom-0 -mx-4 flex flex-col-reverse gap-2 border-t border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 px-4 py-3 backdrop-blur sm:static sm:mx-0 sm:flex-row sm:justify-end sm:border-0 sm:bg-transparent sm:p-0">
+      <div className="sticky bottom-0 flex flex-col-reverse gap-2 border-t border-neutral-200 bg-white/95 py-3 backdrop-blur dark:border-neutral-800 dark:bg-neutral-950/95 sm:static sm:flex-row sm:justify-end sm:border-0 sm:bg-transparent sm:p-0">
         <Link to="/my-listings" className="btn-ghost">Hủy</Link>
         {isEdit && listingStatus !== 'draft' ? (
           <button type="submit" className="btn-primary" disabled={busy}>

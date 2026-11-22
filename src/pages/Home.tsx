@@ -46,7 +46,7 @@ const SHORT_CONDITION: Record<string, string> = {
   for_parts: 'Xác / Linh kiện',
 };
 
-const escapeLike = (s: string) => s.replace(/[\%_]/g, (c) => `${c}`);
+const escapeLike = (s: string) => s.replace(/[\\%_]/g, (c) => `\\${c}`);
 const digitsOnly = (s: string) => s.replace(/\D/g, '').slice(0, 10);
 
 export default function Home() {
@@ -198,7 +198,7 @@ export default function Home() {
       {/* Thanh tìm kiếm & lọc ngang hàng mật độ cao */}
       <section className="space-y-2.5" aria-label="Tìm kiếm và bộ lọc">
         <div className="flex flex-wrap items-center gap-2">
-          <div className="relative min-w-[220px] flex-1">
+          <div className="relative w-full min-w-0 sm:min-w-[220px] sm:flex-1">
             <Search size={16} strokeWidth={1.75} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" />
             <input
               type="search"
@@ -211,7 +211,7 @@ export default function Home() {
           </div>
 
           <select
-            className="input h-9 w-auto min-w-[140px]"
+            className="input h-9 min-w-0 flex-1 sm:w-auto sm:flex-none sm:min-w-[140px]"
             value={province}
             onChange={(e) => setParam('province', e.target.value)}
             aria-label="Khu vực"
@@ -223,7 +223,7 @@ export default function Home() {
           </select>
 
           <select
-            className="input h-9 w-auto min-w-[130px]"
+            className="input h-9 min-w-0 flex-1 sm:w-auto sm:flex-none sm:min-w-[130px]"
             value={sort}
             onChange={(e) => setParam('sort', e.target.value)}
             aria-label="Sắp xếp"
@@ -368,13 +368,13 @@ function ListingCard({ listing: l, feeBp, feeCapVnd }: { listing: ListingCardIte
         : 'Người bán chịu phí sàn';
 
   return (
-    <li>
+    <li className="min-w-0">
       <Link
         to={`/listing/${l.id}`}
         className="card group flex h-full flex-col overflow-hidden transition-colors hover:border-neutral-400 dark:hover:border-neutral-600"
       >
         {/* Khung ảnh 4:3 tràn viền trên */}
-        <div className="relative aspect-[4/3] w-full overflow-hidden bg-neutral-100 dark:bg-neutral-800">
+        <div className="relative aspect-[4/3] w-full shrink-0 overflow-hidden bg-neutral-100 dark:bg-neutral-800">
           {l.images[0] && (
             <img
               src={cldUrl(l.images[0].url, { width: 520, height: 390, crop: 'fill' })}
@@ -383,26 +383,26 @@ function ListingCard({ listing: l, feeBp, feeCapVnd }: { listing: ListingCardIte
               className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-[1.02]"
             />
           )}
-          <span className="absolute left-2 top-2 rounded bg-neutral-950/75 px-1.5 py-0.5 text-[11px] font-medium text-white backdrop-blur-[2px]">
+          <span className="absolute left-2 top-2 max-w-[calc(100%-1rem)] truncate rounded bg-neutral-950/75 px-1.5 py-0.5 text-[11px] font-medium text-white backdrop-blur-[2px]">
             {condTag}
           </span>
         </div>
 
-        {/* Thân thẻ 4 tầng thông tin */}
-        <div className="flex flex-1 flex-col p-3">
-          {/* Tầng 1: Tên sản phẩm */}
-          <p className="line-clamp-2 text-sm font-medium leading-snug text-neutral-950 dark:text-neutral-100">
+        {/* Thân thẻ 4 tầng thông tin: luôn căn thẳng hàng ngang nhau */}
+        <div className="flex flex-1 flex-col p-2.5 sm:p-3">
+          {/* Tầng 1: Khóa cứng chiều cao 2 dòng */}
+          <p className="line-clamp-2 min-h-[2.5rem] text-sm font-medium leading-snug text-neutral-950 dark:text-neutral-100">
             {l.title}
           </p>
 
           {/* Tầng 2: Giá bán + dòng phụ phí */}
-          <div className="mt-2">
-            <div className="flex flex-wrap items-baseline gap-x-1.5 tabular-nums">
-              <span className="text-base font-semibold tracking-tight text-neutral-950 dark:text-neutral-50">
+          <div className="mt-1.5">
+            <div className="flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5 tabular-nums">
+              <span className="text-sm font-semibold tracking-tight text-neutral-950 dark:text-neutral-50 sm:text-base">
                 {formatVND(dp.display)}
               </span>
               {dp.strike && (
-                <span className="text-xs text-neutral-400 line-through dark:text-neutral-500">
+                <span className="text-[11px] text-neutral-400 line-through dark:text-neutral-500 sm:text-xs">
                   {formatVND(dp.strike)}
                 </span>
               )}
@@ -412,27 +412,29 @@ function ListingCard({ listing: l, feeBp, feeCapVnd }: { listing: ListingCardIte
                 </span>
               )}
             </div>
-            <p className="mt-0.5 text-[11px] text-neutral-500 dark:text-neutral-400">{feeSubline}</p>
+            <p className="mt-0.5 truncate text-[11px] text-neutral-500 dark:text-neutral-400">{feeSubline}</p>
           </div>
 
-          {/* Tầng 3: Huy hiệu xác thực dạng chữ nhỏ gọn */}
-          <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] font-medium text-emerald-700 dark:text-emerald-400">
-            <span className="inline-flex items-center gap-0.5">
-              <Check size={12} strokeWidth={2.25} /> Đã đối chiếu FB &amp; NH
-            </span>
+          {/* Tầng 3: 2 dòng xác thực gọn gàng, không tụt hay cắt chữ trên mobile */}
+          <div className="mt-2 space-y-0.5 pb-2.5 text-[11px] font-medium leading-tight text-emerald-700 dark:text-emerald-400 sm:text-xs">
+            <div className="flex items-center gap-1 min-w-0">
+              <Check size={12} strokeWidth={2.25} className="shrink-0" />
+              <span className="truncate">Đã đối chiếu FB &amp; NH</span>
+            </div>
             {l.verification_image_url && (
-              <span className="inline-flex items-center gap-0.5">
-                <Check size={12} strokeWidth={2.25} /> Ảnh viết tay
-              </span>
+              <div className="flex items-center gap-1 min-w-0">
+                <Check size={12} strokeWidth={2.25} className="shrink-0" />
+                <span className="truncate">Ảnh viết tay</span>
+              </div>
             )}
           </div>
 
-          {/* Tầng 4: Chân thẻ (Tên người bán · Tỉnh/thành phố) */}
-          <div className="mt-auto flex items-center justify-between gap-2 border-t border-neutral-100 pt-2 text-xs text-neutral-500 dark:border-neutral-800 dark:text-neutral-400">
-            <span className="truncate font-medium text-neutral-700 dark:text-neutral-300">
+          {/* Tầng 4: Chân thẻ đẩy sát đáy bằng mt-auto */}
+          <div className="mt-auto flex items-center justify-between gap-2 border-t border-neutral-100 pt-2 text-[11px] text-neutral-500 dark:border-neutral-800 dark:text-neutral-400 sm:text-xs">
+            <span className="min-w-0 truncate font-medium text-neutral-700 dark:text-neutral-300">
               {l.profiles?.display_name ?? 'Thành viên VAHA'}
             </span>
-            <span className="shrink-0 truncate">{l.province ?? 'Toàn quốc'}</span>
+            <span className="max-w-[45%] shrink-0 truncate text-right">{l.province ?? 'Toàn quốc'}</span>
           </div>
         </div>
       </Link>

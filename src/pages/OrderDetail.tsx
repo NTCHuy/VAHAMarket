@@ -262,8 +262,8 @@ function OrderDetailContent() {
       {order.status === 'REFUNDED' && <Alert kind="info">Đơn đã được hoàn tiền cho người mua.</Alert>}
 
       {/* Thông tin chi tiết */}
-      <div className="grid gap-5 md:grid-cols-2">
-        <section className="card space-y-3 p-5">
+      <div className="grid min-w-0 gap-5 md:grid-cols-2">
+        <section className="card min-w-0 space-y-3 p-4 sm:p-5">
           <h2 className="text-base font-semibold">Thanh toán</h2>
           {isBuyer ? (
             <>
@@ -309,7 +309,7 @@ function OrderDetailContent() {
           )}
         </section>
 
-        <section className="card space-y-3 p-5">
+        <section className="card min-w-0 space-y-3 p-4 sm:p-5">
           <h2 className="text-base font-semibold">{isBuyer ? 'Người bán' : 'Người mua'}</h2>
           {counterpart ? (
             <div className="flex items-center gap-3">
@@ -331,7 +331,7 @@ function OrderDetailContent() {
       </div>
 
       {showShipping && (
-        <section className="card space-y-3 p-5">
+        <section className="card min-w-0 space-y-3 p-4 sm:p-5">
           <h2 className="text-base font-semibold">Thông tin giao nhận</h2>
           <dl className="divide-y divide-slate-100 dark:divide-slate-800 text-sm">
             <Row label="Người nhận" value={order.recipient_name} />

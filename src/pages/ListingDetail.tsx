@@ -136,17 +136,17 @@ export default function ListingDetail() {
       </Link>
 
       {/* Bố cục 2 cột chuẩn 60% / 40% */}
-      <div className="grid items-start gap-6 lg:grid-cols-[3fr_2fr]">
+      <div className="grid w-full min-w-0 items-start gap-6 lg:grid-cols-[3fr_2fr]">
         {/* CỘT TRÁI (60%): Gallery + Tab Ảnh xác thực viết tay + Thông số & Mô tả */}
-        <div className="space-y-5">
-          <div className="card overflow-hidden">
-            {/* Tab chuyển đổi Ảnh sản phẩm / Ảnh xác thực viết tay */}
+        <div className="min-w-0 w-full space-y-5">
+          <div className="card w-full min-w-0 overflow-hidden">
+            {/* Tab chuyển đổi Ảnh sản phẩm / Ảnh xác thực */}
             {listing.verification_image_url && (
-              <div className="flex border-b border-neutral-200 bg-neutral-50 text-xs font-medium dark:border-neutral-800 dark:bg-neutral-950">
+              <div className="flex w-full min-w-0 border-b border-neutral-200 bg-neutral-50 text-xs font-medium dark:border-neutral-800 dark:bg-neutral-950 sm:text-sm">
                 <button
                   type="button"
                   onClick={() => setGalleryTab('product')}
-                  className={`flex-1 px-4 py-2.5 text-center transition-colors ${
+                  className={`flex-1 whitespace-nowrap px-3 py-2.5 text-center transition-colors sm:px-4 ${
                     galleryTab === 'product'
                       ? 'border-b-2 border-blue-700 bg-white text-neutral-950 dark:border-blue-500 dark:bg-neutral-900 dark:text-neutral-50'
                       : 'text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-200'
@@ -157,19 +157,21 @@ export default function ListingDetail() {
                 <button
                   type="button"
                   onClick={() => setGalleryTab('verification')}
-                  className={`flex flex-1 items-center justify-center gap-1.5 px-4 py-2.5 text-center transition-colors ${
+                  className={`flex flex-1 items-center justify-center gap-1.5 whitespace-nowrap px-3 py-2.5 text-center transition-colors sm:px-4 ${
                     galleryTab === 'verification'
                       ? 'border-b-2 border-emerald-600 bg-white text-emerald-700 dark:border-emerald-500 dark:bg-neutral-900 dark:text-emerald-400'
                       : 'text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-200'
                   }`}
                 >
-                  <BadgeCheck size={14} strokeWidth={1.75} /> Ảnh xác thực viết tay chính chủ
+                  <BadgeCheck size={14} strokeWidth={1.75} className="shrink-0" />
+                  <span className="sm:hidden">Ảnh xác thực</span>
+                  <span className="hidden sm:inline">Ảnh xác thực chính chủ</span>
                 </button>
               </div>
             )}
 
             {galleryTab === 'product' ? (
-              <div className="p-3">
+              <div className="min-w-0 p-3">
                 <button
                   type="button"
                   onClick={() => setLightbox(active)}
@@ -183,24 +185,26 @@ export default function ListingDetail() {
                   />
                 </button>
                 {images.length > 1 && (
-                  <ul className="mt-2.5 flex gap-2 overflow-x-auto pb-0.5">
-                    {images.map((img, i) => (
-                      <li key={`${img.url}-${i}`} className="shrink-0">
-                        <button
-                          type="button"
-                          onClick={() => setActive(i)}
-                          aria-label={`Xem ảnh ${i + 1}`}
-                          className={`h-14 w-16 overflow-hidden rounded border ${
-                            i === active
-                              ? 'border-blue-700 ring-1 ring-blue-700 dark:border-blue-500 dark:ring-blue-500'
-                              : 'border-neutral-200 opacity-75 hover:opacity-100 dark:border-neutral-800'
-                          }`}
-                        >
-                          <img src={cldUrl(img.url, { width: 160, height: 140, crop: 'fill' })} alt="" className="h-full w-full object-cover" />
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
+                  <div className="mt-2.5 max-w-full overflow-x-auto pb-1">
+                    <ul className="flex w-max gap-2">
+                      {images.map((img, i) => (
+                        <li key={`${img.url}-${i}`} className="shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => setActive(i)}
+                            aria-label={`Xem ảnh ${i + 1}`}
+                            className={`h-14 w-14 shrink-0 overflow-hidden rounded border sm:h-16 sm:w-16 ${
+                              i === active
+                                ? 'border-blue-700 ring-1 ring-blue-700 dark:border-blue-500 dark:ring-blue-500'
+                                : 'border-neutral-200 opacity-75 hover:opacity-100 dark:border-neutral-800'
+                            }`}
+                          >
+                            <img src={cldUrl(img.url, { width: 160, height: 160, crop: 'fill' })} alt="" className="h-full w-full object-cover" />
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 )}
               </div>
             ) : (
@@ -225,25 +229,25 @@ export default function ListingDetail() {
           </div>
 
           {/* Thông số & Mô tả */}
-          <section className="card divide-y divide-neutral-200 dark:divide-neutral-800">
-            <div className="p-4 sm:p-5">
+          <section className="card min-w-0 w-full divide-y divide-neutral-200 dark:divide-neutral-800">
+            <div className="min-w-0 w-full p-4 sm:p-5">
               <h2 className="text-sm font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
                 Thông số &amp; Tình trạng
               </h2>
-              <dl className="mt-3 divide-y divide-neutral-100 text-sm dark:divide-neutral-800">
+              <dl className="mt-3 min-w-0 w-full divide-y divide-neutral-100 text-sm dark:divide-neutral-800">
                 {specs.map((s) => (
-                  <div key={s.label} className="flex justify-between gap-4 py-2">
-                    <dt className="text-neutral-500 dark:text-neutral-400">{s.label}</dt>
-                    <dd className="text-right font-medium text-neutral-900 dark:text-neutral-100">{s.value}</dd>
+                  <div key={s.label} className="flex items-start justify-between gap-3 py-2">
+                    <dt className="shrink-0 text-neutral-500 dark:text-neutral-400">{s.label}</dt>
+                    <dd className="min-w-0 break-words text-right font-medium text-neutral-900 dark:text-neutral-100">{s.value}</dd>
                   </div>
                 ))}
               </dl>
             </div>
-            <div className="p-4 sm:p-5">
+            <div className="min-w-0 w-full p-4 sm:p-5">
               <h2 className="text-sm font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
                 Mô tả chi tiết
               </h2>
-              <p className="mt-2.5 whitespace-pre-line text-sm leading-relaxed text-neutral-800 dark:text-neutral-200">
+              <p className="mt-2.5 break-words whitespace-pre-line text-sm leading-relaxed text-neutral-800 dark:text-neutral-200">
                 {listing.description}
               </p>
             </div>
@@ -251,7 +255,7 @@ export default function ListingDetail() {
         </div>
 
         {/* CỘT PHẢI (40%): Sticky Purchase Panel */}
-        <aside className="space-y-4 lg:sticky lg:top-20">
+        <aside className="min-w-0 w-full space-y-4 lg:sticky lg:top-20">
           <div className="card space-y-4 p-4 sm:p-5">
             <div>
               <h1 className="text-lg font-semibold leading-snug tracking-tight text-neutral-950 dark:text-neutral-50 sm:text-xl">

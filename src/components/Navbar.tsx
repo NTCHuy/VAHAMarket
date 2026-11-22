@@ -144,8 +144,8 @@ export default function Navbar() {
   return (
     <>
       <header className="sticky top-0 z-40 h-14 border-b border-neutral-200 bg-white/95 backdrop-blur dark:border-neutral-800 dark:bg-neutral-950/95">
-        <div className="mx-auto flex h-full max-w-6xl items-center gap-3 px-4 sm:px-6">
-          <Link to="/" className="flex items-center gap-2 tracking-tight text-neutral-950 dark:text-neutral-50">
+        <div className="mx-auto flex h-full max-w-6xl items-center gap-2 px-3 sm:gap-3 sm:px-6">
+          <Link to="/" className="flex min-w-0 shrink-0 items-center gap-1.5 tracking-tight text-neutral-950 dark:text-neutral-50 sm:gap-2">
             <span className="text-sm font-bold tracking-wider">VAHA MARKET</span>
             <span className="rounded border border-neutral-200 bg-neutral-100 px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wider text-neutral-600 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-400">
               ESCROW
