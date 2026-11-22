@@ -1,7 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import {
-  ArrowLeft,
   BadgeCheck,
   ChevronLeft,
   ChevronRight,
@@ -19,7 +18,9 @@ import { calcFees, formatVND, getDisplayPrice } from '@/lib/money';
 import { createOrder, getSellerFacebook } from '@/lib/orders';
 import { getErrorMessage } from '@/lib/errors';
 import { getBoxStatusLabel, getCategory, getConditionLabel } from '@/constants/categories';
-import { Alert, Avatar, Field, PageLoader } from '@/components/ui';
+import { Alert, Avatar, Field } from '@/components/ui';
+import { ListingDetailSkeleton } from '@/components/Skeletons';
+import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import BuyerProtectionSteps from '@/components/BuyerProtectionSteps';
 import ModBadge from '@/components/ModBadge';
 import PriceBreakdown from '@/components/PriceBreakdown';
@@ -96,7 +97,9 @@ export default function ListingDetail() {
     return () => document.removeEventListener('keydown', onKey);
   }, [lightbox, listing]);
 
-  if (loading) return <PageLoader />;
+  useDocumentTitle(listing?.title ?? null);
+
+  if (loading) return <ListingDetailSkeleton />;
   if (error) return <div className="mx-auto max-w-2xl"><Alert kind="error">{error}</Alert></div>;
   if (!listing) {
     return (
@@ -127,13 +130,21 @@ export default function ListingDetail() {
   ];
 
   return (
-    <div className="mx-auto max-w-6xl space-y-4">
-      <Link
-        to="/"
-        className="inline-flex items-center gap-1.5 text-xs font-medium text-neutral-600 hover:text-neutral-950 dark:text-neutral-400 dark:hover:text-neutral-100"
-      >
-        <ArrowLeft size={15} strokeWidth={1.75} /> Quay lại danh sách sản phẩm
-      </Link>
+    <div className={`mx-auto max-w-6xl space-y-4 ${canBuy ? 'pb-20 lg:pb-0' : ''}`}>
+      <nav aria-label="Breadcrumb" className="flex min-w-0 items-center gap-1.5 text-xs text-neutral-500 dark:text-neutral-400">
+        <Link to="/" className="shrink-0 hover:text-neutral-950 hover:underline dark:hover:text-neutral-100">
+          Trang chủ
+        </Link>
+        <ChevronRight size={13} strokeWidth={1.75} className="shrink-0 text-neutral-400" />
+        <Link
+          to={`/?category=${encodeURIComponent(listing.category)}`}
+          className="shrink-0 hover:text-neutral-950 hover:underline dark:hover:text-neutral-100"
+        >
+          {category?.label ?? listing.category}
+        </Link>
+        <ChevronRight size={13} strokeWidth={1.75} className="shrink-0 text-neutral-400" />
+        <span className="min-w-0 truncate font-medium text-neutral-800 dark:text-neutral-200">{listing.title}</span>
+      </nav>
 
       {/* Bố cục 2 cột chuẩn 60% / 40% */}
       <div className="grid w-full min-w-0 items-start gap-6 lg:grid-cols-[3fr_2fr]">
@@ -431,6 +442,28 @@ export default function ListingDetail() {
           <span className="absolute bottom-4 rounded bg-black/70 px-2.5 py-1 text-xs tabular-nums text-white">
             {lightbox + 1} / {images.length}
           </span>
+        </div>
+      )}
+
+      {/* Thanh đặt mua cố định dưới cùng cho Mobile (Thumb-zone) */}
+      {canBuy && (
+        <div className="fixed inset-x-0 bottom-0 z-30 border-t border-neutral-200 bg-white/95 px-4 py-2.5 backdrop-blur dark:border-neutral-800 dark:bg-neutral-950/95 lg:hidden">
+          <div className="mx-auto flex max-w-6xl items-center justify-between gap-3">
+            <div className="min-w-0 tabular-nums">
+              <p className="text-[11px] text-neutral-500 dark:text-neutral-400">Tổng thanh toán</p>
+              <p className="truncate text-base font-semibold text-neutral-950 dark:text-neutral-50">
+                {formatVND(fees.buyerPays)}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => (user ? setBuyOpen(true) : void signIn())}
+              className="btn-primary shrink-0 px-4 py-2.5 text-xs font-semibold sm:text-sm"
+            >
+              <ShieldCheck size={16} strokeWidth={1.75} />
+              {user ? 'Đặt mua bảo lãnh' : 'Đăng nhập để mua'}
+            </button>
+          </div>
         </div>
       )}
 

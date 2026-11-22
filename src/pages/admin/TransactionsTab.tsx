@@ -32,7 +32,7 @@ const STATUS_INFO: Record<string, { label: string; cls: string; hint: (r: TxRow)
     hint: () => 'Đơn đã được thanh toán đủ trước đó. Hoàn lại khoản chuyển trùng.',
   },
   UNMATCHED: {
-    label: 'Không khớp đơn', cls: 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200',
+    label: 'Không khớp đơn', cls: 'bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-200',
     hint: () => 'Nội dung không có mã đơn hợp lệ. Tìm người chuyển; nếu đúng tiền một đơn thì duyệt thủ công, nếu không thì hoàn tiền.',
   },
 };
@@ -67,8 +67,8 @@ export default function TransactionsTab({ onChanged }: { onChanged: () => void }
 
   return (
     <div className="space-y-4">
-      <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
-        <input type="checkbox" checked={showResolved} onChange={(e) => setShowResolved(e.target.checked)} className="h-4 w-4 rounded border-slate-300 dark:border-slate-700 text-brand-700 dark:text-brand-400" />
+      <label className="flex items-center gap-2 text-sm text-neutral-700 dark:text-neutral-200">
+        <input type="checkbox" checked={showResolved} onChange={(e) => setShowResolved(e.target.checked)} className="h-4 w-4 rounded border-neutral-300 dark:border-neutral-700 text-brand-700 dark:text-brand-400" />
         Hiện cả giao dịch đã xử lý
       </label>
 
@@ -78,8 +78,8 @@ export default function TransactionsTab({ onChanged }: { onChanged: () => void }
         <Alert kind="error">{error}</Alert>
       ) : rows.length === 0 ? (
         <div className="card flex flex-col items-center px-4 py-12 text-center">
-          <Landmark className="h-8 w-8 text-slate-300 dark:text-slate-600" />
-          <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">Không có giao dịch lệch nào cần tra soát.</p>
+          <Landmark className="h-8 w-8 text-neutral-300 dark:text-neutral-600" />
+          <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-400">Không có giao dịch lệch nào cần tra soát.</p>
         </div>
       ) : (
         <ul className="space-y-3">
@@ -116,19 +116,19 @@ function TxCard({ row, onDone }: { row: TxRow; onDone: () => Promise<void> }) {
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex flex-wrap items-center gap-2">
           <span className={`badge ${info?.cls ?? ''}`}>{info?.label ?? row.match_status}</span>
-          <span className="text-lg font-semibold text-slate-900 dark:text-slate-100">{formatVND(row.amount)}</span>
+          <span className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">{formatVND(row.amount)}</span>
         </div>
-        <span className="text-xs text-slate-500 dark:text-slate-400">{new Date(row.transaction_date).toLocaleString('vi-VN')}</span>
+        <span className="text-xs text-neutral-500 dark:text-neutral-400">{new Date(row.transaction_date).toLocaleString('vi-VN')}</span>
       </div>
 
       <dl className="grid gap-x-6 gap-y-1 text-sm sm:grid-cols-2">
-        <div className="flex gap-2"><dt className="text-slate-500 dark:text-slate-400">Nội dung:</dt><dd className="min-w-0 break-words font-medium text-slate-900 dark:text-slate-100">{row.content || '—'}</dd></div>
-        <div className="flex items-center gap-2"><dt className="text-slate-500 dark:text-slate-400">Mã tham chiếu NH:</dt><dd className="font-mono">{row.reference_code ?? '—'}</dd>{row.reference_code && <CopyButton value={row.reference_code} />}</div>
-        <div className="flex gap-2"><dt className="text-slate-500 dark:text-slate-400">Đơn liên quan:</dt><dd className="font-mono">{row.order?.payment_code ?? '—'}</dd></div>
-        <div className="flex gap-2"><dt className="text-slate-500 dark:text-slate-400">Mã GD {row.provider}:</dt><dd className="font-mono">{row.provider_tx_id}</dd></div>
+        <div className="flex gap-2"><dt className="text-neutral-500 dark:text-neutral-400">Nội dung:</dt><dd className="min-w-0 break-words font-medium text-neutral-900 dark:text-neutral-100">{row.content || '—'}</dd></div>
+        <div className="flex items-center gap-2"><dt className="text-neutral-500 dark:text-neutral-400">Mã tham chiếu NH:</dt><dd className="font-mono">{row.reference_code ?? '—'}</dd>{row.reference_code && <CopyButton value={row.reference_code} />}</div>
+        <div className="flex gap-2"><dt className="text-neutral-500 dark:text-neutral-400">Đơn liên quan:</dt><dd className="font-mono">{row.order?.payment_code ?? '—'}</dd></div>
+        <div className="flex gap-2"><dt className="text-neutral-500 dark:text-neutral-400">Mã GD {row.provider}:</dt><dd className="font-mono">{row.provider_tx_id}</dd></div>
       </dl>
 
-      {info && <p className="rounded-lg bg-slate-50 dark:bg-slate-800/60 px-3 py-2 text-xs text-slate-600 dark:text-slate-400">{info.hint(row)}</p>}
+      {info && <p className="rounded-lg bg-neutral-50 dark:bg-neutral-800/60 px-3 py-2 text-xs text-neutral-600 dark:text-neutral-400">{info.hint(row)}</p>}
 
       {resolved ? (
         <p className="flex items-start gap-1.5 text-sm text-emerald-700 dark:text-emerald-400">

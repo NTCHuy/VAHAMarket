@@ -42,6 +42,13 @@ React + Vite + TypeScript + Tailwind · Supabase (Auth, Postgres/RLS, Realtime, 
 - **Khóa thông tin định danh**: khi người bán đang có tin ở trạng thái `pending_review` / `active` / `reserved` hoặc đơn bán đang xử lý, hệ thống tự khóa không cho đổi `profiles.facebook_url` đã lưu và thông tin tài khoản ngân hàng (`bank_bin`, `bank_code`, `account_number`, `account_name`). Nếu người bán gõ nhầm hợp lệ và cần sửa, Admin cập nhật trực tiếp qua **SQL Editor** (role hệ thống bỏ qua trigger khóa).
 - **Siết quy trình gửi hàng & mở hộp**: người bán bắt buộc chọn đơn vị vận chuyển (GHTK, GHN, Viettel Post, J&T, SPX, Khác), nhập mã vận đơn và dán link video test/đóng gói. Khi đơn ở trạng thái `SHIPPED`, người mua nhận cảnh báo bắt buộc quay video mở hộp liền mạch 6 mặt để làm căn cứ giải quyết khiếu nại.
 
+## Bản cập nhật v1.9.3 — Chuẩn hóa Design System, Skeleton Loaders & Tối ưu UX sàn chuyên nghiệp
+
+- **Đồng nhất hoàn toàn hệ màu & bo góc trên toàn ứng dụng**: Hợp nhất toàn bộ 23 file còn sót từ `slate-*` sang `neutral-*` và `rounded-xl` sang `rounded-lg`/`rounded-md`, loại bỏ sự chênh lệch phong cách ("trust gap") giữa Trang chủ, Chi tiết đơn hàng, Cài đặt và Admin Panel.
+- **Typography kết hợp `Inter` + `JetBrains Mono`**: Nạp font `JetBrains Mono` cho mã thanh toán `CNTH...`, số tài khoản, mã vận đơn và tag kỹ thuật, kết hợp `tabular-nums` giúp các con số thẳng hàng sắc nét.
+- **Skeleton Loaders chống giật bố cục (CLS)**: Thay spinner đơn lẻ bằng `ListingGridSkeleton`, `ListingDetailSkeleton` và `ListRowsSkeleton` (`src/components/Skeletons.tsx`).
+- **Breadcrumbs, Dynamic `<title>` & Mobile Thumb-Zone CTA**: Thêm điều hướng breadcrumb trên `ListingDetail` và `OrderDetail`, tự động cập nhật thẻ `<title>` theo từng trang (`useDocumentTitle`), và bổ sung thanh đặt mua cố định đáy màn hình trên thiết bị di động ở trang chi tiết sản phẩm.
+
 ## Bản cập nhật v1.9.2 — Đại tu giao diện (UI Overhaul) & Cam kết người bán
 
 - **Giao diện tối giản, thực dụng**: Bỏ Hero Banner trang chủ, mở thẳng vào Compact Trust Strip 1 dòng + thanh tìm kiếm/lọc ngang hàng + thẻ sản phẩm 4 tầng (`aspect-[4/3]`, `tabular-nums`, viền `1px` sắc nét, không emoji/shadow nặng/icon pastel).

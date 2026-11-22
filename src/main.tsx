@@ -49,7 +49,7 @@ async function start() {
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e);
     root.render(
-      <div className="mx-auto mt-16 max-w-lg rounded-xl border border-red-200 bg-red-50 p-6 text-sm text-red-800 dark:border-red-900 dark:bg-red-950/60 dark:text-red-200">
+      <div className="mx-auto mt-16 max-w-lg rounded-lg border border-red-200 bg-red-50 p-6 text-sm text-red-800 dark:border-red-900 dark:bg-red-950/60 dark:text-red-200">
         <h1 className="mb-2 text-base font-semibold">Không khởi động được ứng dụng</h1>
         <p>{message}</p>
         <p className="mt-3 text-red-700 dark:text-red-300">

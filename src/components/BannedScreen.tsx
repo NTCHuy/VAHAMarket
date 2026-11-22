@@ -23,15 +23,15 @@ export default function BannedScreen() {
           </p>
         </div>
 
-        <div className="mt-5 space-y-3 rounded-xl border border-red-200 bg-white p-4 text-sm text-slate-900 dark:border-red-900/80 dark:bg-slate-950/90 dark:text-slate-100">
+        <div className="mt-5 space-y-3 rounded-lg border border-red-200 bg-white p-4 text-sm text-neutral-900 dark:border-red-900/80 dark:bg-neutral-950/90 dark:text-neutral-100">
           <div>
             <p className="text-xs font-semibold uppercase tracking-wider text-red-700 dark:text-red-400">Lý do khóa</p>
-            <p className="mt-1 whitespace-pre-line font-medium text-slate-900 dark:text-slate-100">
+            <p className="mt-1 whitespace-pre-line font-medium text-neutral-900 dark:text-neutral-100">
               {banReason?.trim() || 'Vi phạm nghiêm trọng quy định giao dịch của VAHA Market.'}
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3 border-t border-slate-100 pt-3 text-xs text-slate-600 dark:border-slate-800 dark:text-slate-400">
+          <div className="flex flex-wrap items-center gap-3 border-t border-neutral-100 pt-3 text-xs text-neutral-600 dark:border-neutral-800 dark:text-neutral-400">
             {user && (
               <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-1 font-medium text-amber-800 dark:bg-amber-950/60 dark:text-amber-300">
                 <AlertTriangle className="h-3.5 w-3.5" /> Số cảnh báo đã nhận: {warningCount}/3

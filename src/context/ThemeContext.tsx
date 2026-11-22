@@ -32,7 +32,7 @@ function getSystemDark(): boolean {
 function applyThemeToDom(isDark: boolean) {
   document.documentElement.classList.toggle('dark', isDark);
   const meta = document.querySelector('meta[name="theme-color"]');
-  if (meta) meta.setAttribute('content', isDark ? '#020617' : '#ffffff');
+  if (meta) meta.setAttribute('content', isDark ? '#0a0a0a' : '#ffffff');
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {

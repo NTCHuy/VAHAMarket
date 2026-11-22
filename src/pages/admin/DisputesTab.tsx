@@ -50,8 +50,8 @@ export default function DisputesTab({ onChanged }: { onChanged: () => void }) {
   if (orders.length === 0) {
     return (
       <div className="card flex flex-col items-center px-4 py-12 text-center">
-        <ShieldCheck className="h-8 w-8 text-slate-300 dark:text-slate-600" />
-        <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">Không có khiếu nại nào đang chờ xử lý.</p>
+        <ShieldCheck className="h-8 w-8 text-neutral-300 dark:text-neutral-600" />
+        <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-400">Không có khiếu nại nào đang chờ xử lý.</p>
       </div>
     );
   }
@@ -69,12 +69,12 @@ export default function DisputesTab({ onChanged }: { onChanged: () => void }) {
 
 function Party({ title, profile, contact, extraPhone }: { title: string; profile?: Profile; contact?: ProfileContact; extraPhone?: string }) {
   return (
-    <div className="rounded-xl border border-slate-200 dark:border-slate-800 p-3">
-      <p className="mb-2 text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">{title}</p>
+    <div className="rounded-lg border border-neutral-200 dark:border-neutral-800 p-3">
+      <p className="mb-2 text-xs font-medium uppercase tracking-wide text-neutral-500 dark:text-neutral-400">{title}</p>
       <div className="flex items-center gap-2">
         <Avatar name={profile?.display_name ?? '?'} url={profile?.avatar_url ?? null} size={32} />
         <div className="min-w-0">
-          <p className="flex flex-wrap items-center gap-1.5 text-sm font-medium text-slate-900 dark:text-slate-100">
+          <p className="flex flex-wrap items-center gap-1.5 text-sm font-medium text-neutral-900 dark:text-neutral-100">
             <span className="truncate">{profile?.display_name ?? '—'}</span>
             {profile?.is_banned ? (
               <span className="badge bg-red-600 text-white dark:bg-red-600 dark:text-white"><ShieldBan className="mr-1 h-3 w-3" /> Đã bị Ban</span>
@@ -82,15 +82,15 @@ function Party({ title, profile, contact, extraPhone }: { title: string; profile
               <span className="badge bg-amber-100 text-amber-800 dark:bg-amber-950/70 dark:text-amber-300">Cảnh báo {profile?.warning_count}/3</span>
             ) : null}
           </p>
-          <p className="text-xs text-slate-500 dark:text-slate-400">{profile?.sold_count ?? 0} đơn bán · {profile?.bought_count ?? 0} đơn mua</p>
+          <p className="text-xs text-neutral-500 dark:text-neutral-400">{profile?.sold_count ?? 0} đơn bán · {profile?.bought_count ?? 0} đơn mua</p>
         </div>
       </div>
       <div className="mt-2 space-y-1 text-sm">
-        <p className="flex items-center gap-2"><Phone className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500" />
-          {contact?.phone ? <><span className="font-mono">{contact.phone}</span> <CopyButton value={contact.phone} /></> : <span className="text-slate-400 dark:text-slate-500">Chưa có SĐT/Zalo trong hồ sơ</span>}
+        <p className="flex items-center gap-2"><Phone className="h-3.5 w-3.5 text-neutral-400 dark:text-neutral-500" />
+          {contact?.phone ? <><span className="font-mono">{contact.phone}</span> <CopyButton value={contact.phone} /></> : <span className="text-neutral-400 dark:text-neutral-500">Chưa có SĐT/Zalo trong hồ sơ</span>}
         </p>
         {extraPhone && extraPhone !== contact?.phone && (
-          <p className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">SĐT nhận hàng trong đơn: <span className="font-mono">{extraPhone}</span> <CopyButton value={extraPhone} /></p>
+          <p className="flex items-center gap-2 text-xs text-neutral-500 dark:text-neutral-400">SĐT nhận hàng trong đơn: <span className="font-mono">{extraPhone}</span> <CopyButton value={extraPhone} /></p>
         )}
         {(profile?.facebook_url ?? contact?.facebook_url) && (
           <a href={(profile?.facebook_url ?? contact?.facebook_url) as string} target="_blank" rel="noopener noreferrer nofollow" className="inline-flex items-center gap-1.5 text-brand-700 dark:text-brand-400 hover:underline">
@@ -103,7 +103,7 @@ function Party({ title, profile, contact, extraPhone }: { title: string; profile
 }
 
 function VideoLink({ href, label }: { href: string | null; label: string }) {
-  if (!href) return <span className="text-sm text-slate-400 dark:text-slate-500">{label}: không có</span>;
+  if (!href) return <span className="text-sm text-neutral-400 dark:text-neutral-500">{label}: không có</span>;
   return (
     <a href={href} target="_blank" rel="noopener noreferrer nofollow" className="inline-flex items-center gap-1.5 text-sm text-brand-700 dark:text-brand-400 hover:underline">
       <Video className="h-4 w-4" /> {label} <ExternalLink className="h-3.5 w-3.5" />
@@ -162,25 +162,25 @@ function DisputeCard({ order, buyer, seller, buyerContact, sellerContact, onDone
   return (
     <li className="card space-y-4 border-red-200 dark:border-red-900/70 p-4 sm:p-5">
       <div className="flex gap-3">
-        <div className="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-slate-100 dark:bg-slate-800">
+        <div className="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-neutral-100 dark:bg-neutral-800">
           {order.listing_snapshot.image && <img src={cldUrl(order.listing_snapshot.image, { width: 160, height: 160, crop: 'fill' })} alt="" className="h-full w-full object-cover" />}
         </div>
         <div className="min-w-0 flex-1">
-          <p className="line-clamp-2 font-medium text-slate-900 dark:text-slate-100">{order.listing_snapshot.title}</p>
-          <p className="text-sm text-slate-600 dark:text-slate-400">Sàn đang giữ <strong>{formatVND(order.amount)}</strong> · Mã <span className="font-mono">{order.payment_code}</span></p>
-          {order.disputed_at && <p className="text-xs text-slate-500 dark:text-slate-400">Khiếu nại lúc {new Date(order.disputed_at).toLocaleString('vi-VN')}</p>}
+          <p className="line-clamp-2 font-medium text-neutral-900 dark:text-neutral-100">{order.listing_snapshot.title}</p>
+          <p className="text-sm text-neutral-600 dark:text-neutral-400">Sàn đang giữ <strong>{formatVND(order.amount)}</strong> · Mã <span className="font-mono">{order.payment_code}</span></p>
+          {order.disputed_at && <p className="text-xs text-neutral-500 dark:text-neutral-400">Khiếu nại lúc {new Date(order.disputed_at).toLocaleString('vi-VN')}</p>}
         </div>
       </div>
 
-      <div className="rounded-xl bg-red-50/60 dark:bg-red-950/40 p-3 text-sm">
-        <p className="font-medium text-slate-900 dark:text-slate-100">Lý do khiếu nại của người mua</p>
-        <p className="mt-1 whitespace-pre-line text-slate-700 dark:text-slate-200">{order.dispute_reason}</p>
+      <div className="rounded-lg bg-red-50/60 dark:bg-red-950/40 p-3 text-sm">
+        <p className="font-medium text-neutral-900 dark:text-neutral-100">Lý do khiếu nại của người mua</p>
+        <p className="mt-1 whitespace-pre-line text-neutral-700 dark:text-neutral-200">{order.dispute_reason}</p>
         <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1">
           <VideoLink href={order.dispute_video_url} label="Video unbox của người mua" />
           <VideoLink href={order.packing_video_url} label="Video test của người bán" />
         </div>
         {(order.carrier || order.tracking_code) && (
-          <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">Vận chuyển: {order.carrier} · {order.tracking_code}</p>
+          <p className="mt-2 text-xs text-neutral-500 dark:text-neutral-400">Vận chuyển: {order.carrier} · {order.tracking_code}</p>
         )}
       </div>
 
@@ -198,7 +198,7 @@ function DisputeCard({ order, buyer, seller, buyerContact, sellerContact, onDone
       {error && <Alert kind="error">{error}</Alert>}
 
       {warnOpen && (
-        <div className="space-y-2 rounded-xl border border-amber-300 bg-amber-50/70 p-3 dark:border-amber-800/70 dark:bg-amber-950/40">
+        <div className="space-y-2 rounded-lg border border-amber-300 bg-amber-50/70 p-3 dark:border-amber-800/70 dark:bg-amber-950/40">
           <p className="text-sm font-medium text-amber-900 dark:text-amber-200">
             Cảnh báo người bán (hiện có {seller?.warning_count ?? 0}/3 cảnh báo — đạt 3 sẽ tự động Ban vĩnh viễn)
           </p>
@@ -219,7 +219,7 @@ function DisputeCard({ order, buyer, seller, buyerContact, sellerContact, onDone
       )}
 
       {pending ? (
-        <div className="space-y-2 rounded-xl border border-amber-200 dark:border-amber-800/70 bg-amber-50 dark:bg-amber-950/50 p-3 text-sm text-amber-900 dark:text-amber-200">
+        <div className="space-y-2 rounded-lg border border-amber-200 dark:border-amber-800/70 bg-amber-50 dark:bg-amber-950/50 p-3 text-sm text-amber-900 dark:text-amber-200">
           <p>
             {pending === 'REFUND_TO_BUYER'
               ? `Xác nhận HOÀN TIỀN cho người mua? Đơn chuyển sang “Đã hoàn tiền”. Bạn cần tự chuyển khoản ${formatVND(order.amount)} cho người mua (xin STK qua SĐT/Zalo).`

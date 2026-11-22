@@ -11,24 +11,26 @@ import {
   Video,
 } from 'lucide-react';
 import { BRAND_FULL_NAME, BRAND_NAME, DISCORD_SERVER_URL, FOUNDER_FACEBOOK_URL, GROUP_URL } from '@/constants/links';
+import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 
 export default function Terms() {
+  useDocumentTitle('Điều khoản dịch vụ');
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <div>
         <Link
           to="/"
-          className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
+          className="inline-flex items-center gap-1.5 text-sm font-medium text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
         >
           <ArrowLeft className="h-4 w-4" /> Quay lại trang chủ
         </Link>
         <div className="mt-3 flex items-start gap-2.5">
           <FileText size={18} strokeWidth={1.75} className="mt-1 shrink-0 text-blue-700 dark:text-blue-400" />
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight text-slate-900 dark:text-slate-50">
+            <h1 className="text-2xl font-semibold tracking-tight text-neutral-900 dark:text-neutral-50">
               Điều khoản dịch vụ &amp; Quy định giao dịch
             </h1>
-            <p className="text-sm text-slate-600 dark:text-slate-400">
+            <p className="text-sm text-neutral-600 dark:text-neutral-400">
               {BRAND_NAME} ({BRAND_FULL_NAME}) · Áp dụng cho toàn bộ người mua và người bán trên sàn.
             </p>
           </div>
@@ -62,7 +64,7 @@ export default function Terms() {
               <strong>Cơ quan Cảnh sát điều tra (Công an)</strong> để khởi tố theo quy định pháp luật, bao gồm:
             </p>
 
-            <ul className="grid gap-1.5 rounded-xl border border-red-200 bg-white/80 p-3.5 text-xs font-medium text-red-950 dark:border-red-800/80 dark:bg-red-950/80 dark:text-red-100 sm:grid-cols-2">
+            <ul className="grid gap-1.5 rounded-lg border border-red-200 bg-white/80 p-3.5 text-xs font-medium text-red-950 dark:border-red-800/80 dark:bg-red-950/80 dark:text-red-100 sm:grid-cols-2">
               <li>• Email tài khoản Google đăng nhập</li>
               <li>• Số điện thoại liên hệ</li>
               <li>• Đường dẫn trang cá nhân Facebook</li>
@@ -71,13 +73,13 @@ export default function Terms() {
               <li>• Toàn bộ bằng chứng video, hình ảnh đối soát</li>
             </ul>
 
-            <div className="space-y-2.5 rounded-xl border border-red-300 bg-white p-4 text-sm text-slate-900 dark:border-red-800 dark:bg-slate-950/90 dark:text-slate-100">
+            <div className="space-y-2.5 rounded-lg border border-red-300 bg-white p-4 text-sm text-neutral-900 dark:border-red-800 dark:bg-neutral-950/90 dark:text-neutral-100">
               <p className="flex items-center gap-1.5 font-semibold text-red-700 dark:text-red-400">
                 <Scale className="h-4 w-4 shrink-0" /> Căn cứ pháp luật hiện hành tại Việt Nam
               </p>
-              <div className="space-y-2 text-xs leading-relaxed text-slate-700 dark:text-slate-300 sm:text-sm">
+              <div className="space-y-2 text-xs leading-relaxed text-neutral-700 dark:text-neutral-300 sm:text-sm">
                 <p>
-                  <strong className="text-slate-900 dark:text-slate-100">
+                  <strong className="text-neutral-900 dark:text-neutral-100">
                     1. Điều 174 Bộ luật Hình sự 2015 (sửa đổi, bổ sung 2017) — Tội lừa đảo chiếm đoạt tài sản:
                   </strong>{' '}
                   Hành vi dùng thủ đoạn gian dối chiếm đoạt tài sản trị giá từ{' '}
@@ -91,7 +93,7 @@ export default function Terms() {
                   tùy theo giá trị tài sản chiếm đoạt (từ 500 triệu đồng trở lên).
                 </p>
                 <p>
-                  <strong className="text-slate-900 dark:text-slate-100">
+                  <strong className="text-neutral-900 dark:text-neutral-100">
                     2. Điều 175 Bộ luật Hình sự 2015 (sửa đổi, bổ sung 2017) — Tội lạm dụng tín nhiệm chiếm đoạt tài sản:
                   </strong>{' '}
                   Hành vi vay, mượn, thuê tài sản hoặc nhận được tài sản bằng hình thức hợp đồng rồi dùng thủ đoạn gian
@@ -106,11 +108,11 @@ export default function Terms() {
 
       {/* 1. VAI TRÒ TRUNG GIAN & MIỄN TRỪ TRÁCH NHIỆM */}
       <section id="video-rules" className="card space-y-3 p-5 sm:p-6">
-        <h2 className="flex items-center gap-2 text-base font-semibold text-slate-900 dark:text-slate-50">
+        <h2 className="flex items-center gap-2 text-base font-semibold text-neutral-900 dark:text-neutral-50">
           <ShieldCheck className="h-5 w-5 text-brand-700 dark:text-brand-400" />
           1. Vai trò trung gian &amp; Miễn trừ trách nhiệm của Admin
         </h2>
-        <div className="space-y-2.5 text-sm leading-relaxed text-slate-700 dark:text-slate-300">
+        <div className="space-y-2.5 text-sm leading-relaxed text-neutral-700 dark:text-neutral-300">
           <p>
             <strong>{BRAND_NAME}</strong> và đội ngũ quản trị viên (Founder{' '}
             <strong>Nguyễn Trần Công Huy — HweeHiFi</strong>) chỉ đóng vai trò cung cấp nền tảng kết nối giữa người mua
@@ -120,7 +122,7 @@ export default function Terms() {
           <ul className="list-disc space-y-1.5 pl-5">
             <li>
               <strong>Ảnh xác thực chính chủ</strong>: chụp sản phẩm đặt cạnh mảnh giấy viết tay ghi rõ{' '}
-              <code className="rounded bg-slate-100 px-1.5 py-0.5 text-xs dark:bg-slate-800">
+              <code className="rounded bg-neutral-100 px-1.5 py-0.5 text-xs dark:bg-neutral-800">
                 VAHA + Ngày tháng + Tên Facebook
               </code>
               .
@@ -134,7 +136,7 @@ export default function Terms() {
               chưa cắt băng dính cho tới khi kiểm tra ngoại quan và chức năng sản phẩm.
             </li>
           </ul>
-          <div className="rounded-xl border border-amber-200 bg-amber-50 p-3.5 text-xs leading-relaxed text-amber-950 dark:border-amber-800/70 dark:bg-amber-950/40 dark:text-amber-200 sm:text-sm">
+          <div className="rounded-lg border border-amber-200 bg-amber-50 p-3.5 text-xs leading-relaxed text-amber-950 dark:border-amber-800/70 dark:bg-amber-950/40 dark:text-amber-200 sm:text-sm">
             <p className="flex items-center gap-1.5 font-semibold text-amber-900 dark:text-amber-300">
               <AlertTriangle className="h-4 w-4 shrink-0" /> Phạm vi miễn trừ trách nhiệm
             </p>
@@ -159,11 +161,11 @@ export default function Terms() {
 
       {/* 2. QUY ĐỊNH ĐỊNH DANH & BẰNG CHỨNG */}
       <section className="card space-y-3 p-5 sm:p-6">
-        <h2 className="flex items-center gap-2 text-base font-semibold text-slate-900 dark:text-slate-50">
+        <h2 className="flex items-center gap-2 text-base font-semibold text-neutral-900 dark:text-neutral-50">
           <Camera className="h-5 w-5 text-brand-700 dark:text-brand-400" />
           2. Quy định định danh, tiền kiểm &amp; chống giao dịch ngoài sàn
         </h2>
-        <ul className="list-disc space-y-2 pl-5 text-sm leading-relaxed text-slate-700 dark:text-slate-300">
+        <ul className="list-disc space-y-2 pl-5 text-sm leading-relaxed text-neutral-700 dark:text-neutral-300">
           <li>
             <strong>Hồ sơ người bán bắt buộc:</strong> Người bán phải cung cấp đầy đủ Số điện thoại, Link trang cá nhân
             Facebook công khai và ít nhất 01 tài khoản ngân hàng nhận tiền. Tên chủ tài khoản ngân hàng phải là{' '}
@@ -178,7 +180,7 @@ export default function Terms() {
             Admin xác minh ảnh viết tay chính chủ và nội dung hợp lệ. Tin đã duyệt nếu chỉnh sửa nội dung, ảnh hoặc tài
             khoản nhận tiền sẽ quay lại hàng chờ duyệt.
           </li>
-          <li className="flex items-start gap-1.5 list-none -ml-5 rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-800/50">
+          <li className="flex items-start gap-1.5 list-none -ml-5 rounded-lg border border-neutral-200 bg-neutral-50 p-3 dark:border-neutral-800 dark:bg-neutral-800/50">
             <Ban className="mt-0.5 h-4 w-4 shrink-0 text-red-600 dark:text-red-400" />
             <span>
               <strong>Nghiêm cấm dẫn dụ giao dịch ngoài sàn:</strong> Không chèn số điện thoại, Zalo hoặc kêu gọi
@@ -190,11 +192,11 @@ export default function Terms() {
 
       {/* 3. QUY TRÌNH TRANH CHẤP & PHÍ DỊCH VỤ */}
       <section id="fee-cap" className="card space-y-3 p-5 sm:p-6">
-        <h2 className="flex items-center gap-2 text-base font-semibold text-slate-900 dark:text-slate-50">
+        <h2 className="flex items-center gap-2 text-base font-semibold text-neutral-900 dark:text-neutral-50">
           <Video className="h-5 w-5 text-brand-700 dark:text-brand-400" />
           3. Thanh toán, phí bảo lãnh &amp; giải quyết khiếu nại
         </h2>
-        <ul className="list-disc space-y-2 pl-5 text-sm leading-relaxed text-slate-700 dark:text-slate-300">
+        <ul className="list-disc space-y-2 pl-5 text-sm leading-relaxed text-neutral-700 dark:text-neutral-300">
           <li>
             <strong>Thanh toán VietQR tự động:</strong> Đơn hàng giữ chỗ trong 15 phút. Tiền được giữ an toàn tại tài
             khoản trung gian của sàn cho đến khi người mua bấm xác nhận đã nhận hàng ổn định hoặc có phán quyết cuối
@@ -221,11 +223,11 @@ export default function Terms() {
 
       {/* 4. CƠ CHẾ CẢNH BÁO 3 LẦN TỰ ĐỘNG BAN & CHẶN THIẾT BỊ */}
       <section className="card space-y-3 border-red-200 p-5 dark:border-red-900/70 sm:p-6">
-        <h2 className="flex items-center gap-2 text-base font-semibold text-slate-900 dark:text-slate-50">
+        <h2 className="flex items-center gap-2 text-base font-semibold text-neutral-900 dark:text-neutral-50">
           <ShieldAlert className="h-5 w-5 text-red-600 dark:text-red-400" />
           4. Cơ chế Cảnh báo 3 lần tự động khóa vĩnh viễn (3-Strike) &amp; Chặn thiết bị
         </h2>
-        <ul className="list-disc space-y-2 pl-5 text-sm leading-relaxed text-slate-700 dark:text-slate-300">
+        <ul className="list-disc space-y-2 pl-5 text-sm leading-relaxed text-neutral-700 dark:text-neutral-300">
           <li>
             <strong>Hệ thống 3 lần cảnh báo (3-Strike Auto-Ban):</strong> Mỗi hành vi vi phạm quy định sàn (đăng ảnh
             không trung thực, cố tình dẫn dụ giao dịch ngoài sàn, giao hàng sai mô tả, thái độ thiếu hợp tác khi đối
@@ -249,7 +251,7 @@ export default function Terms() {
         </ul>
       </section>
 
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-4 text-xs text-slate-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400">
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-neutral-200 bg-white p-4 text-xs text-neutral-600 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-400">
         <span>Cần hỗ trợ hoặc báo cáo gian lận? Liên hệ trực tiếp kênh chính thức của {BRAND_NAME}:</span>
         <div className="flex flex-wrap gap-2">
           <a href={FOUNDER_FACEBOOK_URL} target="_blank" rel="noopener noreferrer" className="font-medium text-brand-700 hover:underline dark:text-brand-400">

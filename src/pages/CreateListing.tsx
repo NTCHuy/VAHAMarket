@@ -15,6 +15,7 @@ import NotificationHint from '@/components/NotificationHint';
 import SellerTermsModal, { hasAcceptedSellerTerms } from '@/components/SellerTermsModal';
 import ModBadge from '@/components/ModBadge';
 import { usePlatformSettings } from '@/context/PlatformSettingsContext';
+import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useNotifications } from '@/context/NotificationContext';
 import { PLATFORM_FEE_BP } from '@/constants/payment';
 import type { BankAccount, Listing, ListingStatus } from '@/types';
@@ -69,6 +70,7 @@ function ListingForm({ listingId }: { listingId?: string }) {
   const { pushToast } = useNotifications();
   const navigate = useNavigate();
   const isEdit = Boolean(listingId);
+  useDocumentTitle(isEdit ? 'Sửa tin đăng' : 'Đăng bán sản phẩm');
   const [termsAccepted, setTermsAccepted] = useState<boolean>(() => isEdit || hasAcceptedSellerTerms());
 
   const [loading, setLoading] = useState(true);
@@ -431,18 +433,18 @@ function ListingForm({ listingId }: { listingId?: string }) {
           <AlertTriangle size={18} strokeWidth={1.75} className="mt-0.5 shrink-0 text-amber-600 dark:text-amber-400" />
           <div>
             <h1 className="text-lg font-semibold">Hoàn tất hồ sơ người bán trước khi đăng tin</h1>
-            <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">VAHA Market yêu cầu xác thực danh tính người bán để bảo vệ cộng đồng khỏi lừa đảo.</p>
+            <p className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">VAHA Market yêu cầu xác thực danh tính người bán để bảo vệ cộng đồng khỏi lừa đảo.</p>
           </div>
         </div>
         <ul className="space-y-2 text-sm">
           {checklist.map((c) => (
             <li key={c.label} className="flex items-center gap-2">
               {c.ok ? <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" /> : <XCircle className="h-4 w-4 text-red-500" />}
-              <span className={c.ok ? 'text-slate-500 dark:text-slate-400 line-through' : 'font-medium text-slate-900 dark:text-slate-100'}>{c.label}</span>
+              <span className={c.ok ? 'text-neutral-500 dark:text-neutral-400 line-through' : 'font-medium text-neutral-900 dark:text-neutral-100'}>{c.label}</span>
             </li>
           ))}
         </ul>
-        <p className="text-xs text-slate-500 dark:text-slate-400">Tên chủ tài khoản ngân hàng phải là tên chính chủ, khớp với tên trên trang cá nhân Facebook của bạn thì mới được giải ngân.</p>
+        <p className="text-xs text-neutral-500 dark:text-neutral-400">Tên chủ tài khoản ngân hàng phải là tên chính chủ, khớp với tên trên trang cá nhân Facebook của bạn thì mới được giải ngân.</p>
         <Link to="/settings" className="btn-primary w-full"><Landmark className="h-4 w-4" /> Đến Cài đặt tài khoản để hoàn tất</Link>
       </div>
     );
@@ -455,7 +457,7 @@ function ListingForm({ listingId }: { listingId?: string }) {
     <form onSubmit={onSubmit} className="mx-auto max-w-3xl space-y-6" noValidate>
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">{isEdit ? 'Sửa tin đăng' : 'Đăng bán đồ audio'}</h1>
-        <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">Mô tả trung thực, ảnh rõ nét sẽ giúp bạn bán nhanh và tránh tranh chấp.</p>
+        <p className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">Mô tả trung thực, ảnh rõ nét sẽ giúp bạn bán nhanh và tránh tranh chấp.</p>
       </div>
 
       {listingStatus === 'rejected' && rejectionReason && (
@@ -472,32 +474,32 @@ function ListingForm({ listingId }: { listingId?: string }) {
       <section className="card space-y-3 p-5 sm:p-6">
         <div className="flex items-baseline justify-between">
           <h2 className="text-base font-semibold">Hình ảnh <span className="text-red-500">*</span></h2>
-          <span className="text-xs text-slate-500 dark:text-slate-400">{images.length}/{MAX_IMAGES} ảnh · ảnh đầu tiên là ảnh bìa</span>
+          <span className="text-xs text-neutral-500 dark:text-neutral-400">{images.length}/{MAX_IMAGES} ảnh · ảnh đầu tiên là ảnh bìa</span>
         </div>
 
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           {images.map((img, index) => (
-            <div key={img.key} className="overflow-hidden rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60">
+            <div key={img.key} className="overflow-hidden rounded-lg border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-800/60">
               <div className="relative aspect-square">
                 <img src={img.preview} alt={`Ảnh ${index + 1}`} className="h-full w-full object-cover" />
-                {index === 0 && <span className="absolute left-2 top-2 rounded-md bg-slate-900/80 px-1.5 py-0.5 text-[11px] font-medium text-white">Ảnh bìa</span>}
+                {index === 0 && <span className="absolute left-2 top-2 rounded-md bg-neutral-900/80 px-1.5 py-0.5 text-[11px] font-medium text-white">Ảnh bìa</span>}
                 <button
                   type="button"
                   onClick={() => removeImage(img.key)}
                   aria-label={`Xóa ảnh ${index + 1}`}
-                  className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-white/95 dark:bg-slate-900/95 text-slate-700 dark:text-slate-200 shadow hover:bg-white dark:hover:bg-slate-800"
+                  className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-white/95 dark:bg-neutral-900/95 text-neutral-700 dark:text-neutral-200 shadow hover:bg-white dark:hover:bg-neutral-800"
                 >
                   <X className="h-4 w-4" />
                 </button>
                 {img.state === 'uploading' && (
-                  <div className="absolute inset-x-0 bottom-0 bg-white/90 dark:bg-slate-900/90 px-2 py-1.5">
-                    <div className="h-1.5 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
+                  <div className="absolute inset-x-0 bottom-0 bg-white/90 dark:bg-neutral-900/90 px-2 py-1.5">
+                    <div className="h-1.5 overflow-hidden rounded-full bg-neutral-200 dark:bg-neutral-700">
                       <div className="h-full rounded-full bg-brand-600 transition-all" style={{ width: `${img.progress}%` }} />
                     </div>
                   </div>
                 )}
                 {img.state === 'error' && (
-                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-white/90 dark:bg-slate-900/90 p-2 text-center">
+                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-white/90 dark:bg-neutral-900/90 p-2 text-center">
                     <p className="line-clamp-2 text-xs text-red-600 dark:text-red-400">{img.error}</p>
                     {img.file && (
                       <button type="button" className="btn-secondary px-2 py-1 text-xs" onClick={() => void startUpload(img.key, img.file!)}>
@@ -507,7 +509,7 @@ function ListingForm({ listingId }: { listingId?: string }) {
                   </div>
                 )}
               </div>
-              <div className="flex justify-between border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-1 py-1">
+              <div className="flex justify-between border-t border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 px-1 py-1">
                 <button type="button" className="btn-ghost px-2 py-1" disabled={index === 0} onClick={() => moveImage(index, -1)} aria-label="Chuyển ảnh sang trái">
                   <ArrowLeft className="h-4 w-4" />
                 </button>
@@ -519,7 +521,7 @@ function ListingForm({ listingId }: { listingId?: string }) {
           ))}
 
           {images.length < MAX_IMAGES && (
-            <label className="flex aspect-square cursor-pointer flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed border-slate-300 dark:border-slate-700 text-slate-500 dark:text-slate-400 transition-colors hover:border-brand-400 dark:hover:border-brand-500 hover:bg-brand-50 dark:hover:bg-brand-900/50 hover:text-brand-700 dark:hover:text-brand-400">
+            <label className="flex aspect-square cursor-pointer flex-col items-center justify-center gap-1.5 rounded-lg border-2 border-dashed border-neutral-300 dark:border-neutral-700 text-neutral-500 dark:text-neutral-400 transition-colors hover:border-brand-400 dark:hover:border-brand-500 hover:bg-brand-50 dark:hover:bg-brand-900/50 hover:text-brand-700 dark:hover:text-brand-400">
               <ImagePlus className="h-6 w-6" />
               <span className="text-xs font-medium">Thêm ảnh</span>
               <input type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" multiple className="sr-only" onChange={onPickFiles} />
@@ -533,18 +535,18 @@ function ListingForm({ listingId }: { listingId?: string }) {
       {/* Ảnh xác thực chính chủ */}
       <section className="card space-y-3 p-5 sm:p-6">
         <h2 className="text-base font-semibold">Ảnh xác thực chính chủ (Bắt buộc) <span className="text-red-500">*</span></h2>
-        <div className="rounded-xl border border-amber-200 dark:border-amber-800/70 bg-amber-50 dark:bg-amber-950/50 p-3 text-sm text-amber-900 dark:text-amber-200">
+        <div className="rounded-lg border border-amber-200 dark:border-amber-800/70 bg-amber-50 dark:bg-amber-950/50 p-3 text-sm text-amber-900 dark:text-amber-200">
           <p><strong>Chụp sản phẩm đặt cạnh mảnh giấy viết tay</strong> ghi rõ chữ <strong>“VAHA + Ngày hôm nay + Tên Facebook của bạn”</strong>.</p>
           <p className="mt-1 text-xs">Ví dụ: <span className="font-mono font-semibold">VAHA {new Date().toLocaleDateString('vi-VN')} Nguyễn Văn A</span> — chữ phải rõ nét, nằm cùng khung hình với sản phẩm thật. Ảnh chỉ dùng để Admin kiểm duyệt.</p>
         </div>
 
         {verification ? (
           <div className="flex flex-wrap items-start gap-3">
-            <div className="relative h-40 w-40 shrink-0 overflow-hidden rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60">
+            <div className="relative h-40 w-40 shrink-0 overflow-hidden rounded-lg border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-800/60">
               <img src={verification.preview} alt="Ảnh xác thực chính chủ" className="h-full w-full object-cover" />
               {verification.state === 'uploading' && (
-                <div className="absolute inset-x-0 bottom-0 bg-white/90 dark:bg-slate-900/90 px-2 py-1.5">
-                  <div className="h-1.5 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700"><div className="h-full rounded-full bg-brand-600 transition-all" style={{ width: `${verification.progress}%` }} /></div>
+                <div className="absolute inset-x-0 bottom-0 bg-white/90 dark:bg-neutral-900/90 px-2 py-1.5">
+                  <div className="h-1.5 overflow-hidden rounded-full bg-neutral-200 dark:bg-neutral-700"><div className="h-full rounded-full bg-brand-600 transition-all" style={{ width: `${verification.progress}%` }} /></div>
                 </div>
               )}
             </div>
@@ -561,7 +563,7 @@ function ListingForm({ listingId }: { listingId?: string }) {
             </div>
           </div>
         ) : (
-          <label className="flex cursor-pointer flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed border-slate-300 dark:border-slate-700 px-4 py-8 text-slate-500 dark:text-slate-400 transition-colors hover:border-brand-400 dark:hover:border-brand-500 hover:bg-brand-50 dark:hover:bg-brand-900/50 hover:text-brand-700 dark:hover:text-brand-400">
+          <label className="flex cursor-pointer flex-col items-center justify-center gap-1.5 rounded-lg border-2 border-dashed border-neutral-300 dark:border-neutral-700 px-4 py-8 text-neutral-500 dark:text-neutral-400 transition-colors hover:border-brand-400 dark:hover:border-brand-500 hover:bg-brand-50 dark:hover:bg-brand-900/50 hover:text-brand-700 dark:hover:text-brand-400">
             <Camera className="h-6 w-6" />
             <span className="text-sm font-medium">Tải ảnh xác thực chính chủ</span>
             <input type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" className="sr-only" onChange={onPickVerification} />
@@ -600,12 +602,12 @@ function ListingForm({ listingId }: { listingId?: string }) {
               <label
                 key={c.id}
                 className={`cursor-pointer rounded-lg border p-3 transition-colors ${
-                  condition === c.id ? 'border-brand-600 dark:border-brand-500 bg-brand-50 dark:bg-brand-900/40 ring-1 ring-brand-600' : 'border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800'
+                  condition === c.id ? 'border-brand-600 dark:border-brand-500 bg-brand-50 dark:bg-brand-900/40 ring-1 ring-brand-600' : 'border-neutral-200 dark:border-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-800'
                 }`}
               >
                 <input type="radio" name="condition" value={c.id} checked={condition === c.id} onChange={() => setCondition(c.id)} className="sr-only" />
-                <span className="block text-sm font-medium text-slate-900 dark:text-slate-100">{c.label}</span>
-                <span className="block text-xs text-slate-500 dark:text-slate-400">{c.hint}</span>
+                <span className="block text-sm font-medium text-neutral-900 dark:text-neutral-100">{c.label}</span>
+                <span className="block text-xs text-neutral-500 dark:text-neutral-400">{c.hint}</span>
               </label>
             ))}
           </div>
@@ -639,7 +641,7 @@ function ListingForm({ listingId }: { listingId?: string }) {
               value={priceText ? new Intl.NumberFormat('vi-VN').format(parseInt(priceText, 10)) : ''}
               onChange={(e) => setPriceText(e.target.value.replace(/\D/g, '').slice(0, 10))}
             />
-            <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-slate-400 dark:text-slate-500">đ</span>
+            <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-neutral-400 dark:text-neutral-500">đ</span>
           </div>
         </Field>
 
@@ -655,12 +657,12 @@ function ListingForm({ listingId }: { listingId?: string }) {
             {FEE_PAYER_OPTIONS.map((o) => {
               const f = priceValid ? calcFees(price, o.id, isMod, feeBp, feeCapVnd) : null;
               return (
-                <label key={o.id} className={`cursor-pointer rounded-lg border p-3 transition-colors ${feePayer === o.id ? 'border-brand-600 dark:border-brand-500 bg-brand-50 dark:bg-brand-900/40 ring-1 ring-brand-600' : 'border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800'}`}>
+                <label key={o.id} className={`cursor-pointer rounded-lg border p-3 transition-colors ${feePayer === o.id ? 'border-brand-600 dark:border-brand-500 bg-brand-50 dark:bg-brand-900/40 ring-1 ring-brand-600' : 'border-neutral-200 dark:border-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-800'}`}>
                   <input type="radio" name="feePayer" value={o.id} checked={feePayer === o.id} onChange={() => setFeePayer(o.id)} className="sr-only" />
-                  <span className="block text-sm font-medium text-slate-900 dark:text-slate-100">{o.label}{o.id === 'SELLER' && <span className="ml-1 text-xs font-normal text-slate-500 dark:text-slate-400">(mặc định)</span>}</span>
-                  <span className="block text-xs text-slate-500 dark:text-slate-400">{o.hint}</span>
+                  <span className="block text-sm font-medium text-neutral-900 dark:text-neutral-100">{o.label}{o.id === 'SELLER' && <span className="ml-1 text-xs font-normal text-neutral-500 dark:text-neutral-400">(mặc định)</span>}</span>
+                  <span className="block text-xs text-neutral-500 dark:text-neutral-400">{o.hint}</span>
                   {f && (
-                    <span className="mt-1.5 block text-xs text-slate-700 dark:text-slate-200">
+                    <span className="mt-1.5 block text-xs text-neutral-700 dark:text-neutral-200">
                       Người mua trả <strong>{formatVND(f.buyerPays)}</strong><br />Bạn nhận <strong>{formatVND(f.sellerReceives)}</strong>
                     </span>
                   )}
@@ -670,13 +672,13 @@ function ListingForm({ listingId }: { listingId?: string }) {
           </div>
         </fieldset>
 
-        <dl className="divide-y divide-slate-100 dark:divide-slate-800 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 text-sm">
+        <dl className="divide-y divide-neutral-100 dark:divide-neutral-800 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-800/60 text-sm">
           <div className="flex justify-between px-4 py-2.5">
-            <dt className="text-slate-600 dark:text-slate-400">Giá niêm yết</dt>
-            <dd className="font-medium text-slate-900 dark:text-slate-100">{fees ? formatVND(fees.listPrice) : '—'}</dd>
+            <dt className="text-neutral-600 dark:text-neutral-400">Giá niêm yết</dt>
+            <dd className="font-medium text-neutral-900 dark:text-neutral-100">{fees ? formatVND(fees.listPrice) : '—'}</dd>
           </div>
           <div className="flex justify-between gap-2 px-4 py-2.5">
-            <dt className="text-slate-600 dark:text-slate-400">
+            <dt className="text-neutral-600 dark:text-neutral-400">
               Phí trung gian bạn chịu ({feePctText}{feePayer === 'SPLIT' ? ', chia đôi' : ''})
               {fees?.isFeeCapped && (
                 <span className="ml-1 font-medium text-emerald-700 dark:text-emerald-400">
@@ -687,28 +689,28 @@ function ListingForm({ listingId }: { listingId?: string }) {
             <dd className="font-medium text-red-600 dark:text-red-400">{fees ? (fees.sellerFee > 0 ? `− ${formatVND(fees.sellerFee)}` : formatVND(0)) : '—'}</dd>
           </div>
           <div className="flex justify-between px-4 py-3">
-            <dt className="font-medium text-slate-900 dark:text-slate-100">Bạn thực nhận</dt>
+            <dt className="font-medium text-neutral-900 dark:text-neutral-100">Bạn thực nhận</dt>
             <dd className="text-base font-semibold text-brand-800 dark:text-brand-300">{fees ? formatVND(fees.sellerReceives) : '—'}</dd>
           </div>
           <div className="flex justify-between px-4 py-2.5">
-            <dt className="text-slate-600 dark:text-slate-400">Người mua phải chuyển khoản</dt>
-            <dd className="font-medium text-slate-900 dark:text-slate-100">{fees ? formatVND(fees.buyerPays) : '—'}</dd>
+            <dt className="text-neutral-600 dark:text-neutral-400">Người mua phải chuyển khoản</dt>
+            <dd className="font-medium text-neutral-900 dark:text-neutral-100">{fees ? formatVND(fees.buyerPays) : '—'}</dd>
           </div>
         </dl>
         {fees?.isFeeCapped && fees.feeSavedAmount > 0 && (
-          <div className="rounded-xl border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-900 dark:border-emerald-700/80 dark:bg-emerald-950/50 dark:text-emerald-200">
+          <div className="rounded-lg border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-900 dark:border-emerald-700/80 dark:bg-emerald-950/50 dark:text-emerald-200">
             Đã đạt trần phí sàn tối đa {formatVND(fees.feeCapVnd)} — Bạn đã tiết kiệm được{' '}
             <strong className="font-bold text-emerald-700 dark:text-emerald-300">{formatVND(fees.feeSavedAmount)}</strong>!
           </div>
         )}
         {!fees?.isFeeCapped && !isMod && feeBp === 0 && refStandardFees?.isFeeCapped && (
-          <div className="rounded-xl border border-emerald-200 bg-emerald-50/70 px-3.5 py-2.5 text-xs text-emerald-900 dark:border-emerald-800/70 dark:bg-emerald-950/40 dark:text-emerald-200">
+          <div className="rounded-lg border border-emerald-200 bg-emerald-50/70 px-3.5 py-2.5 text-xs text-emerald-900 dark:border-emerald-800/70 dark:bg-emerald-950/40 dark:text-emerald-200">
             Hiện sàn đang ưu đãi <strong>0% phí</strong>. Sau thời gian ưu đãi (mức 5%), đơn hàng này vẫn được bảo vệ bởi{' '}
             <strong>trần phí tối đa {formatVND(refStandardFees.feeCapVnd)}</strong> (tiết kiệm{' '}
             <strong>{formatVND(refStandardFees.feeSavedAmount)}</strong> so với phí 5% không trần).
           </div>
         )}
-        <p className="text-xs text-slate-500 dark:text-slate-400">Người mua chuyển tiền vào tài khoản trung gian. Sau khi họ xác nhận nhận hàng, sàn giữ phần phí và chuyển số thực nhận cho bạn.</p>
+        <p className="text-xs text-neutral-500 dark:text-neutral-400">Người mua chuyển tiền vào tài khoản trung gian. Sau khi họ xác nhận nhận hàng, sàn giữ phần phí và chuyển số thực nhận cho bạn.</p>
       </section>
 
       {/* Giao nhận */}
@@ -723,11 +725,11 @@ function ListingForm({ listingId }: { listingId?: string }) {
           </select>
         </Field>
 
-        <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-slate-200 dark:border-slate-800 p-3 hover:bg-slate-50 dark:hover:bg-slate-800">
-          <input type="checkbox" checked={shipCod} onChange={(e) => setShipCod(e.target.checked)} className="mt-0.5 h-4 w-4 rounded border-slate-300 dark:border-slate-700 text-brand-700 dark:text-brand-400" />
+        <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-neutral-200 dark:border-neutral-800 p-3 hover:bg-neutral-50 dark:hover:bg-neutral-800">
+          <input type="checkbox" checked={shipCod} onChange={(e) => setShipCod(e.target.checked)} className="mt-0.5 h-4 w-4 rounded border-neutral-300 dark:border-neutral-700 text-brand-700 dark:text-brand-400" />
           <span>
-            <span className="flex items-center gap-1.5 text-sm font-medium text-slate-900 dark:text-slate-100"><Truck className="h-4 w-4 text-slate-400 dark:text-slate-500" /> Ship COD — người mua trả phí ship</span>
-            <span className="mt-0.5 block text-xs text-slate-500 dark:text-slate-400">Bạn gửi hàng qua bưu tá; người mua tự thanh toán phí ship cho bưu tá khi nhận hàng (không tính vào tiền trung gian).</span>
+            <span className="flex items-center gap-1.5 text-sm font-medium text-neutral-900 dark:text-neutral-100"><Truck className="h-4 w-4 text-neutral-400 dark:text-neutral-500" /> Ship COD — người mua trả phí ship</span>
+            <span className="mt-0.5 block text-xs text-neutral-500 dark:text-neutral-400">Bạn gửi hàng qua bưu tá; người mua tự thanh toán phí ship cho bưu tá khi nhận hàng (không tính vào tiền trung gian).</span>
           </span>
         </label>
         {show('delivery') && <p className="text-xs text-red-600 dark:text-red-400">{show('delivery')}</p>}
@@ -737,7 +739,7 @@ function ListingForm({ listingId }: { listingId?: string }) {
       <section className="card space-y-3 p-5 sm:p-6">
         <h2 className="text-base font-semibold">Tài khoản ngân hàng nhận tiền <span className="text-red-500">*</span></h2>
         {accounts.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-amber-300 dark:border-amber-700/80 bg-amber-50 dark:bg-amber-950/50 p-4">
+          <div className="rounded-lg border border-dashed border-amber-300 dark:border-amber-700/80 bg-amber-50 dark:bg-amber-950/50 p-4">
             <p className="flex items-center gap-2 text-sm font-medium text-amber-900 dark:text-amber-200"><AlertTriangle className="h-4 w-4" /> Bạn chưa có tài khoản ngân hàng nào.</p>
             <p className="mt-1 text-sm text-amber-800 dark:text-amber-300">Cần thêm ít nhất một tài khoản trong Cài đặt để nhận tiền sau khi bán.</p>
             <Link to="/settings" className="btn-primary mt-3"><Landmark className="h-4 w-4" /> Đến Cài đặt tài khoản</Link>
@@ -770,7 +772,7 @@ function ListingForm({ listingId }: { listingId?: string }) {
       {saveError && <Alert kind="error">{saveError}</Alert>}
       {submitted && Object.keys(errors).length > 0 && <Alert kind="error">Vui lòng kiểm tra lại các mục được đánh dấu đỏ.</Alert>}
 
-      <p className="text-xs text-slate-500 dark:text-slate-400">
+      <p className="text-xs text-neutral-500 dark:text-neutral-400">
         Bằng việc đăng tin, bạn đồng ý với{' '}
         <Link to="/terms" className="font-medium text-brand-700 hover:underline dark:text-brand-400">
           Điều khoản dịch vụ

@@ -371,15 +371,15 @@ function ToastContainer({
         <div
           key={t.id}
           role="status"
-          className="pointer-events-auto overflow-hidden rounded-lg border border-slate-200 bg-white p-4 transition-all dark:border-slate-700 dark:bg-slate-900"
+          className="pointer-events-auto overflow-hidden rounded-lg border border-neutral-200 bg-white p-4 transition-all dark:border-neutral-700 dark:bg-neutral-900"
         >
           <div className="flex items-start gap-3">
             <span className="mt-0.5 shrink-0">
               <ToastIcon kind={t.kind} title={t.title} />
             </span>
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{t.title}</p>
-              <p className="mt-0.5 text-xs leading-relaxed text-slate-600 dark:text-slate-300">{t.body}</p>
+              <p className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">{t.title}</p>
+              <p className="mt-0.5 text-xs leading-relaxed text-neutral-600 dark:text-neutral-300">{t.body}</p>
               {t.href && (
                 <button
                   type="button"
@@ -397,7 +397,7 @@ function ToastContainer({
               type="button"
               onClick={() => onDismiss(t.id)}
               aria-label="Đóng thông báo"
-              className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+              className="rounded-lg p-1 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600 dark:hover:bg-neutral-800 dark:hover:text-neutral-200"
             >
               <X className="h-4 w-4" />
             </button>

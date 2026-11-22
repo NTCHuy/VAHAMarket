@@ -5,6 +5,7 @@ import { getAdminStats, type AdminStats } from '@/lib/admin';
 import { formatVND } from '@/lib/money';
 import { getErrorMessage } from '@/lib/errors';
 import { Alert } from '@/components/ui';
+import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import ReviewTab from './admin/ReviewTab';
 import PayoutsTab from './admin/PayoutsTab';
 import DisputesTab from './admin/DisputesTab';
@@ -19,6 +20,7 @@ type TabId = 'review' | 'payouts' | 'disputes' | 'transactions' | 'orders' | 'li
 const TAB_IDS: TabId[] = ['review', 'payouts', 'disputes', 'transactions', 'orders', 'listings', 'members', 'bans'];
 
 export default function AdminDashboard() {
+  useDocumentTitle('Quản trị hệ thống');
   const [params, setParams] = useSearchParams();
   const tab = (TAB_IDS.includes(params.get('tab') as TabId) ? params.get('tab') : 'review') as TabId;
 
@@ -53,7 +55,7 @@ export default function AdminDashboard() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Quản trị</h1>
-        <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">Giải ngân, xử lý khiếu nại và tra soát biến động số dư.</p>
+        <p className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">Giải ngân, xử lý khiếu nại và tra soát biến động số dư.</p>
       </div>
 
       {error && <Alert kind="error">{error}</Alert>}
@@ -71,7 +73,7 @@ export default function AdminDashboard() {
         {tabs.map((t) => (
           <button key={t.id} type="button" role="tab" aria-selected={tab === t.id}
             onClick={() => setParams({ tab: t.id }, { replace: true })}
-            className={`-mb-px flex shrink-0 items-center gap-2 border-b-2 px-3 py-2.5 text-sm font-medium transition-colors ${tab === t.id ? 'border-brand-700 dark:border-brand-500 text-brand-800 dark:text-brand-300' : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'}`}>
+            className={`-mb-px flex shrink-0 items-center gap-2 border-b-2 px-3 py-2.5 text-sm font-medium transition-colors ${tab === t.id ? 'border-brand-700 dark:border-brand-500 text-brand-800 dark:text-brand-300' : 'border-transparent text-neutral-500 dark:text-neutral-400 hover:text-neutral-800 dark:hover:text-neutral-200'}`}>
             {t.id === 'transactions' && <Landmark className="h-4 w-4" />}
             {t.id === 'bans' && <ShieldBan className="h-4 w-4" />}
             {t.label}
@@ -97,11 +99,11 @@ function StatCard({ icon: Icon, label, value, sub, tone = 'normal' }: {
 }) {
   return (
     <div className="card p-4">
-      <div className="flex items-center gap-2 text-xs font-medium text-slate-500 dark:text-slate-400">
+      <div className="flex items-center gap-2 text-xs font-medium text-neutral-500 dark:text-neutral-400">
         <Icon className={`h-4 w-4 ${tone === 'danger' ? 'text-red-500' : 'text-brand-600 dark:text-brand-400'}`} /> {label}
       </div>
-      <p className={`mt-2 text-xl font-semibold tracking-tight sm:text-2xl ${tone === 'danger' ? 'text-red-700 dark:text-red-400' : 'text-slate-900 dark:text-slate-100'}`}>{value}</p>
-      {sub && <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">{sub}</p>}
+      <p className={`mt-2 text-xl font-semibold tracking-tight sm:text-2xl ${tone === 'danger' ? 'text-red-700 dark:text-red-400' : 'text-neutral-900 dark:text-neutral-100'}`}>{value}</p>
+      {sub && <p className="mt-0.5 text-xs text-neutral-500 dark:text-neutral-400">{sub}</p>}
     </div>
   );
 }

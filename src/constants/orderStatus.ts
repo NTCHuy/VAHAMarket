@@ -6,10 +6,10 @@ export const ORDER_STATUS_META: Record<OrderStatus, { label: string; cls: string
   SHIPPED: { label: 'Đang giao hàng', cls: 'bg-sky-50 text-sky-700 dark:bg-sky-950/60 dark:text-sky-300' },
   COMPLETED: { label: 'Đã nhận hàng', cls: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300' },
   PAID_OUT: { label: 'Hoàn tất', cls: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300' },
-  CANCELLED: { label: 'Đã hủy', cls: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400' },
-  EXPIRED: { label: 'Hết hạn thanh toán', cls: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400' },
+  CANCELLED: { label: 'Đã hủy', cls: 'bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400' },
+  EXPIRED: { label: 'Hết hạn thanh toán', cls: 'bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400' },
   DISPUTED: { label: 'Đang khiếu nại', cls: 'bg-red-50 text-red-700 dark:bg-red-950/60 dark:text-red-300' },
-  REFUNDED: { label: 'Đã hoàn tiền', cls: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400' },
+  REFUNDED: { label: 'Đã hoàn tiền', cls: 'bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400' },
 };
 
 export interface OrderFilter {

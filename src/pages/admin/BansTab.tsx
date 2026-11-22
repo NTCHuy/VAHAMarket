@@ -193,22 +193,22 @@ export default function BansTab({ onChanged }: { onChanged: () => void }) {
       <form onSubmit={onDirectSubmit} className="card space-y-4 border-red-200 dark:border-red-900/70 p-4 sm:p-5">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
-            <h2 className="flex items-center gap-2 text-base font-semibold text-slate-900 dark:text-slate-100">
+            <h2 className="flex items-center gap-2 text-base font-semibold text-neutral-900 dark:text-neutral-100">
               <ShieldBan className="h-5 w-5 text-red-600 dark:text-red-400" />
               Thêm Ban mới / Đưa vào Danh sách đen
             </h2>
-            <p className="mt-0.5 text-xs text-slate-600 dark:text-slate-400">
+            <p className="mt-0.5 text-xs text-neutral-600 dark:text-neutral-400">
               Khóa thẳng tài khoản scam nghiêm trọng (không cần đợi đủ 3 cảnh báo) hoặc chặn trước Email / Facebook / STK / SĐT / Thiết bị.
             </p>
           </div>
-          <div className="inline-flex rounded-lg border border-slate-200 bg-slate-50 p-0.5 text-xs dark:border-slate-700 dark:bg-slate-800">
+          <div className="inline-flex rounded-lg border border-neutral-200 bg-neutral-50 p-0.5 text-xs dark:border-neutral-700 dark:bg-neutral-800">
             <button
               type="button"
               onClick={() => setFormMode('user')}
               className={`rounded-md px-3 py-1.5 font-medium transition-colors ${
                 formMode === 'user'
-                  ? 'bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100'
-                  : 'text-slate-600 dark:text-slate-400'
+                  ? 'bg-white text-neutral-900 dark:bg-neutral-900 dark:text-neutral-100'
+                  : 'text-neutral-600 dark:text-neutral-400'
               }`}
             >
               Ban tài khoản
@@ -218,8 +218,8 @@ export default function BansTab({ onChanged }: { onChanged: () => void }) {
               onClick={() => setFormMode('entity')}
               className={`rounded-md px-3 py-1.5 font-medium transition-colors ${
                 formMode === 'entity'
-                  ? 'bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100'
-                  : 'text-slate-600 dark:text-slate-400'
+                  ? 'bg-white text-neutral-900 dark:bg-neutral-900 dark:text-neutral-100'
+                  : 'text-neutral-600 dark:text-neutral-400'
               }`}
             >
               Thêm Blacklist rời
@@ -231,7 +231,7 @@ export default function BansTab({ onChanged }: { onChanged: () => void }) {
           <div className="grid gap-3 sm:grid-cols-2">
             <Field label="Tìm thành viên" htmlFor="ban-user-search">
               <div className="relative">
-                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
                 <input
                   id="ban-user-search"
                   className="input pl-9"
@@ -306,14 +306,14 @@ export default function BansTab({ onChanged }: { onChanged: () => void }) {
 
       {/* 2. Danh sách tài khoản bị Ban & Đang có cảnh báo */}
       <section className="space-y-3">
-        <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">
+        <h2 className="text-base font-semibold text-neutral-900 dark:text-neutral-100">
           Tài khoản đang có cảnh báo / Đã bị Ban ({flaggedUsers.length})
         </h2>
 
         {flaggedUsers.length === 0 ? (
           <div className="card flex flex-col items-center px-4 py-10 text-center">
-            <ShieldCheck className="h-8 w-8 text-slate-300 dark:text-slate-600" />
-            <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">Chưa có tài khoản nào bị cảnh báo hoặc bị khóa.</p>
+            <ShieldCheck className="h-8 w-8 text-neutral-300 dark:text-neutral-600" />
+            <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-400">Chưa có tài khoản nào bị cảnh báo hoặc bị khóa.</p>
           </div>
         ) : (
           <ul className="space-y-4">
@@ -340,10 +340,10 @@ export default function BansTab({ onChanged }: { onChanged: () => void }) {
       <section className="card space-y-4 p-4 sm:p-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">
+            <h2 className="text-base font-semibold text-neutral-900 dark:text-neutral-100">
               Danh sách đen toàn sàn ({entities.length})
             </h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
+            <p className="text-xs text-neutral-500 dark:text-neutral-400">
               Hệ thống tự động chặn đăng ký mới, cập nhật hồ sơ hoặc thêm tài khoản ngân hàng trùng các dấu vết dưới đây.
             </p>
           </div>
@@ -371,9 +371,9 @@ export default function BansTab({ onChanged }: { onChanged: () => void }) {
         </div>
 
         {filteredEntities.length === 0 ? (
-          <p className="py-6 text-center text-sm text-slate-500 dark:text-slate-400">Không có mục nào trong danh sách đen.</p>
+          <p className="py-6 text-center text-sm text-neutral-500 dark:text-neutral-400">Không có mục nào trong danh sách đen.</p>
         ) : (
-          <ul className="divide-y divide-slate-100 dark:divide-slate-800">
+          <ul className="divide-y divide-neutral-100 dark:divide-neutral-800">
             {filteredEntities.map((ent) => (
               <li key={ent.id} className="flex flex-wrap items-center justify-between gap-3 py-3 text-sm">
                 <div className="min-w-0 flex-1">
@@ -381,11 +381,11 @@ export default function BansTab({ onChanged }: { onChanged: () => void }) {
                     <span className="badge bg-red-50 text-red-700 dark:bg-red-950/60 dark:text-red-300">
                       {ENTITY_TYPE_LABELS[ent.entity_type]?.label ?? ent.entity_type}
                     </span>
-                    <code className="break-all font-mono text-xs font-semibold text-slate-900 dark:text-slate-100">
+                    <code className="break-all font-mono text-xs font-semibold text-neutral-900 dark:text-neutral-100">
                       {ent.entity_value}
                     </code>
                   </div>
-                  <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">
+                  <p className="mt-1 text-xs text-neutral-600 dark:text-neutral-400">
                     {ent.reason} · {new Date(ent.created_at).toLocaleString('vi-VN')}
                   </p>
                 </div>
@@ -484,7 +484,7 @@ function FlaggedUserCard({
           <Avatar name={profile.display_name} url={profile.avatar_url} size={40} />
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
-              <p className="font-semibold text-slate-900 dark:text-slate-100">{profile.display_name}</p>
+              <p className="font-semibold text-neutral-900 dark:text-neutral-100">{profile.display_name}</p>
               {profile.is_banned ? (
                 <span className="badge bg-red-600 text-white dark:bg-red-600 dark:text-white">
                   <Ban className="mr-1 h-3 w-3" /> Đã bị Ban
@@ -495,7 +495,7 @@ function FlaggedUserCard({
                 </span>
               )}
             </div>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
+            <p className="text-xs text-neutral-500 dark:text-neutral-400">
               {profile.sold_count} đơn bán · {profile.bought_count} đơn mua
               {profile.banned_at && ` · Khóa lúc ${new Date(profile.banned_at).toLocaleString('vi-VN')}`}
             </p>
@@ -544,8 +544,8 @@ function FlaggedUserCard({
 
       {/* Form inline cảnh báo / ban */}
       {actionMode && (
-        <div className="space-y-2 rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-800/60">
-          <p className="text-xs font-semibold text-slate-800 dark:text-slate-200">
+        <div className="space-y-2 rounded-lg border border-neutral-200 bg-neutral-50 p-3 dark:border-neutral-700 dark:bg-neutral-800/60">
+          <p className="text-xs font-semibold text-neutral-800 dark:text-neutral-200">
             {actionMode === 'warn'
               ? `Nhập lý do cảnh báo lần ${profile.warning_count + 1}/3${profile.warning_count + 1 >= 3 ? ' (sẽ tự động Ban vĩnh viễn!)' : ''}:`
               : 'Nhập lý do khóa vĩnh viễn tài khoản này:'}
@@ -577,13 +577,13 @@ function FlaggedUserCard({
       {/* Lịch sử cảnh báo */}
       {warnings.length > 0 && (
         <div className="space-y-1.5">
-          <p className="text-xs font-medium text-slate-600 dark:text-slate-400">Lịch sử cảnh báo ({warnings.length})</p>
+          <p className="text-xs font-medium text-neutral-600 dark:text-neutral-400">Lịch sử cảnh báo ({warnings.length})</p>
           <ul className="space-y-1">
             {warnings.map((w, idx) => (
-              <li key={w.id} className="rounded-lg bg-slate-50 px-3 py-1.5 text-xs text-slate-700 dark:bg-slate-800/60 dark:text-slate-300">
+              <li key={w.id} className="rounded-lg bg-neutral-50 px-3 py-1.5 text-xs text-neutral-700 dark:bg-neutral-800/60 dark:text-neutral-300">
                 <span className="font-semibold text-amber-700 dark:text-amber-400">#{warnings.length - idx}</span>{' '}
                 {w.reason}{' '}
-                <span className="text-slate-400">({new Date(w.created_at).toLocaleString('vi-VN')})</span>
+                <span className="text-neutral-400">({new Date(w.created_at).toLocaleString('vi-VN')})</span>
               </li>
             ))}
           </ul>
@@ -594,11 +594,11 @@ function FlaggedUserCard({
       {(devices.length > 0 || entities.length > 0) && (
         <div className="grid gap-2 sm:grid-cols-2">
           {devices.length > 0 && (
-            <div className="rounded-lg border border-slate-200 bg-slate-50/70 p-2.5 text-xs dark:border-slate-800 dark:bg-slate-800/40">
-              <p className="mb-1 flex items-center gap-1 font-medium text-slate-700 dark:text-slate-300">
+            <div className="rounded-lg border border-neutral-200 bg-neutral-50/70 p-2.5 text-xs dark:border-neutral-800 dark:bg-neutral-800/40">
+              <p className="mb-1 flex items-center gap-1 font-medium text-neutral-700 dark:text-neutral-300">
                 <Fingerprint className="h-3.5 w-3.5" /> Thiết bị đã ghi nhận ({devices.length})
               </p>
-              <ul className="space-y-0.5 font-mono text-[11px] text-slate-600 dark:text-slate-400">
+              <ul className="space-y-0.5 font-mono text-[11px] text-neutral-600 dark:text-neutral-400">
                 {devices.map((d) => (
                   <li key={d.id} className="truncate" title={d.user_agent ?? d.visitor_id}>
                     {d.visitor_id}

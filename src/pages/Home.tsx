@@ -7,6 +7,8 @@ import { getErrorMessage } from '@/lib/errors';
 import { BOX_STATUS_OPTIONS, CATEGORIES, LISTING_CONDITIONS } from '@/constants/categories';
 import { PROVINCES } from '@/constants/provinces';
 import { Alert } from '@/components/ui';
+import { ListingGridSkeleton } from '@/components/Skeletons';
+import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { usePlatformSettings } from '@/context/PlatformSettingsContext';
 import { formatVND, getDisplayPrice } from '@/lib/money';
 import type { Listing } from '@/types';
@@ -50,6 +52,7 @@ const escapeLike = (s: string) => s.replace(/[\\%_]/g, (c) => `\\${c}`);
 const digitsOnly = (s: string) => s.replace(/\D/g, '').slice(0, 10);
 
 export default function Home() {
+  useDocumentTitle();
   const { feeBp, feeCapVnd } = usePlatformSettings();
   const [params, setParams] = useSearchParams();
   const q = params.get('q') ?? '';
@@ -320,9 +323,7 @@ export default function Home() {
       {/* Danh sách sản phẩm */}
       <section aria-label="Danh sách sản phẩm đang bán">
         {loading ? (
-          <div className="flex justify-center py-16">
-            <Loader2 size={24} strokeWidth={1.75} className="animate-spin text-neutral-400" />
-          </div>
+          <ListingGridSkeleton count={8} />
         ) : error ? (
           <Alert kind="error">{error}</Alert>
         ) : items.length === 0 ? (
@@ -380,7 +381,7 @@ function ListingCard({ listing: l, feeBp, feeCapVnd }: { listing: ListingCardIte
               src={cldUrl(l.images[0].url, { width: 520, height: 390, crop: 'fill' })}
               alt={l.title}
               loading="lazy"
-              className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-[1.02]"
+              className="h-full w-full object-cover"
             />
           )}
           <span className="absolute left-2 top-2 max-w-[calc(100%-1rem)] truncate rounded bg-neutral-950/75 px-1.5 py-0.5 text-[11px] font-medium text-white backdrop-blur-[2px]">

@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { AlertCircle, CheckCircle2, Info, Loader2 } from 'lucide-react';
 
 export function Spinner({ className = '' }: { className?: string }) {
-  return <Loader2 className={`h-5 w-5 animate-spin text-slate-400 ${className}`} aria-label="Đang tải" />;
+  return <Loader2 className={`h-5 w-5 animate-spin text-neutral-400 ${className}`} aria-label="Đang tải" />;
 }
 
 export function PageLoader() {
@@ -60,7 +60,7 @@ export function Field({ label, htmlFor, hint, error, required, children }: Field
       {error ? (
         <p className="mt-1 text-xs text-red-600 dark:text-red-400">{error}</p>
       ) : hint ? (
-        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{hint}</p>
+        <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">{hint}</p>
       ) : null}
     </div>
   );
@@ -69,7 +69,7 @@ export function Field({ label, htmlFor, hint, error, required, children }: Field
 export function Avatar({ name, url, size = 32 }: { name: string; url: string | null; size?: number }) {
   const style = { width: size, height: size };
   if (url) {
-    return <img src={url} alt="" referrerPolicy="no-referrer" style={style} className="shrink-0 rounded-full bg-slate-100 object-cover dark:bg-slate-800" />;
+    return <img src={url} alt="" referrerPolicy="no-referrer" style={style} className="shrink-0 rounded-full bg-neutral-100 object-cover dark:bg-neutral-800" />;
   }
   return (
     <span style={style} className="flex shrink-0 items-center justify-center rounded-full bg-brand-100 text-xs font-semibold text-brand-800 dark:bg-brand-900/60 dark:text-brand-200">

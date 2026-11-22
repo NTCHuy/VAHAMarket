@@ -5,7 +5,9 @@ import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { cldUrl } from '@/lib/cloudinary';
 import { getErrorMessage } from '@/lib/errors';
-import { Alert, PageLoader } from '@/components/ui';
+import { Alert } from '@/components/ui';
+import { ListRowsSkeleton } from '@/components/Skeletons';
+import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import PriceTag from '@/components/PriceTag';
 import NotificationHint from '@/components/NotificationHint';
 import { discountPercent } from '@/lib/money';
@@ -13,18 +15,19 @@ import type { Listing, ListingStatus } from '@/types';
 
 const STATUS_BADGE: Record<ListingStatus, { label: string; cls: string }> = {
   active: { label: 'Đang bán', cls: 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400' },
-  draft: { label: 'Nháp', cls: 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200' },
+  draft: { label: 'Nháp', cls: 'bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-200' },
   pending_review: { label: 'Chờ duyệt', cls: 'bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300' },
   rejected: { label: 'Bị từ chối', cls: 'bg-red-50 dark:bg-red-950/50 text-red-700 dark:text-red-400' },
   hidden: { label: 'Đang ẩn', cls: 'bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300' },
   reserved: { label: 'Đang giữ chỗ', cls: 'bg-brand-50 dark:bg-brand-900/40 text-brand-800 dark:text-brand-300' },
-  sold: { label: 'Đã bán', cls: 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400' },
+  sold: { label: 'Đã bán', cls: 'bg-neutral-100 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400' },
   removed: { label: 'Đã gỡ', cls: 'bg-red-50 dark:bg-red-950/50 text-red-700 dark:text-red-400' },
 };
 
 const EDITABLE: ListingStatus[] = ['draft', 'pending_review', 'rejected', 'active', 'hidden'];
 
 export default function MyListings() {
+  useDocumentTitle('Tin đăng của tôi');
   const { user } = useAuth();
   const [items, setItems] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(true);
@@ -73,9 +76,9 @@ export default function MyListings() {
       {error && <Alert kind="error">{error}</Alert>}
 
       {loading ? (
-        <PageLoader />
+        <ListRowsSkeleton count={4} />
       ) : items.length === 0 ? (
-        <div className="card px-4 py-12 text-center text-sm text-slate-600 dark:text-slate-400">Bạn chưa đăng tin nào.</div>
+        <div className="card px-4 py-12 text-center text-sm text-neutral-600 dark:text-neutral-400">Bạn chưa đăng tin nào.</div>
       ) : (
         <ul className="space-y-3">
           {items.map((l) => {
@@ -83,14 +86,14 @@ export default function MyListings() {
             const editable = EDITABLE.includes(l.status);
             return (
               <li key={l.id} className="card flex gap-3 p-3 sm:gap-4 sm:p-4">
-                <div className="h-20 w-20 shrink-0 overflow-hidden rounded-lg bg-slate-100 dark:bg-slate-800 sm:h-24 sm:w-24">
+                <div className="h-20 w-20 shrink-0 overflow-hidden rounded-lg bg-neutral-100 dark:bg-neutral-800 sm:h-24 sm:w-24">
                   {l.images[0] && <img src={cldUrl(l.images[0].url, { width: 200, height: 200, crop: 'fill' })} alt="" className="h-full w-full object-cover" />}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="line-clamp-2 text-sm font-medium text-slate-900 dark:text-slate-100">{l.title}</p>
+                  <p className="line-clamp-2 text-sm font-medium text-neutral-900 dark:text-neutral-100">{l.title}</p>
                   <div className="mt-0.5"><PriceTag display={l.price} strike={l.original_price} percent={discountPercent(l.price, l.original_price)} /></div>
                   <span className={`badge mt-1 ${badge.cls}`}>{badge.label}</span>
-                  {l.status === 'pending_review' && <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Đang chờ Admin duyệt — chưa hiển thị công khai.</p>}
+                  {l.status === 'pending_review' && <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">Đang chờ Admin duyệt — chưa hiển thị công khai.</p>}
                   {l.status === 'rejected' && l.rejection_reason && (
                     <p className="mt-1.5 rounded-lg bg-red-50 dark:bg-red-950/50 px-2.5 py-1.5 text-xs text-red-800 dark:text-red-300"><strong>Lý do từ chối:</strong> {l.rejection_reason}</p>
                   )}

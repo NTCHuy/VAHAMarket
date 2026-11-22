@@ -19,6 +19,7 @@ import { removeVietnameseTones } from '@/lib/vietqr';
 import { BANKS, getBankByBin } from '@/constants/banks';
 import { PROVINCES } from '@/constants/provinces';
 import { Alert, Field, PageLoader, Spinner } from '@/components/ui';
+import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import type { BankAccount } from '@/types';
 
 const PHONE_RE = /^[0-9+ ]{8,15}$/;
@@ -44,6 +45,7 @@ function formatLockSummary(lock: IdentityLock): string {
 }
 
 export default function AccountSettings() {
+  useDocumentTitle('Cài đặt tài khoản');
   const { user, profile, contact, loading } = useAuth();
   const [identityLock, setIdentityLock] = useState<IdentityLock>(EMPTY_LOCK);
   const [bankCount, setBankCount] = useState<number | null>(null);
@@ -78,7 +80,7 @@ export default function AccountSettings() {
     <div className="mx-auto max-w-3xl space-y-6">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Cài đặt tài khoản</h1>
-        <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">Quản lý thông tin liên hệ và tài khoản ngân hàng nhận tiền khi bán hàng.</p>
+        <p className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">Quản lý thông tin liên hệ và tài khoản ngân hàng nhận tiền khi bán hàng.</p>
       </div>
 
       {checklistReady && (
@@ -141,8 +143,8 @@ function SellerChecklist({
             key={item.label}
             className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-medium ${
               item.done
-                ? 'border-emerald-200 dark:border-emerald-800/70 bg-white/80 dark:bg-slate-900/80 text-emerald-900 dark:text-emerald-200'
-                : 'border-amber-200 dark:border-amber-800/70 bg-white/80 dark:bg-slate-900/80 text-slate-700 dark:text-slate-200'
+                ? 'border-emerald-200 dark:border-emerald-800/70 bg-white/80 dark:bg-neutral-900/80 text-emerald-900 dark:text-emerald-200'
+                : 'border-amber-200 dark:border-amber-800/70 bg-white/80 dark:bg-neutral-900/80 text-neutral-700 dark:text-neutral-200'
             }`}
           >
             {item.done ? (
@@ -254,7 +256,7 @@ function ProfileSection({ identityLock }: { identityLock: IdentityLock }) {
       >
         <input
           id="facebook"
-          className="input disabled:cursor-not-allowed disabled:bg-slate-100 dark:disabled:bg-slate-800 disabled:text-slate-500 dark:disabled:text-slate-500"
+          className="input disabled:cursor-not-allowed disabled:bg-neutral-100 dark:disabled:bg-neutral-800 disabled:text-neutral-500 dark:disabled:text-neutral-500"
           inputMode="url"
           placeholder="https://facebook.com/..."
           value={facebook}
@@ -265,7 +267,7 @@ function ProfileSection({ identityLock }: { identityLock: IdentityLock }) {
       </Field>
 
       {fbLocked && (
-        <div className="flex items-start gap-2.5 rounded-xl border border-amber-200 dark:border-amber-800/70 bg-amber-50 dark:bg-amber-950/50 px-3.5 py-2.5 text-xs text-amber-900 dark:text-amber-200">
+        <div className="flex items-start gap-2.5 rounded-lg border border-amber-200 dark:border-amber-800/70 bg-amber-50 dark:bg-amber-950/50 px-3.5 py-2.5 text-xs text-amber-900 dark:text-amber-200">
           <Lock className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
           <p>
             Link Facebook đang bị khóa vì bạn có <strong>{formatLockSummary(identityLock)}</strong>. Thông tin định danh được giữ cố định để bảo vệ người mua; hãy liên hệ Admin nếu cần chỉnh sửa.
@@ -288,11 +290,11 @@ function ProfileSection({ identityLock }: { identityLock: IdentityLock }) {
       </div>
 
       {user?.email && (
-        <div className="space-y-1 text-xs text-slate-500 dark:text-slate-400">
-          <p>Email đăng nhập: <strong className="font-medium text-slate-700 dark:text-slate-300">{user.email}</strong></p>
+        <div className="space-y-1 text-xs text-neutral-500 dark:text-neutral-400">
+          <p>Email đăng nhập: <strong className="font-medium text-neutral-700 dark:text-neutral-300">{user.email}</strong></p>
           <p>
             Thông báo đơn hàng và kết quả duyệt tin sẽ gửi tự động về email này từ{' '}
-            <code className="rounded bg-slate-100 px-1 py-0.5 text-[11px] text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+            <code className="rounded bg-neutral-100 px-1 py-0.5 text-[11px] text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300">
               vahamarket.vn@gmail.com
             </code>
             . Nếu chưa thấy, hãy kiểm tra mục <strong>Thư rác / Spam</strong> và đánh dấu <em>&lsquo;Không phải thư rác&rsquo;</em>.
@@ -446,7 +448,7 @@ function BankAccountsSection({
       <div className="flex items-start justify-between gap-3">
         <div>
           <h2 className="text-base font-semibold">Tài khoản ngân hàng nhận tiền</h2>
-          <p className="mt-0.5 text-sm text-slate-600 dark:text-slate-400">Khi đăng bán, bạn chọn 1 tài khoản trong danh sách này để nhận tiền sau giao dịch.</p>
+          <p className="mt-0.5 text-sm text-neutral-600 dark:text-neutral-400">Khi đăng bán, bạn chọn 1 tài khoản trong danh sách này để nhận tiền sau giao dịch.</p>
         </div>
         {!showForm && (
           <button type="button" className="btn-secondary shrink-0" onClick={() => setShowForm(true)}>
@@ -455,7 +457,7 @@ function BankAccountsSection({
         )}
       </div>
 
-      <div className="flex items-start gap-2.5 rounded-xl border border-amber-300 dark:border-amber-700/80 bg-amber-50 dark:bg-amber-950/50 px-3.5 py-3 text-sm text-amber-950 dark:text-amber-100">
+      <div className="flex items-start gap-2.5 rounded-lg border border-amber-300 dark:border-amber-700/80 bg-amber-50 dark:bg-amber-950/50 px-3.5 py-3 text-sm text-amber-950 dark:text-amber-100">
         <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
         <div className="space-y-1">
           <p className="font-medium">
@@ -472,7 +474,7 @@ function BankAccountsSection({
       {notice && <Alert kind={notice.kind}>{notice.text}</Alert>}
 
       {showForm && (
-        <form onSubmit={onAdd} className="space-y-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 p-4" noValidate>
+        <form onSubmit={onAdd} className="space-y-4 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-800/60 p-4" noValidate>
           <Field label="Ngân hàng" htmlFor="bank" required error={formErrors.bank}>
             <select id="bank" className="input" value={bankBin} onChange={(e) => setBankBin(e.target.value)}>
               <option value="">— Chọn ngân hàng —</option>
@@ -505,8 +507,8 @@ function BankAccountsSection({
             </Field>
           </div>
           {accounts.length > 0 && (
-            <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
-              <input type="checkbox" checked={makeDefault} onChange={(e) => setMakeDefault(e.target.checked)} className="h-4 w-4 rounded border-slate-300 dark:border-slate-700 text-brand-700 dark:text-brand-400" />
+            <label className="flex items-center gap-2 text-sm text-neutral-700 dark:text-neutral-200">
+              <input type="checkbox" checked={makeDefault} onChange={(e) => setMakeDefault(e.target.checked)} className="h-4 w-4 rounded border-neutral-300 dark:border-neutral-700 text-brand-700 dark:text-brand-400" />
               Đặt làm tài khoản mặc định
             </label>
           )}
@@ -524,23 +526,23 @@ function BankAccountsSection({
       ) : loadError ? (
         <Alert kind="error">{loadError}</Alert>
       ) : accounts.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-slate-300 dark:border-slate-700 px-4 py-8 text-center">
-          <Landmark className="mx-auto h-7 w-7 text-slate-300 dark:text-slate-600" />
-          <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">Bạn chưa lưu tài khoản ngân hàng nào.</p>
+        <div className="rounded-lg border border-dashed border-neutral-300 dark:border-neutral-700 px-4 py-8 text-center">
+          <Landmark className="mx-auto h-7 w-7 text-neutral-300 dark:text-neutral-600" />
+          <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-400">Bạn chưa lưu tài khoản ngân hàng nào.</p>
           {!showForm && <button type="button" className="btn-primary mt-3" onClick={() => setShowForm(true)}><Plus className="h-4 w-4" /> Thêm tài khoản đầu tiên</button>}
         </div>
       ) : (
         <ul className="space-y-3">
           {accounts.map((a) => (
-            <li key={a.id} className="rounded-xl border border-slate-200 dark:border-slate-800 p-4">
+            <li key={a.id} className="rounded-lg border border-neutral-200 dark:border-neutral-800 p-4">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="flex flex-wrap items-center gap-2 font-medium text-slate-900 dark:text-slate-100">
+                  <p className="flex flex-wrap items-center gap-2 font-medium text-neutral-900 dark:text-neutral-100">
                     {a.bank_name}
                     {a.is_default && <span className="badge bg-brand-50 dark:bg-brand-900/40 text-brand-800 dark:text-brand-300"><Star className="mr-1 h-3 w-3" /> Mặc định</span>}
                   </p>
-                  <p className="mt-1 font-mono text-sm text-slate-700 dark:text-slate-200">{a.account_number}</p>
-                  <p className="text-sm text-slate-500 dark:text-slate-400">{a.account_name}</p>
+                  <p className="mt-1 font-mono text-sm text-neutral-700 dark:text-neutral-200">{a.account_number}</p>
+                  <p className="text-sm text-neutral-500 dark:text-neutral-400">{a.account_name}</p>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
                   {!a.is_default && (
@@ -567,7 +569,7 @@ function BankAccountsSection({
         </ul>
       )}
 
-      <p className="text-xs text-slate-500 dark:text-slate-400">
+      <p className="text-xs text-neutral-500 dark:text-neutral-400">
         Thông tin ngân hàng chỉ bạn (và quản trị viên khi giải ngân) xem được. Người mua không thấy số tài khoản của bạn.{' '}
         <Link to="/sell" className="text-brand-700 dark:text-brand-400 hover:underline">Đăng bán ngay</Link>
       </p>

@@ -67,14 +67,14 @@ export default function OrdersTab({ onChanged }: { onChanged: () => void }) {
   return (
     <div className="space-y-4">
       <div className="relative">
-        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
+        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400 dark:text-neutral-500" />
         <input className="input pl-9" placeholder="Tìm theo mã đơn (CNTH...)" value={search} onChange={(e) => setSearch(e.target.value)} aria-label="Tìm theo mã đơn" />
       </div>
 
       <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0">
         {ORDER_FILTERS.map((f) => (
           <button key={f.id} type="button" onClick={() => setFilterId(f.id)}
-            className={`shrink-0 rounded-full border px-3 py-1 text-xs font-medium ${filterId === f.id ? 'border-brand-600 dark:border-brand-500 bg-brand-50 dark:bg-brand-900/40 text-brand-800 dark:text-brand-300' : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'}`}>
+            className={`shrink-0 rounded-full border px-3 py-1 text-xs font-medium ${filterId === f.id ? 'border-brand-600 dark:border-brand-500 bg-brand-50 dark:bg-brand-900/40 text-brand-800 dark:text-brand-300' : 'border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-800'}`}>
             {f.label}
           </button>
         ))}
@@ -85,13 +85,13 @@ export default function OrdersTab({ onChanged }: { onChanged: () => void }) {
       {loading ? (
         <PageLoader />
       ) : orders.length === 0 ? (
-        <div className="card px-4 py-12 text-center text-sm text-slate-600 dark:text-slate-400">Không có đơn hàng nào.</div>
+        <div className="card px-4 py-12 text-center text-sm text-neutral-600 dark:text-neutral-400">Không có đơn hàng nào.</div>
       ) : (
         <>
-          <p className="text-sm text-slate-500 dark:text-slate-400">{total} đơn hàng</p>
+          <p className="text-sm text-neutral-500 dark:text-neutral-400">{total} đơn hàng</p>
           <div className="card overflow-x-auto">
             <table className="w-full min-w-[720px] text-left text-sm">
-              <thead className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
+              <thead className="border-b border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-800/60 text-xs uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
                 <tr>
                   <th className="px-3 py-2.5">Mã đơn</th>
                   <th className="px-3 py-2.5">Sản phẩm</th>
@@ -101,14 +101,14 @@ export default function OrdersTab({ onChanged }: { onChanged: () => void }) {
                   <th className="px-3 py-2.5 text-right">Thao tác</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+              <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
                 {orders.map((o) => (
                   <tr key={o.id} className="align-top">
                     <td className="px-3 py-2.5 font-mono text-xs">{o.payment_code}</td>
                     <td className="max-w-[16rem] px-3 py-2.5"><span className="line-clamp-2">{o.listing_snapshot.title}</span></td>
                     <td className="whitespace-nowrap px-3 py-2.5 text-right font-medium">{formatVND(o.amount)}</td>
                     <td className="px-3 py-2.5"><OrderStatusBadge status={o.status} /></td>
-                    <td className="whitespace-nowrap px-3 py-2.5 text-xs text-slate-500 dark:text-slate-400">{new Date(o.created_at).toLocaleString('vi-VN')}</td>
+                    <td className="whitespace-nowrap px-3 py-2.5 text-xs text-neutral-500 dark:text-neutral-400">{new Date(o.created_at).toLocaleString('vi-VN')}</td>
                     <td className="px-3 py-2.5 text-right">
                       <div className="flex flex-wrap justify-end gap-2">
                         <Link to={`/orders/${o.id}`} className="btn-ghost px-2 py-1 text-xs">Xem</Link>
@@ -155,16 +155,16 @@ function ManualConfirmDialog({ order, onClose, onDone }: { order: Order; onClose
   };
 
   return (
-    <div role="dialog" aria-modal="true" aria-label="Duyệt thanh toán thủ công" className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/50 sm:items-center sm:p-4">
-      <div className="w-full max-w-md space-y-4 rounded-t-lg bg-white dark:bg-slate-900 p-5 sm:rounded-lg">
+    <div role="dialog" aria-modal="true" aria-label="Duyệt thanh toán thủ công" className="fixed inset-0 z-50 flex items-end justify-center bg-neutral-900/50 sm:items-center sm:p-4">
+      <div className="w-full max-w-md space-y-4 rounded-t-lg bg-white dark:bg-neutral-900 p-5 sm:rounded-lg">
         <div className="flex items-start justify-between gap-3">
           <h2 className="text-lg font-semibold">Duyệt thanh toán thủ công</h2>
           <button type="button" className="btn-ghost px-2" onClick={onClose} disabled={busy} aria-label="Đóng"><X className="h-5 w-5" /></button>
         </div>
-        <div className="rounded-xl bg-slate-50 dark:bg-slate-800/60 p-3 text-sm">
-          <p className="font-mono text-xs text-slate-600 dark:text-slate-400">{order.payment_code}</p>
-          <p className="mt-0.5 line-clamp-2 font-medium text-slate-900 dark:text-slate-100">{order.listing_snapshot.title}</p>
-          <p className="mt-1 text-slate-600 dark:text-slate-400">Số tiền cần nhận: <strong>{formatVND(order.amount)}</strong></p>
+        <div className="rounded-lg bg-neutral-50 dark:bg-neutral-800/60 p-3 text-sm">
+          <p className="font-mono text-xs text-neutral-600 dark:text-neutral-400">{order.payment_code}</p>
+          <p className="mt-0.5 line-clamp-2 font-medium text-neutral-900 dark:text-neutral-100">{order.listing_snapshot.title}</p>
+          <p className="mt-1 text-neutral-600 dark:text-neutral-400">Số tiền cần nhận: <strong>{formatVND(order.amount)}</strong></p>
         </div>
         <Alert kind="info">
           Chỉ duyệt khi bạn đã <strong>thấy tiền về tài khoản trung gian</strong> đúng {formatVND(order.amount)}.
