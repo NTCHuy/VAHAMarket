@@ -26,7 +26,7 @@ import ModBadge from '@/components/ModBadge';
 import PriceBreakdown from '@/components/PriceBreakdown';
 import PriceTag from '@/components/PriceTag';
 import { usePlatformSettings } from '@/context/PlatformSettingsContext';
-import type { Listing, Profile } from '@/types';
+import type { BankAccount, Listing, Profile } from '@/types';
 
 const STATUS_TEXT: Partial<Record<Listing['status'], string>> = {
   pending_review: 'Tin đang chờ Admin duyệt nên chưa hiển thị công khai.',
@@ -484,8 +484,32 @@ function BuyDialog({ listing, buyerPays, onClose }: { listing: Listing; buyerPay
   const [saveProfile, setSaveProfile] = useState(missing);
   const [agree, setAgree] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [buyerBank, setBuyerBank] = useState<BankAccount | null>(null);
+  const [bankLoading, setBankLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!user) return;
+    let alive = true;
+    setBankLoading(true);
+    supabase
+      .from('bank_accounts')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('is_default', { ascending: false })
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .then(({ data }) => {
+        if (!alive) return;
+        const rows = (data ?? []) as BankAccount[];
+        setBuyerBank(rows[0] ?? null);
+        setBankLoading(false);
+      });
+    return () => {
+      alive = false;
+    };
+  }, [user]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -497,7 +521,7 @@ function BuyDialog({ listing, buyerPays, onClose }: { listing: Listing; buyerPay
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!user) return;
+    if (!user || !buyerBank) return;
     const next: Record<string, string> = {};
     if (name.trim().length < 2 || name.trim().length > 80) next.name = 'Tên người nhận 2–80 ký tự.';
     if (!PHONE_RE.test(phone.trim())) next.phone = 'Số điện thoại gồm 8–15 chữ số.';
@@ -550,6 +574,27 @@ function BuyDialog({ listing, buyerPays, onClose }: { listing: Listing; buyerPay
           </button>
         </div>
 
+        {bankLoading ? (
+          <div className="flex items-center gap-2 rounded-md border border-neutral-200 bg-neutral-50 px-3 py-2 text-xs text-neutral-500 dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-400">
+            <Loader2 size={14} className="animate-spin" /> Đang kiểm tra tài khoản ngân hàng nhận hoàn tiền...
+          </div>
+        ) : !buyerBank ? (
+          <Alert kind="error">
+            <p className="font-medium">Bạn chưa lưu tài khoản ngân hàng.</p>
+            <p className="mt-0.5 text-xs">
+              Cần ít nhất 1 tài khoản ngân hàng trong hồ sơ để sàn hoàn tiền tự động nếu người bán hủy đơn hoặc quá hạn gửi hàng 48h.{' '}
+              <Link to="/settings" className="font-semibold underline">
+                Thêm tài khoản ngân hàng ngay
+              </Link>
+            </p>
+          </Alert>
+        ) : (
+          <div className="rounded-md border border-neutral-200 bg-neutral-50 px-3 py-2 text-xs text-neutral-700 dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-300">
+            <span className="font-medium text-neutral-900 dark:text-neutral-100">TK nhận hoàn tiền (nếu hủy đơn):</span>{' '}
+            {buyerBank.bank_name} · <span className="font-mono">{buyerBank.account_number}</span> · {buyerBank.account_name}
+          </div>
+        )}
+
         {missing && <Alert kind="info">Điền SĐT và địa chỉ nhận hàng bên dưới để tiếp tục.</Alert>}
 
         <Field label="Tên người nhận" htmlFor="b-name" required error={errors.name}>
@@ -596,7 +641,7 @@ function BuyDialog({ listing, buyerPays, onClose }: { listing: Listing; buyerPay
 
         <div className="flex justify-end gap-2 border-t border-neutral-200 pt-3 dark:border-neutral-800">
           <button type="button" className="btn-secondary" onClick={onClose} disabled={busy}>Hủy</button>
-          <button type="submit" className="btn-primary" disabled={busy}>
+          <button type="submit" className="btn-primary" disabled={busy || bankLoading || !buyerBank}>
             {busy && <Loader2 size={15} strokeWidth={1.75} className="animate-spin" />} Xác nhận đặt mua
           </button>
         </div>

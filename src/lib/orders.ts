@@ -35,6 +35,28 @@ export async function cancelOrder(orderId: string): Promise<Order> {
   return data as Order;
 }
 
+/** Người bán chủ động báo hết hàng / hủy đơn khi đang PAID_HELD để Admin hoàn tiền cho người mua. */
+export async function sellerCancelPaidOrder(
+  orderId: string,
+  reason: string,
+  listingAction: 'hidden' | 'sold' = 'hidden',
+): Promise<Order> {
+  const { data, error } = await supabase.rpc('seller_cancel_paid_order', {
+    p_order_id: orderId,
+    p_reason: reason.trim(),
+    p_listing_action: listingAction,
+  });
+  if (error) throw new Error(error.message);
+  return data as Order;
+}
+
+/** Người mua yêu cầu hủy & hoàn tiền khi người bán quá hạn gửi hàng 48 giờ. */
+export async function buyerCancelOverdueOrder(orderId: string): Promise<Order> {
+  const { data, error } = await supabase.rpc('buyer_cancel_overdue_order', { p_order_id: orderId });
+  if (error) throw new Error(error.message);
+  return data as Order;
+}
+
 export interface MarkShippedInput {
   carrier: string;
   trackingCode: string;

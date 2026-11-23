@@ -95,20 +95,21 @@ export function tryBuildEscrowQrUrl(opts: { amount: number; paymentCode: string;
   }
 }
 
-/** QR để ADMIN giải ngân cho NGƯỜI BÁN (dùng snapshot tài khoản trong đơn hàng). */
+/** QR để ADMIN giải ngân cho NGƯỜI BÁN hoặc hoàn tiền cho NGƯỜI MUA (dùng snapshot tài khoản trong đơn hàng). */
 export function buildPayoutQrUrl(opts: {
   bankBin: string;
   accountNumber: string;
   accountName: string;
   amount: number;
   paymentCode: string;
+  addInfo?: string;
 }): string {
   return buildVietQrUrl({
     bin: opts.bankBin,
     accountNo: opts.accountNumber,
     accountName: opts.accountName,
     amount: opts.amount,
-    addInfo: `Giai ngan don ${opts.paymentCode}`,
+    addInfo: opts.addInfo ?? `Giai ngan don ${opts.paymentCode}`,
   });
 }
 

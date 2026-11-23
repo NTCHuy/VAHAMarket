@@ -447,8 +447,8 @@ function BankAccountsSection({
     <section className="card space-y-4 p-5 sm:p-6">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h2 className="text-base font-semibold">Tài khoản ngân hàng nhận tiền</h2>
-          <p className="mt-0.5 text-sm text-neutral-600 dark:text-neutral-400">Khi đăng bán, bạn chọn 1 tài khoản trong danh sách này để nhận tiền sau giao dịch.</p>
+          <h2 className="text-base font-semibold">Tài khoản ngân hàng (nhận tiền bán hàng &amp; nhận hoàn tiền khi mua hàng)</h2>
+          <p className="mt-0.5 text-sm text-neutral-600 dark:text-neutral-400">Dùng để nhận giải ngân khi bạn bán hàng và tự động nhận hoàn tiền nếu đơn mua bị hủy hoặc quá hạn gửi hàng.</p>
         </div>
         {!showForm && (
           <button type="button" className="btn-secondary shrink-0" onClick={() => setShowForm(true)}>

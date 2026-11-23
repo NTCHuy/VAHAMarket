@@ -198,9 +198,23 @@ export default function Terms() {
         </h2>
         <ul className="list-disc space-y-2 pl-5 text-sm leading-relaxed text-neutral-700 dark:text-neutral-300">
           <li>
-            <strong>Thanh toán VietQR tự động:</strong> Đơn hàng giữ chỗ trong 15 phút. Tiền được giữ an toàn tại tài
-            khoản trung gian của sàn cho đến khi người mua bấm xác nhận đã nhận hàng ổn định hoặc có phán quyết cuối
-            cùng từ Admin.
+            <strong>Thanh toán VietQR tự động &amp; Tài khoản nhận hoàn tiền:</strong> Đơn hàng giữ chỗ trong 15 phút.
+            Người mua cần lưu ít nhất 01 tài khoản ngân hàng trong hồ sơ để nhận hoàn tiền tự động khi đơn bị hủy. Tiền
+            được giữ an toàn tại tài khoản trung gian của sàn cho đến khi người mua bấm xác nhận đã nhận hàng ổn định
+            hoặc có phán quyết cuối cùng từ Admin.
+          </li>
+          <li>
+            <strong>Thời hạn gửi hàng 48 giờ:</strong> Kể từ khi đơn hàng được xác nhận thanh toán thành công
+            (<code>PAID_HELD</code>), người bán có tối đa <strong>48 giờ</strong> để đóng gói, gửi hàng và cập nhật mã
+            vận đơn cùng video đóng gói 6 mặt. Nếu người bán báo hết hàng hoặc quá 48 giờ chưa gửi hàng, người mua (hoặc
+            Admin) có quyền hủy đơn để sàn hoàn tiền về tài khoản ngân hàng của người mua.
+          </li>
+          <li>
+            <strong>Bảo vệ người bán — Rà soát vận đơn sau 14 ngày:</strong> Đối với đơn đã gửi hàng
+            (<code>SHIPPED</code>) quá <strong>14 ngày</strong> kể từ thời điểm cập nhật vận đơn mà người mua không xác
+            nhận nhận hàng và cũng không mở khiếu nại, đơn sẽ được chuyển sang danh sách Admin rà soát mã vận đơn. Nếu
+            kết quả tra cứu từ đơn vị vận chuyển xác nhận bưu phẩm đã giao thành công, Admin có quyền xác nhận hoàn tất
+            đơn và mở khóa giải ngân cho người bán.
           </li>
           <li>
             <strong>Phí trung gian &amp; Chính sách trần phí tối đa 500.000₫/đơn:</strong> Mức phí chuẩn là 5% giá niêm

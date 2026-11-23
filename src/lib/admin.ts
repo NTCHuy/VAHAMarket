@@ -14,6 +14,9 @@ export interface AdminStats {
   flagged_tx_count: number;     // số giao dịch lệch chưa xử lý
   pending_review_count: number; // số tin đăng chờ duyệt
   banned_count: number;         // số tài khoản đang bị khóa vĩnh viễn
+  refund_pending_count: number; // số đơn chờ Admin chuyển khoản hoàn tiền
+  refund_pending_amount: number;
+  overdue_shipped_count: number; // số đơn SHIPPED quá 14 ngày cần rà soát vận đơn
 }
 
 export type DisputeDecision = 'RELEASE_TO_SELLER' | 'REFUND_TO_BUYER';
@@ -34,6 +37,36 @@ export async function markPaidOut(orderId: string, reference?: string): Promise<
   const { data, error } = await supabase.rpc('admin_mark_paid_out', {
     p_order_id: orderId,
     p_reference: reference?.trim() || null,
+  });
+  if (error) throw new Error(error.message);
+  return data as Order;
+}
+
+/** Admin cưỡng chế hủy đơn (PAID_HELD hoặc SHIPPED) để đưa vào hàng đợi hoàn tiền. */
+export async function forceRefundOrder(orderId: string, reason: string): Promise<Order> {
+  const { data, error } = await supabase.rpc('admin_force_refund_order', {
+    p_order_id: orderId,
+    p_reason: reason.trim(),
+  });
+  if (error) throw new Error(error.message);
+  return data as Order;
+}
+
+/** Admin xác nhận đã chuyển khoản hoàn tiền cho người mua. */
+export async function markRefunded(orderId: string, reference?: string): Promise<Order> {
+  const { data, error } = await supabase.rpc('admin_mark_refunded', {
+    p_order_id: orderId,
+    p_reference: reference?.trim() || null,
+  });
+  if (error) throw new Error(error.message);
+  return data as Order;
+}
+
+/** Admin xác nhận đã giao thành công & mở khóa giải ngân cho đơn SHIPPED quá 14 ngày. */
+export async function forceCompleteShipped(orderId: string, note: string): Promise<Order> {
+  const { data, error } = await supabase.rpc('admin_force_complete_shipped', {
+    p_order_id: orderId,
+    p_note: note.trim(),
   });
   if (error) throw new Error(error.message);
   return data as Order;

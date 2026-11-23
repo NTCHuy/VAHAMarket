@@ -155,6 +155,15 @@ export interface Order {
   admin_note: string | null;
   resolved_at: string | null;
   expires_at: string;
+  ship_deadline_at?: string | null;
+  refund_requested_at?: string | null;
+  refund_completed_at?: string | null;
+  refund_reference?: string | null;
+  refund_bank_bin?: string | null;
+  refund_bank_code?: string | null;
+  refund_bank_name?: string | null;
+  refund_account_number?: string | null;
+  refund_account_name?: string | null;
   shipped_at: string | null;
   completed_at: string | null;
   cancelled_at: string | null;

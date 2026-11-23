@@ -9,7 +9,7 @@ import { cldUrl } from '@/lib/cloudinary';
 import { formatVND } from '@/lib/money';
 import { getEscrowTransferInfo, tryBuildEscrowQrUrl } from '@/lib/vietqr';
 import {
-  cancelOrder, confirmReceived, expireOrderIfDue, getSellerFacebook, markShipped, openDispute, subscribeToOrder,
+  buyerCancelOverdueOrder, cancelOrder, confirmReceived, expireOrderIfDue, getSellerFacebook, markShipped, openDispute, sellerCancelPaidOrder, subscribeToOrder,
 } from '@/lib/orders';
 import { getErrorMessage } from '@/lib/errors';
 import { CARRIERS } from '@/constants/orderStatus';
@@ -244,13 +244,21 @@ function OrderDetailContent() {
       )}
 
       {order.status === 'PAID_HELD' && isBuyer && (
-        <Alert kind="success">
-          <p className="font-medium">{paidNotice ? 'Thanh toán thành công!' : 'Sàn đã nhận tiền của bạn.'}</p>
-          <p className="mt-0.5">Số tiền đang được sàn giữ an toàn. Đang chờ người bán đóng gói và gửi hàng — bạn sẽ thấy mã vận đơn tại đây.</p>
-        </Alert>
+        <BuyerPaidHeldPanel
+          order={order}
+          paidNotice={paidNotice}
+          busy={busy}
+          onCancelOverdue={() => run(() => buyerCancelOverdueOrder(order.id))}
+        />
       )}
       {order.status === 'PAID_HELD' && isSeller && (
-        <ShipForm order={order} busy={busy} onSubmit={(input) => run(() => markShipped(order.id, input))} />
+        <div className="space-y-4">
+          <ShipForm order={order} busy={busy} onSubmit={(input) => run(() => markShipped(order.id, input))} />
+          <SellerCancelPaidPanel
+            busy={busy}
+            onCancel={(reason, listingAction) => run(() => sellerCancelPaidOrder(order.id, reason, listingAction))}
+          />
+        </div>
       )}
 
       {order.status === 'SHIPPED' && (
@@ -268,7 +276,7 @@ function OrderDetailContent() {
         </Alert>
       )}
       {order.status === 'DISPUTED' && <DisputeInfo order={order} />}
-      {order.status === 'REFUNDED' && <Alert kind="info">Đơn đã được hoàn tiền cho người mua.</Alert>}
+      {order.status === 'REFUNDED' && <RefundStatusCard order={order} />}
 
       {/* Thông tin chi tiết */}
       <div className="grid min-w-0 gap-5 md:grid-cols-2">
@@ -473,7 +481,20 @@ function ShipForm({ order, busy, onSubmit }: {
 
   return (
     <form onSubmit={submit} noValidate className="card space-y-4 p-5">
-      <Alert kind="success">Sàn đã nhận <strong>{formatVND(order.amount)}</strong> từ người mua. Hãy đóng gói và gửi hàng.</Alert>
+      <Alert kind="success">
+        <p>Sàn đã nhận <strong>{formatVND(order.amount)}</strong> từ người mua. Hãy đóng gói và gửi hàng.</p>
+        {(order.ship_deadline_at || order.paid_at) && (
+          <p className="mt-1 text-xs">
+            Hạn chót gửi hàng (48 giờ):{' '}
+            <strong>
+              {new Date(
+                order.ship_deadline_at ?? new Date(new Date(order.paid_at as string).getTime() + 48 * 3600_000).toISOString(),
+              ).toLocaleString('vi-VN')}
+            </strong>
+            . Quá hạn này, người mua có quyền yêu cầu hủy đơn hoàn tiền.
+          </p>
+        )}
+      </Alert>
       <div className="rounded-lg bg-neutral-50 dark:bg-neutral-800/60 p-3 text-sm">
         <p className="font-medium text-neutral-900 dark:text-neutral-100">Gửi tới: {order.recipient_name} · {order.phone}</p>
         <p className="mt-0.5 text-neutral-700 dark:text-neutral-200">{order.address}</p>
@@ -546,6 +567,15 @@ function ShippedPanel({ order, isBuyer, busy, onConfirm, onDispute }: {
             {order.tracking_code && <CopyButton value={order.tracking_code} label="Chép mã" />}
           </p>
           <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">Dùng mã vận đơn để tra cứu trên website/app của đơn vị vận chuyển.</p>
+          {order.shipped_at && (
+            <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
+              Quy tắc bảo vệ 14 ngày: nếu sau ngày{' '}
+              <strong className="text-neutral-700 dark:text-neutral-300">
+                {new Date(new Date(order.shipped_at).getTime() + 14 * 24 * 3600_000).toLocaleDateString('vi-VN')}
+              </strong>{' '}
+              người mua không xác nhận nhận hàng hoặc mở khiếu nại, đơn sẽ chuyển Admin rà soát mã vận đơn để giải ngân cho người bán.
+            </p>
+          )}
           {order.packing_video_url && (
             <a href={order.packing_video_url} target="_blank" rel="noopener noreferrer nofollow" className="mt-2 inline-flex items-center gap-1.5 text-brand-700 dark:text-brand-400 hover:underline">
               <Video className="h-4 w-4" /> Xem video test của người bán <ExternalLink className="h-3.5 w-3.5" />
@@ -624,6 +654,245 @@ function DisputeInfo({ order }: { order: Order }) {
         )}
       </div>
       <p className="flex items-center gap-1.5 text-xs text-neutral-500 dark:text-neutral-400"><CheckCircle2 className="h-3.5 w-3.5" /> Hai bên chưa cần thao tác thêm. Hãy liên hệ admin nếu cần bổ sung bằng chứng.</p>
+    </section>
+  );
+}
+
+/* ----------------------------------------------------------------------------
+ *  Người mua khi đơn PAID_HELD: hiển thị hạn 48h & nút hủy hoàn tiền nếu quá hạn
+ * -------------------------------------------------------------------------- */
+function BuyerPaidHeldPanel({
+  order,
+  paidNotice,
+  busy,
+  onCancelOverdue,
+}: {
+  order: Order;
+  paidNotice: boolean;
+  busy: boolean;
+  onCancelOverdue: () => Promise<boolean>;
+}) {
+  const [confirming, setConfirming] = useState(false);
+  const deadlineIso =
+    order.ship_deadline_at ??
+    (order.paid_at ? new Date(new Date(order.paid_at).getTime() + 48 * 3600_000).toISOString() : null);
+  const isOverdue = Boolean(deadlineIso && Date.now() > new Date(deadlineIso).getTime());
+
+  return (
+    <div className="space-y-3">
+      <Alert kind="success">
+        <p className="font-medium">{paidNotice ? 'Thanh toán thành công!' : 'Sàn đã nhận tiền của bạn.'}</p>
+        <p className="mt-0.5">
+          Số tiền đang được sàn giữ an toàn. Đang chờ người bán đóng gói và gửi hàng — bạn sẽ thấy mã vận đơn tại đây.
+        </p>
+        {deadlineIso && (
+          <p className="mt-1 text-xs">
+            Hạn gửi hàng tối đa (48 giờ): <strong>{new Date(deadlineIso).toLocaleString('vi-VN')}</strong>
+          </p>
+        )}
+      </Alert>
+
+      {isOverdue && (
+        <div className="card space-y-3 border-amber-300 bg-amber-50/70 p-4 dark:border-amber-800/70 dark:bg-amber-950/40">
+          <p className="text-sm font-medium text-amber-950 dark:text-amber-200">
+            Người bán đã quá hạn gửi hàng 48 giờ. Bạn có thể yêu cầu hủy đơn để Admin hoàn tiền về tài khoản ngân hàng đã lưu.
+          </p>
+          {confirming ? (
+            <div className="flex flex-wrap items-center justify-end gap-2">
+              <button type="button" className="btn-ghost" onClick={() => setConfirming(false)} disabled={busy}>
+                Quay lại
+              </button>
+              <button
+                type="button"
+                className="btn bg-red-600 text-white hover:bg-red-700"
+                disabled={busy}
+                onClick={async () => {
+                  const ok = await onCancelOverdue();
+                  if (ok) setConfirming(false);
+                }}
+              >
+                {busy && <Loader2 className="h-4 w-4 animate-spin" />} Xác nhận hủy &amp; nhận hoàn tiền
+              </button>
+            </div>
+          ) : (
+            <div className="flex justify-end">
+              <button
+                type="button"
+                className="btn bg-red-600 text-white hover:bg-red-700"
+                disabled={busy}
+                onClick={() => setConfirming(true)}
+              >
+                Yêu cầu hủy đơn &amp; Hoàn tiền (Quá hạn gửi hàng 48h)
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ----------------------------------------------------------------------------
+ *  Người bán chủ động báo hết hàng / hủy đơn hoàn tiền khi đang PAID_HELD
+ * -------------------------------------------------------------------------- */
+function SellerCancelPaidPanel({
+  busy,
+  onCancel,
+}: {
+  busy: boolean;
+  onCancel: (reason: string, listingAction: 'hidden' | 'sold') => Promise<boolean>;
+}) {
+  const [open, setOpen] = useState(false);
+  const [reason, setReason] = useState('');
+  const [listingAction, setListingAction] = useState<'hidden' | 'sold'>('hidden');
+  const [err, setErr] = useState<string | null>(null);
+
+  const submit = async (e: FormEvent) => {
+    e.preventDefault();
+    if (reason.trim().length < 5) {
+      setErr('Hãy nhập lý do hủy đơn (tối thiểu 5 ký tự).');
+      return;
+    }
+    setErr(null);
+    const ok = await onCancel(reason.trim(), listingAction);
+    if (ok) setOpen(false);
+  };
+
+  return (
+    <section className="card p-4 sm:p-5">
+      {!open ? (
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100">Không thể giao hàng / Hủy đơn hoàn tiền</p>
+            <p className="text-xs text-neutral-500 dark:text-neutral-400">
+              Nếu sản phẩm đã bán ngoài hoặc gặp lỗi không thể giao, hãy báo hủy sớm để sàn hoàn tiền cho người mua.
+            </p>
+          </div>
+          <button
+            type="button"
+            className="btn-secondary shrink-0 text-xs text-red-700 dark:text-red-400"
+            disabled={busy}
+            onClick={() => setOpen(true)}
+          >
+            Hủy đơn hoàn tiền
+          </button>
+        </div>
+      ) : (
+        <form onSubmit={submit} className="space-y-3" noValidate>
+          <p className="text-sm font-semibold text-red-700 dark:text-red-400">Xác nhận hủy đơn &amp; hoàn tiền cho người mua</p>
+          <Field label="Lý do không thể giao hàng" htmlFor="seller-cancel-reason" required error={err ?? undefined}>
+            <textarea
+              id="seller-cancel-reason"
+              rows={2}
+              className="input"
+              maxLength={500}
+              placeholder="Ví dụ: Sản phẩm vừa bán trực tiếp, hoặc phát hiện lỗi khi test trước khi đóng gói..."
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+            />
+          </Field>
+          <div className="space-y-1.5 text-xs text-neutral-700 dark:text-neutral-300">
+            <p className="font-medium">Trạng thái tin đăng sau khi hủy đơn:</p>
+            <div className="flex flex-wrap gap-4">
+              <label className="flex cursor-pointer items-center gap-1.5">
+                <input
+                  type="radio"
+                  name="listingAction"
+                  checked={listingAction === 'hidden'}
+                  onChange={() => setListingAction('hidden')}
+                />
+                Ẩn tin đăng (có thể mở lại sau)
+              </label>
+              <label className="flex cursor-pointer items-center gap-1.5">
+                <input
+                  type="radio"
+                  name="listingAction"
+                  checked={listingAction === 'sold'}
+                  onChange={() => setListingAction('sold')}
+                />
+                Đánh dấu Đã bán
+              </label>
+            </div>
+          </div>
+          <div className="flex justify-end gap-2">
+            <button type="button" className="btn-ghost" onClick={() => setOpen(false)} disabled={busy}>
+              Quay lại
+            </button>
+            <button type="submit" className="btn bg-red-600 text-white hover:bg-red-700" disabled={busy}>
+              {busy && <Loader2 className="h-4 w-4 animate-spin" />} Xác nhận hủy &amp; hoàn tiền
+            </button>
+          </div>
+        </form>
+      )}
+    </section>
+  );
+}
+
+/* ----------------------------------------------------------------------------
+ *  Thông tin trạng thái hoàn tiền (REFUNDED)
+ * -------------------------------------------------------------------------- */
+function RefundStatusCard({ order }: { order: Order }) {
+  const refundAmount = order.paid_amount > 0 ? order.paid_amount : order.amount;
+  const done = Boolean(order.refund_completed_at);
+
+  return (
+    <section
+      className={`card space-y-3 p-4 sm:p-5 ${
+        done
+          ? 'border-emerald-200 dark:border-emerald-800/70'
+          : 'border-amber-300 dark:border-amber-800/70'
+      }`}
+    >
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h2 className="text-base font-semibold text-neutral-950 dark:text-neutral-50">Thông tin hoàn tiền</h2>
+        <span
+          className={`badge ${
+            done
+              ? 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300'
+              : 'border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-800 dark:bg-amber-950/50 dark:text-amber-300'
+          }`}
+        >
+          {done ? 'Admin đã hoàn tiền thành công' : 'Đang chờ Admin chuyển khoản hoàn tiền'}
+        </span>
+      </div>
+
+      <dl className="divide-y divide-neutral-100 text-sm dark:divide-neutral-800">
+        {(order.cancel_reason || order.admin_note) && (
+          <div className="flex items-start justify-between gap-4 py-2">
+            <dt className="shrink-0 text-neutral-500 dark:text-neutral-400">Lý do hủy / hoàn tiền</dt>
+            <dd className="min-w-0 break-words text-right text-neutral-900 dark:text-neutral-100">
+              {order.cancel_reason ?? order.admin_note}
+            </dd>
+          </div>
+        )}
+        <div className="flex items-start justify-between gap-4 py-2 tabular-nums">
+          <dt className="shrink-0 text-neutral-500 dark:text-neutral-400">Số tiền hoàn</dt>
+          <dd className="font-semibold text-neutral-950 dark:text-neutral-50">{formatVND(refundAmount)}</dd>
+        </div>
+        {order.refund_bank_name && order.refund_account_number && (
+          <div className="flex items-start justify-between gap-4 py-2">
+            <dt className="shrink-0 text-neutral-500 dark:text-neutral-400">Tài khoản nhận hoàn tiền</dt>
+            <dd className="min-w-0 break-words text-right text-neutral-900 dark:text-neutral-100">
+              {order.refund_bank_name} · <span className="font-mono">{order.refund_account_number}</span>
+              {order.refund_account_name && <span className="block text-xs text-neutral-500 dark:text-neutral-400">{order.refund_account_name}</span>}
+            </dd>
+          </div>
+        )}
+        {order.refund_completed_at && (
+          <div className="flex items-start justify-between gap-4 py-2">
+            <dt className="shrink-0 text-neutral-500 dark:text-neutral-400">Thời gian hoàn tiền</dt>
+            <dd className="text-right text-neutral-900 dark:text-neutral-100">
+              {new Date(order.refund_completed_at).toLocaleString('vi-VN')}
+            </dd>
+          </div>
+        )}
+        {order.refund_reference && (
+          <div className="flex items-start justify-between gap-4 py-2">
+            <dt className="shrink-0 text-neutral-500 dark:text-neutral-400">Mã giao dịch hoàn tiền</dt>
+            <dd className="font-mono text-right text-neutral-900 dark:text-neutral-100">{order.refund_reference}</dd>
+          </div>
+        )}
+      </dl>
     </section>
   );
 }

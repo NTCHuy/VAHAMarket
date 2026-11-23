@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { AlertTriangle, Banknote, Landmark, Lock, Percent, ShieldBan, type LucideIcon } from 'lucide-react';
+import { AlertTriangle, Banknote, Landmark, Lock, Percent, RotateCcw, ShieldBan, type LucideIcon } from 'lucide-react';
 import { getAdminStats, type AdminStats } from '@/lib/admin';
 import { formatVND } from '@/lib/money';
 import { getErrorMessage } from '@/lib/errors';
@@ -8,6 +8,7 @@ import { Alert } from '@/components/ui';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import ReviewTab from './admin/ReviewTab';
 import PayoutsTab from './admin/PayoutsTab';
+import RefundsTab from './admin/RefundsTab';
 import DisputesTab from './admin/DisputesTab';
 import TransactionsTab from './admin/TransactionsTab';
 import OrdersTab from './admin/OrdersTab';
@@ -16,8 +17,8 @@ import MembersTab from './admin/MembersTab';
 import BansTab from './admin/BansTab';
 import FeeSettingsCard from './admin/FeeSettingsCard';
 
-type TabId = 'review' | 'payouts' | 'disputes' | 'transactions' | 'orders' | 'listings' | 'members' | 'bans';
-const TAB_IDS: TabId[] = ['review', 'payouts', 'disputes', 'transactions', 'orders', 'listings', 'members', 'bans'];
+type TabId = 'review' | 'payouts' | 'refunds' | 'disputes' | 'transactions' | 'orders' | 'listings' | 'members' | 'bans';
+const TAB_IDS: TabId[] = ['review', 'payouts', 'refunds', 'disputes', 'transactions', 'orders', 'listings', 'members', 'bans'];
 
 export default function AdminDashboard() {
   useDocumentTitle('Quản trị hệ thống');
@@ -43,9 +44,10 @@ export default function AdminDashboard() {
   const tabs: { id: TabId; label: string; badge?: number }[] = [
     { id: 'review', label: 'Duyệt tin', badge: stats?.pending_review_count },
     { id: 'payouts', label: 'Giải ngân', badge: stats?.payout_pending_count },
+    { id: 'refunds', label: 'Hoàn tiền', badge: stats?.refund_pending_count },
     { id: 'disputes', label: 'Khiếu nại', badge: stats?.dispute_count },
     { id: 'transactions', label: 'Giao dịch lệch', badge: stats?.flagged_tx_count },
-    { id: 'orders', label: 'Tất cả đơn hàng' },
+    { id: 'orders', label: 'Tất cả đơn hàng', badge: stats?.overdue_shipped_count },
     { id: 'listings', label: 'Tin đăng & giá' },
     { id: 'members', label: 'Mod' },
     { id: 'bans', label: 'Cảnh báo & Ban', badge: stats?.banned_count },
@@ -74,6 +76,7 @@ export default function AdminDashboard() {
           <button key={t.id} type="button" role="tab" aria-selected={tab === t.id}
             onClick={() => setParams({ tab: t.id }, { replace: true })}
             className={`-mb-px flex shrink-0 items-center gap-2 border-b-2 px-3 py-2.5 text-sm font-medium transition-colors ${tab === t.id ? 'border-brand-700 dark:border-brand-500 text-brand-800 dark:text-brand-300' : 'border-transparent text-neutral-500 dark:text-neutral-400 hover:text-neutral-800 dark:hover:text-neutral-200'}`}>
+            {t.id === 'refunds' && <RotateCcw className="h-4 w-4" />}
             {t.id === 'transactions' && <Landmark className="h-4 w-4" />}
             {t.id === 'bans' && <ShieldBan className="h-4 w-4" />}
             {t.label}
@@ -84,9 +87,10 @@ export default function AdminDashboard() {
 
       {tab === 'review' && <ReviewTab onChanged={refreshStats} />}
       {tab === 'payouts' && <PayoutsTab onChanged={refreshStats} />}
+      {tab === 'refunds' && <RefundsTab onChanged={refreshStats} />}
       {tab === 'disputes' && <DisputesTab onChanged={refreshStats} />}
       {tab === 'transactions' && <TransactionsTab onChanged={refreshStats} />}
-      {tab === 'orders' && <OrdersTab onChanged={refreshStats} />}
+      {tab === 'orders' && <OrdersTab onChanged={refreshStats} overdueCount={stats?.overdue_shipped_count ?? 0} />}
       {tab === 'listings' && <ListingsTab />}
       {tab === 'members' && <MembersTab />}
       {tab === 'bans' && <BansTab onChanged={refreshStats} />}

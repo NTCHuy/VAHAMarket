@@ -10,7 +10,7 @@ React + Vite + TypeScript + Tailwind · Supabase (Auth, Postgres/RLS, Realtime, 
 ## Bước 0 — Chuẩn bị Supabase (làm 1 lần)
 
 1. Supabase Dashboard → **SQL Editor** → chạy lần lượt, mỗi file 1 lần:
-   `supabase/schema.sql` → `supabase/migrations/002_ui_fields.sql` → `003_order_dispute_fields.sql` → `004_admin_actions.sql` → `005_vaha_rebrand_and_fees.sql` → `006_platform_settings_and_ux.sql` → `007_bulletproof_moderation.sql` → `008_email_notifications.sql` → `009_ban_and_fingerprinting.sql` → `010_platform_fee_cap.sql`
+   `supabase/schema.sql` → `supabase/migrations/002_ui_fields.sql` → `003_order_dispute_fields.sql` → `004_admin_actions.sql` → `005_vaha_rebrand_and_fees.sql` → `006_platform_settings_and_ux.sql` → `007_bulletproof_moderation.sql` → `008_email_notifications.sql` → `009_ban_and_fingerprinting.sql` → `010_platform_fee_cap.sql` → `011_refund_and_overdue_delivery.sql`
    *(Lưu ý: nếu SQL Editor báo lỗi liên quan đến giá trị enum mới ở `007`, hãy chạy riêng 2 dòng `alter type public.listing_status add value ...` trước, rồi chạy phần còn lại.)*
 2. **Authentication → Providers → Google**: bật và nhập Client ID/Secret (Google Cloud Console → OAuth client, loại Web).
    *Authorized redirect URI* trên Google phải là `https://<PROJECT_REF>.supabase.co/auth/v1/callback`.
@@ -41,6 +41,13 @@ React + Vite + TypeScript + Tailwind · Supabase (Auth, Postgres/RLS, Realtime, 
 - **Bộ lọc chống dẫn dụ ngoài sàn**: chặn số điện thoại (9–11 chữ số liền hoặc có phân cách) và các từ khóa lách luật (`zalo`, `ck trực tiếp`, `bank trực tiếp`, `không qua sàn`...) trong tiêu đề và mô tả. Chạy đồng thời ở frontend (`src/lib/moderation.ts`) và trigger DB (`trg_listings_moderation`).
 - **Khóa thông tin định danh**: khi người bán đang có tin ở trạng thái `pending_review` / `active` / `reserved` hoặc đơn bán đang xử lý, hệ thống tự khóa không cho đổi `profiles.facebook_url` đã lưu và thông tin tài khoản ngân hàng (`bank_bin`, `bank_code`, `account_number`, `account_name`). Nếu người bán gõ nhầm hợp lệ và cần sửa, Admin cập nhật trực tiếp qua **SQL Editor** (role hệ thống bỏ qua trigger khóa).
 - **Siết quy trình gửi hàng & mở hộp**: người bán bắt buộc chọn đơn vị vận chuyển (GHTK, GHN, Viettel Post, J&T, SPX, Khác), nhập mã vận đơn và dán link video test/đóng gói. Khi đơn ở trạng thái `SHIPPED`, người mua nhận cảnh báo bắt buộc quay video mở hộp liền mạch 6 mặt để làm căn cứ giải quyết khiếu nại.
+
+## Bản cập nhật v1.9.5 — Hoàn tiền tự động hóa (48h) & Rà soát đơn quá hạn 14 ngày (Migration 011)
+
+- **Bắt buộc tài khoản ngân hàng nhận hoàn tiền khi đặt mua**: `create_order` kiểm tra người mua có ≥1 tài khoản trong `bank_accounts` và snapshot vào `orders.refund_bank_*`.
+- **Hạn gửi hàng 48 giờ (`ship_deadline_at`)**: Gán tự động khi đơn chuyển sang `PAID_HELD` (cả qua `sepay-webhook` lẫn duyệt tay). Người bán có thể chủ động hủy đơn (`seller_cancel_paid_order`); quá 48h người mua có quyền bấm hủy hoàn tiền (`buyer_cancel_overdue_order`).
+- **Tab Hoàn tiền (`Admin → Hoàn tiền`)**: Tự động tạo mã VietQR hoàn tiền nền trắng từ `refund_bank_*` của người mua, kèm nút xác nhận đã chuyển khoản (`admin_mark_refunded`).
+- **Bảo vệ người bán khi người mua không phản hồi quá 14 ngày**: Bộ lọc *Quá hạn vận đơn (>14 ngày)* trên `Admin → Tất cả đơn hàng` cho phép Admin tự tra vận đơn rồi bấm **Xác nhận đã giao & Giải ngân** (`admin_force_complete_shipped`) hoặc **Vận đơn lỗi / Hoàn tiền khách** (`admin_force_refund_order`).
 
 ## Bản cập nhật v1.9.4 — Sửa lỗi cắt chữ trên BuyerProtectionSteps
 
