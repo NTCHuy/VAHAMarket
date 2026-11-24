@@ -2,6 +2,9 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import {
   BadgeCheck,
+  Check,
+  Copy,
+  Share2,
   ChevronLeft,
   ChevronRight,
   ExternalLink,
@@ -50,6 +53,8 @@ export default function ListingDetail() {
   const [active, setActive] = useState(0);
   const [lightbox, setLightbox] = useState<number | null>(null);
   const [buyOpen, setBuyOpen] = useState(false);
+  const [copiedMode, setCopiedMode] = useState<'link' | 'snippet' | null>(null);
+  const [related, setRelated] = useState<Pick<Listing, 'id' | 'title' | 'price' | 'province' | 'condition' | 'images'>[]>([]);
 
   useEffect(() => {
     if (!id) return;
@@ -66,13 +71,22 @@ export default function ListingDetail() {
         if (!alive) return;
         setListing(l);
         if (l) {
-          const [p, fb] = await Promise.all([
+          const [p, fb, rel] = await Promise.all([
             supabase.from('profiles').select('*').eq('id', l.seller_id).maybeSingle(),
             getSellerFacebook(l.seller_id),
+            supabase
+              .from('listings')
+              .select('id,title,price,province,condition,images')
+              .eq('status', 'active')
+              .eq('category', l.category)
+              .neq('id', l.id)
+              .order('created_at', { ascending: false })
+              .limit(4),
           ]);
           if (!alive) return;
           setSeller((p.data as Profile | null) ?? null);
           setFacebook(fb);
+          setRelated((rel.data ?? []) as Pick<Listing, 'id' | 'title' | 'price' | 'province' | 'condition' | 'images'>[]);
         }
       } catch (e) {
         if (alive) setError(getErrorMessage(e));
@@ -128,6 +142,26 @@ export default function ListingDetail() {
     { label: 'Ship COD', value: listing.ship_cod ? 'Có — người mua trả phí ship cho bưu tá' : 'Không' },
     { label: 'Ngày đăng', value: new Date(listing.created_at).toLocaleDateString('vi-VN') },
   ];
+
+  const shareUrl = `${window.location.origin}/listing/${listing.id}`;
+
+  const handleCopyShare = async (mode: 'link' | 'snippet') => {
+    const content =
+      mode === 'link'
+        ? shareUrl
+        : [
+            `[VAHA Market · 0% phí] ${listing.title}`,
+            `Giá: ${formatVND(dp.display)} · ${getConditionLabel(listing.condition)}${listing.province ? ` · ${listing.province}` : ''}`,
+            `Giao dịch bảo lãnh trung gian: ${shareUrl}`,
+          ].join('\n');
+    try {
+      await navigator.clipboard.writeText(content);
+      setCopiedMode(mode);
+      setTimeout(() => setCopiedMode((cur) => (cur === mode ? null : cur)), 2000);
+    } catch {
+      // ignore clipboard errors
+    }
+  };
 
   return (
     <div className={`mx-auto max-w-6xl space-y-4 ${canBuy ? 'pb-20 lg:pb-0' : ''}`}>
@@ -384,11 +418,86 @@ export default function ListingDetail() {
             </div>
           )}
 
+          {/* Chia sẻ nhanh lên cộng đồng / Discord / Messenger */}
+          <div className="card space-y-2 p-4">
+            <p className="flex items-center gap-1.5 text-xs font-semibold text-neutral-900 dark:text-neutral-100">
+              <Share2 size={14} strokeWidth={1.75} className="text-blue-700 dark:text-blue-400" />
+              Chia sẻ tin đăng
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => void handleCopyShare('link')}
+                className="btn-secondary h-8 px-2.5 text-xs"
+              >
+                {copiedMode === 'link' ? <Check size={14} strokeWidth={2} className="text-emerald-600" /> : <Copy size={14} strokeWidth={1.75} />}
+                {copiedMode === 'link' ? 'Đã chép link' : 'Chép link'}
+              </button>
+              <button
+                type="button"
+                onClick={() => void handleCopyShare('snippet')}
+                className="btn-secondary h-8 px-2.5 text-xs"
+              >
+                {copiedMode === 'snippet' ? <Check size={14} strokeWidth={2} className="text-emerald-600" /> : <Share2 size={14} strokeWidth={1.75} />}
+                {copiedMode === 'snippet' ? 'Đã chép mẫu' : 'Mẫu chia sẻ'}
+              </button>
+            </div>
+          </div>
+
           <p className="px-1 text-xs leading-relaxed text-neutral-500 dark:text-neutral-400">
             Bắt buộc quay video mở hộp liền mạch 6 mặt khi nhận hàng để làm căn cứ đối soát. Không chuyển khoản riêng ngoài mã QR trên đơn.
           </p>
         </aside>
       </div>
+
+      {/* Sản phẩm cùng phân loại (giữ chân người xem từ link chia sẻ) */}
+      {related.length > 0 && (
+        <section className="space-y-3 pt-2" aria-label="Sản phẩm cùng phân loại">
+          <div className="flex items-center justify-between gap-2">
+            <h2 className="text-base font-semibold tracking-tight text-neutral-950 dark:text-neutral-50">
+              Sản phẩm cùng phân loại
+            </h2>
+            <Link
+              to={`/?category=${encodeURIComponent(listing.category)}`}
+              className="text-xs font-medium text-blue-700 hover:underline dark:text-blue-400"
+            >
+              Xem thêm →
+            </Link>
+          </div>
+          <ul className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            {related.map((item) => (
+              <li key={item.id} className="min-w-0">
+                <Link
+                  to={`/listing/${item.id}`}
+                  className="card flex h-full flex-col overflow-hidden transition-colors hover:border-neutral-400 dark:hover:border-neutral-600"
+                >
+                  <div className="aspect-[4/3] w-full overflow-hidden bg-neutral-100 dark:bg-neutral-800">
+                    {item.images[0] && (
+                      <img
+                        src={cldUrl(item.images[0].url, { width: 420, height: 315, crop: 'fill' })}
+                        alt={item.title}
+                        loading="lazy"
+                        className="h-full w-full object-cover"
+                      />
+                    )}
+                  </div>
+                  <div className="flex flex-1 flex-col p-2.5">
+                    <p className="line-clamp-2 min-h-[2.25rem] text-xs font-medium leading-snug text-neutral-950 dark:text-neutral-100 sm:text-sm">
+                      {item.title}
+                    </p>
+                    <p className="mt-1.5 text-sm font-semibold tabular-nums text-neutral-950 dark:text-neutral-50">
+                      {formatVND(item.price)}
+                    </p>
+                    <p className="mt-auto pt-1.5 truncate text-[11px] text-neutral-500 dark:text-neutral-400">
+                      {item.province ?? 'Toàn quốc'}
+                    </p>
+                  </div>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       {/* Lightbox */}
       {lightbox !== null && (

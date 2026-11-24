@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Heart, QrCode, Server, ShieldCheck, Sparkles, Users } from 'lucide-react';
 import { SUPPORT_ACCOUNT, SUPPORT_PRESET_AMOUNTS } from '@/constants/support';
+import { ESCROW_ACCOUNT } from '@/constants/payment';
 import { BRAND_NAME, DISCORD_SERVER_URL, GROUP_URL } from '@/constants/links';
 import { buildVietQrUrl, isValidAccountNo, normalizeAccountName, sanitizeTransferContent } from '@/lib/vietqr';
 import { formatVND } from '@/lib/money';
@@ -46,6 +47,9 @@ export default function Support() {
     const raw = extra ? `${SUPPORT_ACCOUNT.defaultMessage} ${extra}` : SUPPORT_ACCOUNT.defaultMessage;
     return sanitizeTransferContent(raw) || SUPPORT_ACCOUNT.defaultMessage;
   }, [senderNote]);
+
+  const conflictsWithEscrow =
+    SUPPORT_ACCOUNT.accountNo.trim().toUpperCase() === ESCROW_ACCOUNT.accountNo.trim().toUpperCase();
 
   const isConfigured =
     /^\d{6}$/.test(SUPPORT_ACCOUNT.bin) &&
@@ -189,7 +193,18 @@ export default function Support() {
             </p>
           </div>
 
-          {!isConfigured || !qrUrl ? (
+          {conflictsWithEscrow ? (
+            <div className="w-full space-y-3 py-4">
+              <Alert kind="error">
+                <p className="font-semibold">Trùng số tài khoản Escrow ({ESCROW_ACCOUNT.accountNo})</p>
+                <p className="mt-1 text-xs leading-relaxed">
+                  Không dùng chung tài khoản Escrow đang gắn SePay Webhook cho mục ủng hộ. Hãy đổi{' '}
+                  <code className="rounded bg-red-100 px-1 py-0.5 font-mono text-[11px] dark:bg-red-900">VITE_SUPPORT_ACCOUNT_NO</code>{' '}
+                  sang tài khoản ngân hàng khác.
+                </p>
+              </Alert>
+            </div>
+          ) : !isConfigured || !qrUrl ? (
             <div className="w-full space-y-3 py-4">
               <Alert kind="info">
                 <p className="font-semibold">Chưa cấu hình tài khoản nhận ủng hộ</p>

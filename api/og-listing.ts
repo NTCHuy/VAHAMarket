@@ -4,6 +4,7 @@ export const config = {
 
 const SITE_URL = 'https://vahamarket.vercel.app';
 const FALLBACK_IMAGE = `${SITE_URL}/og-preview.png`;
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function escapeHtml(str: string): string {
   return str
@@ -22,6 +23,13 @@ function formatVnd(value: number): string {
   }).format(value);
 }
 
+function toOgImageUrl(rawUrl: string): string {
+  const marker = '/upload/';
+  const idx = rawUrl.indexOf(marker);
+  if (idx === -1 || !rawUrl.includes('res.cloudinary.com')) return rawUrl;
+  return `${rawUrl.slice(0, idx + marker.length)}f_jpg,q_auto,w_1200,h_630,c_fill,g_auto/${rawUrl.slice(idx + marker.length)}`;
+}
+
 export default async function handler(req: Request): Promise<Response> {
   const url = new URL(req.url);
   const id = url.searchParams.get('id')?.trim() ?? '';
@@ -35,9 +43,9 @@ export default async function handler(req: Request): Promise<Response> {
     'Sàn giao dịch trung gian bảo lãnh 0% phí của cộng đồng Hội người Việt nghiện tai nghe. Thanh toán VietQR tự động.';
   let image = FALLBACK_IMAGE;
 
-  if (id && supabaseUrl && supabaseKey) {
+  if (UUID_RE.test(id) && supabaseUrl && supabaseKey) {
     try {
-      const apiUrl = `${supabaseUrl.replace(/\/+$/, '')}/rest/v1/listings?id=eq.${encodeURIComponent(id)}&select=title,price,province,condition,images&limit=1`;
+      const apiUrl = `${supabaseUrl.replace(/\/+$/, '')}/rest/v1/listings?id=eq.${encodeURIComponent(id)}&select=title,price,province,images&limit=1`;
       const res = await fetch(apiUrl, {
         headers: {
           apikey: supabaseKey,
@@ -57,7 +65,7 @@ export default async function handler(req: Request): Promise<Response> {
           title = priceStr ? `${item.title} — ${priceStr} | VAHA Market` : `${item.title} | VAHA Market`;
           description = `${priceStr ? `Giá ${priceStr} · ` : ''}${item.province ? `${item.province} · ` : ''}Giao dịch bảo lãnh 0% phí tại VAHA Market.`;
           const firstImg = item.images?.[0]?.url;
-          if (firstImg) image = firstImg;
+          if (firstImg) image = toOgImageUrl(firstImg);
         }
       }
     } catch {
@@ -78,10 +86,14 @@ export default async function handler(req: Request): Promise<Response> {
     <meta property="og:description" content="${escapeHtml(description)}" />
     <meta property="og:url" content="${escapeHtml(targetUrl)}" />
     <meta property="og:image" content="${escapeHtml(image)}" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="${escapeHtml(title)}" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="${escapeHtml(title)}" />
     <meta name="twitter:description" content="${escapeHtml(description)}" />
     <meta name="twitter:image" content="${escapeHtml(image)}" />
+    <meta name="twitter:image:alt" content="${escapeHtml(title)}" />
   </head>
   <body>
     <p><a href="${escapeHtml(targetUrl)}">${escapeHtml(title)}</a></p>

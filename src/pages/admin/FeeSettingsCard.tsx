@@ -94,7 +94,7 @@ export default function FeeSettingsCard() {
         <div className="flex flex-wrap items-center gap-2">
           <span className={`badge ${feeBp < 500 ? 'bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300' : ''}`}>
             Phí: <strong className="ml-1">{loaded ? pctText(feeBp) : '…'}</strong>
-            {feeBp < 500 && loaded ? ' · ưu đãi' : ''}
+            {loaded ? (feeBp === 0 ? ' · cộng đồng' : feeBp < 500 ? ' · ưu đãi' : '') : ''}
           </span>
           <span className="badge bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300">
             Trần tối đa: <strong className="ml-1">{loaded ? (feeCapVnd > 0 ? formatVND(feeCapVnd) : 'Tắt') : '…'}</strong>

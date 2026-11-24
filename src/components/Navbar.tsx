@@ -21,6 +21,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useOrderAlerts } from '@/context/OrderAlertsContext';
 import { useTheme, type ThemeMode } from '@/context/ThemeContext';
 import { useNotifications } from '@/context/NotificationContext';
+import { usePlatformSettings } from '@/context/PlatformSettingsContext';
 import CountBadge from './CountBadge';
 import SellerTermsModal, { hasAcceptedSellerTerms } from './SellerTermsModal';
 import { Avatar } from './ui';
@@ -86,6 +87,7 @@ export default function Navbar() {
   const { user, profile, isAdmin, isBanned, deviceBanned, loading, signIn, signOut } = useAuth();
   const blocked = (isBanned || deviceBanned) && !isAdmin;
   const alerts = useOrderAlerts();
+  const { feeBp } = usePlatformSettings();
   const [menuOpen, setMenuOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [signingIn, setSigningIn] = useState(false);
@@ -149,8 +151,14 @@ export default function Navbar() {
           <Link to="/" className="flex min-w-0 shrink-0 items-center gap-2 tracking-tight text-neutral-950 dark:text-neutral-50">
             <img src="/logo.png" alt="VAHA Market" className="h-7 w-7 rounded-md object-cover" />
             <span className="text-sm font-bold tracking-wider">VAHA MARKET</span>
-            <span className="hidden rounded border border-emerald-200 bg-emerald-50 px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wider text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 sm:inline-block">
-              0% FEE
+            <span
+              className={`hidden rounded border px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wider sm:inline-block ${
+                feeBp === 0
+                  ? 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300'
+                  : 'border-neutral-200 bg-neutral-100 text-neutral-600 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-400'
+              }`}
+            >
+              {feeBp === 0 ? '0% FEE' : 'ESCROW'}
             </span>
           </Link>
 
@@ -186,7 +194,7 @@ export default function Navbar() {
               <button
                 type="button"
                 onClick={handleSellClick}
-                className="btn-primary hidden h-8 px-3 text-xs sm:inline-flex"
+                className="btn-primary inline-flex h-8 px-2.5 text-xs sm:px-3"
               >
                 <Plus size={15} strokeWidth={2} /> Đăng bán
               </button>

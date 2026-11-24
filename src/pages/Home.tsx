@@ -42,6 +42,15 @@ const QUICK_CATEGORIES: { id: string; label: string }[] = [
   { id: 'dap', label: 'DAP' },
 ];
 
+const QUICK_PRICE_RANGES: { id: string; label: string; min: string; max: string }[] = [
+  { id: 'u1', label: 'Dưới 1tr', min: '', max: '1000000' },
+  { id: '1to3', label: '1 – 3tr', min: '1000000', max: '3000000' },
+  { id: '3to10', label: '3 – 10tr', min: '3000000', max: '10000000' },
+  { id: '10p', label: 'Trên 10tr', min: '10000000', max: '' },
+];
+
+const POPULAR_KEYWORDS = ['Moondrop', 'Sennheiser', 'FiiO', 'Sony', 'Truthear', '7Hz'] as const;
+
 const SHORT_CONDITION: Record<string, string> = {
   like_new: 'Like new 99%',
   good: 'Tốt 90–98%',
@@ -154,6 +163,25 @@ export default function Home() {
     if (err) setError(getErrorMessage(err));
     else setItems((prev) => [...prev, ...((data ?? []) as unknown as ListingCardItem[])]);
     setLoadingMore(false);
+  };
+
+  const applyPriceRange = (nextMin: string, nextMax: string) => {
+    const isSame = min === nextMin && max === nextMax;
+    const finalMin = isSame ? '' : nextMin;
+    const finalMax = isSame ? '' : nextMax;
+    setMinText(finalMin);
+    setMaxText(finalMax);
+    setParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        if (finalMin) next.set('min', finalMin);
+        else next.delete('min');
+        if (finalMax) next.set('max', finalMax);
+        else next.delete('max');
+        return next;
+      },
+      { replace: true },
+    );
   };
 
   const extraFilterCount = [condition, box, min, max].filter(Boolean).length;
@@ -287,6 +315,49 @@ export default function Home() {
               <option key={c.id} value={c.id}>{c.label}</option>
             ))}
           </select>
+        </div>
+
+        {/* Lọc nhanh tầm giá & từ khóa phổ biến */}
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="text-neutral-500 dark:text-neutral-400">Tầm giá:</span>
+            {QUICK_PRICE_RANGES.map((r) => {
+              const active = min === r.min && max === r.max;
+              return (
+                <button
+                  key={r.id}
+                  type="button"
+                  onClick={() => applyPriceRange(r.min, r.max)}
+                  className={`rounded-md border px-2 py-0.5 text-xs font-medium tabular-nums transition-colors ${
+                    active
+                      ? 'border-blue-700 bg-blue-50 text-blue-700 dark:border-blue-500 dark:bg-blue-950/60 dark:text-blue-300'
+                      : 'border-neutral-200 bg-white text-neutral-600 hover:bg-neutral-100 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-400 dark:hover:bg-neutral-800'
+                  }`}
+                >
+                  {r.label}
+                </button>
+              );
+            })}
+          </div>
+          {!q && (
+            <div className="hidden flex-wrap items-center gap-1.5 sm:flex">
+              <span className="text-neutral-400 dark:text-neutral-600">|</span>
+              <span className="text-neutral-500 dark:text-neutral-400">Tìm nhanh:</span>
+              {POPULAR_KEYWORDS.map((kw) => (
+                <button
+                  key={kw}
+                  type="button"
+                  onClick={() => {
+                    setSearchText(kw);
+                    setParam('q', kw);
+                  }}
+                  className="rounded-md px-1.5 py-0.5 text-xs text-neutral-600 transition-colors hover:bg-neutral-100 hover:text-neutral-950 dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-neutral-100"
+                >
+                  {kw}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Bộ lọc mở rộng (tình trạng, hộp, khoảng giá) */}
