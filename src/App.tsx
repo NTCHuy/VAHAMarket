@@ -10,6 +10,7 @@ import ListingDetail from '@/pages/ListingDetail';
 import Orders from '@/pages/Orders';
 import OrderDetail from '@/pages/OrderDetail';
 import Support from '@/pages/Support';
+import Transparency from '@/pages/Transparency';
 import Terms from '@/pages/Terms';
 
 function NotFound() {
@@ -27,6 +28,7 @@ export default function App() {
       <Route element={<Layout />}>
         <Route index element={<Home />} />
         <Route path="listing/:id" element={<ListingDetail />} />
+        <Route path="transparency" element={<Transparency />} />
         <Route path="support" element={<Support />} />
         <Route path="terms" element={<Terms />} />
 

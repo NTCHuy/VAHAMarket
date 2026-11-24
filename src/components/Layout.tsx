@@ -39,6 +39,11 @@ export default function Layout() {
               </p>
               <ul className="space-y-1 text-xs text-neutral-600 dark:text-neutral-400">
                 <li>
+                  <Link to="/transparency" className="hover:text-neutral-950 hover:underline dark:hover:text-neutral-100">
+                    Minh bạch dòng tiền trung gian
+                  </Link>
+                </li>
+                <li>
                   <Link to="/terms" className="hover:text-neutral-950 hover:underline dark:hover:text-neutral-100">
                     Điều khoản dịch vụ
                   </Link>

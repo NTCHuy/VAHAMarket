@@ -34,7 +34,7 @@ const RULES = [
   {
     num: '03',
     title: 'Miễn phí trung gian 0% — Sàn vì cộng đồng',
-    body: 'VAHA Market v2.0 hoạt động phi lợi nhuận với mức 0% phí trung gian: người bán nhận đủ 100% giá bán, người mua trả đúng giá niêm yết (trường hợp có điều chỉnh chính sách phí sau này sẽ áp dụng trần tối đa 500.000₫/đơn).',
+    body: 'VAHA Market hoạt động hoàn toàn phi lợi nhuận và không thu phí giao dịch: người bán nhận đủ 100% giá bán, người mua chỉ trả đúng giá niêm yết.',
   },
   {
     num: '04',

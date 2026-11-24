@@ -149,16 +149,8 @@ function buildEmail(payload: EmailPayload): { subject: string; html: string; tex
   const title = escapeHtml(rawTitle);
   const code = escapeHtml(rawCode);
   const orderUrl = payload.orderId ? `${SITE_URL}/orders/${payload.orderId}` : `${SITE_URL}/orders`;
-  const feeSaved = typeof payload.feeSavedAmount === 'number' && payload.feeSavedAmount > 0 ? payload.feeSavedAmount : 0;
-  const feeCapLabel = formatVnd(typeof payload.feeCapVnd === 'number' && payload.feeCapVnd > 0 ? payload.feeCapVnd : 500000);
-  const feeCapHtml =
-    payload.isFeeCapped && feeSaved > 0
-      ? `<div style="background-color:#ecfdf5;border:1px solid #6ee7b7;border-radius:10px;padding:12px 14px;margin-bottom:14px;color:#065f46;font-size:13px;"><strong>Ưu đãi trần phí sàn:</strong> Đơn hàng đã đạt mức trần phí sàn tối đa <strong>${feeCapLabel}</strong>, giúp bạn tiết kiệm <strong>${formatVnd(feeSaved)}</strong>.</div>`
-      : '';
-  const feeCapText =
-    payload.isFeeCapped && feeSaved > 0
-      ? `Đơn hàng đã đạt mức trần phí sàn tối đa ${feeCapLabel}, giúp bạn tiết kiệm ${formatVnd(feeSaved)}.`
-      : '';
+  const feeCapHtml = '';
+  const feeCapText = '';
 
   switch (payload.event) {
     case 'ORDER_PAID': {

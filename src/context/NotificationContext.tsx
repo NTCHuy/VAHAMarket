@@ -199,10 +199,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       const itemTitle = next.listing_snapshot?.title ?? next.payment_code ?? 'Đơn hàng';
       const href = `/orders/${next.id}`;
 
-      const capNote =
-        typeof next.fee_saved_amount === 'number' && next.fee_saved_amount > 0
-          ? ` Đơn hàng đã đạt mức trần phí sàn tối đa ${formatVND(next.fee_cap_vnd ?? 500_000)}, giúp bạn tiết kiệm ${formatVND(next.fee_saved_amount)}.`
-          : '';
+      const capNote = '';
 
       if (next.status === 'PAID_HELD') {
         pushToast(

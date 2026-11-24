@@ -21,6 +21,9 @@ export default function TrustBadge({ compact = false }: { compact?: boolean }) {
         <a href={DISCORD_SERVER_URL} target="_blank" rel="noopener noreferrer" className={linkCls}>
           Discord hỗ trợ <ExternalLink size={12} strokeWidth={1.75} />
         </a>
+        <Link to="/transparency" className={linkCls}>
+          Minh bạch dòng tiền
+        </Link>
         <Link to="/support" className={linkCls}>
           <Heart size={12} strokeWidth={1.75} /> Ủng hộ sàn
         </Link>

@@ -300,24 +300,14 @@ function OrderDetailContent() {
           ) : (
             <dl className="divide-y divide-neutral-100 dark:divide-neutral-800 text-sm">
               <Row label="Giá sản phẩm gốc" value={formatVND(order.list_price)} />
-              {isSeller && (order.seller_fee > 0
-                ? <Row
-                    label={`Phí bảo lãnh giao dịch (bên bạn chịu)${(order.fee_saved_amount ?? 0) > 0 ? ` · Đã áp trần tối đa ${formatVND(order.fee_cap_vnd ?? 500_000)}` : ''}`}
-                    value={`− ${formatVND(order.seller_fee)}`}
-                  />
-                : <Row label="Phí bảo lãnh giao dịch (bên bạn chịu)" value="Miễn phí" />)}
+              {isSeller && <Row label="Phí trung gian" value="Miễn phí (0%)" />}
               {isSeller && <Row label="Bạn thực nhận" value={formatVND(order.seller_payout)} strong />}
               {!isSeller && <Row label="Người mua chuyển" value={formatVND(order.amount)} />}
               {!isSeller && <Row label="Phí sàn" value={formatVND(order.platform_fee)} />}
               {!isSeller && <Row label="Người bán nhận" value={formatVND(order.seller_payout)} strong />}
             </dl>
           )}
-          {(order.fee_saved_amount ?? 0) > 0 && (
-            <p className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-800 dark:border-emerald-800/70 dark:bg-emerald-950/50 dark:text-emerald-300">
-              Tiết kiệm <strong>{formatVND(order.fee_saved_amount ?? 0)}</strong> nhờ chính sách trần phí tối đa{' '}
-              <strong>{formatVND(order.fee_cap_vnd ?? 500_000)}</strong>.
-            </p>
-          )}
+
           {order.fee_rate_bp === 0 && (
             <span className="inline-flex items-center gap-1 rounded border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/60 dark:text-emerald-300">
               0% phí trung gian · Sàn cộng đồng

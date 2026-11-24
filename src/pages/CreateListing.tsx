@@ -8,15 +8,13 @@ import { calcFees, formatVND } from '@/lib/money';
 import { getErrorMessage } from '@/lib/errors';
 import { validateListingContent } from '@/lib/moderation';
 import { BOX_STATUS_OPTIONS, CATEGORIES, LISTING_CONDITIONS, type BoxStatus, type ListingCondition } from '@/constants/categories';
-import { FEE_PAYER_OPTIONS, type FeePayer } from '@/constants/fees';
+import { type FeePayer } from '@/constants/fees';
 import { PROVINCES } from '@/constants/provinces';
 import { Alert, Field, PageLoader } from '@/components/ui';
 import NotificationHint from '@/components/NotificationHint';
 import SellerTermsModal, { hasAcceptedSellerTerms } from '@/components/SellerTermsModal';
-import ModBadge from '@/components/ModBadge';
 import { usePlatformSettings } from '@/context/PlatformSettingsContext';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
-import { useNotifications } from '@/context/NotificationContext';
 import type { BankAccount, Listing, ListingStatus } from '@/types';
 
 const MAX_IMAGES = 6;
@@ -66,7 +64,6 @@ const nextKey = () => `img-${Date.now()}-${keySeq++}`;
 function ListingForm({ listingId }: { listingId?: string }) {
   const { user, profile, contact, isAdmin } = useAuth();
   const { feeBp, feeCapVnd } = usePlatformSettings();
-  const { pushToast } = useNotifications();
   const navigate = useNavigate();
   const isEdit = Boolean(listingId);
   useDocumentTitle(isEdit ? 'Sửa tin đăng' : 'Đăng bán sản phẩm');
@@ -294,7 +291,6 @@ function ListingForm({ listingId }: { listingId?: string }) {
     () => (priceValid ? calcFees(price, feePayer, isMod, feeBp, feeCapVnd) : null),
     [price, priceValid, feePayer, isMod, feeBp, feeCapVnd],
   );
-  const feePctText = `${Number(((isMod ? 0 : feeBp) / 100).toFixed(2))}%`;
 
   /* ----------------------------- Validate ----------------------------- */
   const uploading = images.some((i) => i.state === 'uploading');
@@ -357,15 +353,6 @@ function ListingForm({ listingId }: { listingId?: string }) {
         ? await supabase.from('listings').update(payload).eq('id', listingId).select('id').single()
         : await supabase.from('listings').insert(payload).select('id').single();
       if (res.error) throw res.error;
-      if (targetStatus !== 'draft' && fees?.isFeeCapped && fees.feeSavedAmount > 0) {
-        pushToast({
-          title: `Đã đạt trần phí sàn tối đa ${formatVND(fees.feeCapVnd)}`,
-          body: `Tin đăng của bạn đã đạt mức trần phí sàn tối đa ${formatVND(fees.feeCapVnd)}, giúp tiết kiệm ${formatVND(fees.feeSavedAmount)} cho giao dịch này.`,
-          href: '/my-listings',
-          actionLabel: 'Xem tin đăng',
-          kind: 'success',
-        });
-      }
       navigate('/my-listings');
     } catch (e) {
       setSaveError(getErrorMessage(e));
@@ -643,70 +630,26 @@ function ListingForm({ listingId }: { listingId?: string }) {
           <Alert kind="info">Tin này đang có giá ưu đãi do Admin đặt. Nếu bạn đổi giá bán, giá ưu đãi (gạch ngang) sẽ tự động được gỡ.</Alert>
         )}
 
-        {feeBp === 0 ? (
-          <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3.5 py-2.5 text-xs text-emerald-900 dark:border-emerald-800/70 dark:bg-emerald-950/40 dark:text-emerald-200">
-            <strong>Miễn phí trung gian 0% — Sàn vì cộng đồng:</strong> Người bán nhận đủ 100% giá niêm yết và người mua chỉ trả đúng giá niêm yết.
-          </div>
-        ) : (
-          <fieldset>
-            <legend className="label">Ai chịu phí trung gian {feePctText}?</legend>
-            {isMod && <div className="mb-2"><ModBadge full /></div>}
-            {!isMod && feeBp < 500 && <p className="mb-2 text-xs text-amber-700 dark:text-amber-300">Đang áp dụng ưu đãi phí sàn toàn hệ thống: {feePctText} (thay vì 5%).</p>}
-            <div className="grid gap-2 sm:grid-cols-3">
-              {FEE_PAYER_OPTIONS.map((o) => {
-                const f = priceValid ? calcFees(price, o.id, isMod, feeBp, feeCapVnd) : null;
-                return (
-                  <label key={o.id} className={`cursor-pointer rounded-lg border p-3 transition-colors ${feePayer === o.id ? 'border-brand-600 dark:border-brand-500 bg-brand-50 dark:bg-brand-900/40 ring-1 ring-brand-600' : 'border-neutral-200 dark:border-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-800'}`}>
-                    <input type="radio" name="feePayer" value={o.id} checked={feePayer === o.id} onChange={() => setFeePayer(o.id)} className="sr-only" />
-                    <span className="block text-sm font-medium text-neutral-900 dark:text-neutral-100">{o.label}{o.id === 'SELLER' && <span className="ml-1 text-xs font-normal text-neutral-500 dark:text-neutral-400">(mặc định)</span>}</span>
-                    <span className="block text-xs text-neutral-500 dark:text-neutral-400">{o.hint}</span>
-                    {f && (
-                      <span className="mt-1.5 block text-xs text-neutral-700 dark:text-neutral-200">
-                        Người mua trả <strong>{formatVND(f.buyerPays)}</strong><br />Bạn nhận <strong>{formatVND(f.sellerReceives)}</strong>
-                      </span>
-                    )}
-                  </label>
-                );
-              })}
-            </div>
-          </fieldset>
-        )}
+        <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3.5 py-2.5 text-xs text-emerald-900 dark:border-emerald-800/70 dark:bg-emerald-950/40 dark:text-emerald-200">
+          <strong>Miễn phí trung gian 0%:</strong> VAHA Market không thu phí giao dịch — người bán nhận đủ 100% giá niêm yết và người mua chỉ trả đúng giá niêm yết.
+        </div>
 
-        <dl className="divide-y divide-neutral-100 dark:divide-neutral-800 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-800/60 text-sm">
+        <dl className="divide-y divide-neutral-100 rounded-lg border border-neutral-200 bg-neutral-50 text-sm tabular-nums dark:divide-neutral-800 dark:border-neutral-800 dark:bg-neutral-800/60">
           <div className="flex justify-between px-4 py-2.5">
             <dt className="text-neutral-600 dark:text-neutral-400">Giá niêm yết</dt>
             <dd className="font-medium text-neutral-900 dark:text-neutral-100">{fees ? formatVND(fees.listPrice) : '—'}</dd>
           </div>
           <div className="flex justify-between gap-2 px-4 py-2.5">
-            <dt className="text-neutral-600 dark:text-neutral-400">
-              Phí trung gian bạn chịu ({feePctText}{feePayer === 'SPLIT' ? ', chia đôi' : ''})
-              {fees?.isFeeCapped && (
-                <span className="ml-1 font-medium text-emerald-700 dark:text-emerald-400">
-                  (Đã áp trần tối đa {formatVND(fees.feeCapVnd)})
-                </span>
-              )}
-            </dt>
-            <dd className="font-medium text-red-600 dark:text-red-400">{fees ? (fees.sellerFee > 0 ? `− ${formatVND(fees.sellerFee)}` : formatVND(0)) : '—'}</dd>
+            <dt className="text-neutral-600 dark:text-neutral-400">Phí trung gian</dt>
+            <dd className="font-medium text-emerald-700 dark:text-emerald-400">Miễn phí (0₫)</dd>
           </div>
           <div className="flex justify-between px-4 py-3">
             <dt className="font-medium text-neutral-900 dark:text-neutral-100">Bạn thực nhận</dt>
-            <dd className="text-base font-semibold text-brand-800 dark:text-brand-300">{fees ? formatVND(fees.sellerReceives) : '—'}</dd>
-          </div>
-          <div className="flex justify-between px-4 py-2.5">
-            <dt className="text-neutral-600 dark:text-neutral-400">Người mua phải chuyển khoản</dt>
-            <dd className="font-medium text-neutral-900 dark:text-neutral-100">{fees ? formatVND(fees.buyerPays) : '—'}</dd>
+            <dd className="text-base font-semibold text-brand-800 dark:text-brand-300">{fees ? formatVND(fees.listPrice) : '—'}</dd>
           </div>
         </dl>
-        {fees?.isFeeCapped && fees.feeSavedAmount > 0 && (
-          <div className="rounded-lg border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-900 dark:border-emerald-700/80 dark:bg-emerald-950/50 dark:text-emerald-200">
-            Đã đạt trần phí sàn tối đa {formatVND(fees.feeCapVnd)} — Bạn đã tiết kiệm được{' '}
-            <strong className="font-bold text-emerald-700 dark:text-emerald-300">{formatVND(fees.feeSavedAmount)}</strong>!
-          </div>
-        )}
         <p className="text-xs text-neutral-500 dark:text-neutral-400">
-          {feeBp === 0
-            ? 'Người mua chuyển tiền vào tài khoản trung gian. Sau khi họ xác nhận nhận hàng, sàn chuyển đủ 100% giá bán cho bạn (0% phí).'
-            : 'Người mua chuyển tiền vào tài khoản trung gian. Sau khi họ xác nhận nhận hàng, sàn giữ phần phí và chuyển số thực nhận cho bạn.'}
+          Người mua chuyển tiền vào tài khoản trung gian. Sau khi họ xác nhận nhận hàng, sàn chuyển đủ 100% giá bán cho bạn.
         </p>
       </section>
 

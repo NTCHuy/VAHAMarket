@@ -194,7 +194,7 @@ export default function Terms() {
       <section id="fee-cap" className="card space-y-3 p-5 sm:p-6">
         <h2 className="flex items-center gap-2 text-base font-semibold text-neutral-900 dark:text-neutral-50">
           <Video className="h-5 w-5 text-brand-700 dark:text-brand-400" />
-          3. Thanh toán, phí bảo lãnh &amp; giải quyết khiếu nại
+          3. Thanh toán trung gian &amp; giải quyết khiếu nại
         </h2>
         <ul className="list-disc space-y-2 pl-5 text-sm leading-relaxed text-neutral-700 dark:text-neutral-300">
           <li>
@@ -217,16 +217,11 @@ export default function Terms() {
             đơn và mở khóa giải ngân cho người bán.
           </li>
           <li>
-            <strong>Phí trung gian 0% — Phi lợi nhuận vì cộng đồng:</strong> Từ phiên bản v2.0, {BRAND_NAME} áp dụng{' '}
-            <strong className="text-emerald-700 dark:text-emerald-400">0% phí trung gian</strong> cho mọi giao dịch và
-            duy trì hạ tầng bằng nguồn đóng góp tự nguyện của thành viên. Trong trường hợp có điều chỉnh chính sách phí ở
-            từng giai đoạn (Mod Group luôn hưởng 0%),{' '}
-            <strong className="text-emerald-700 dark:text-emerald-400">
-              tổng phí sàn được giới hạn trần tối đa 500.000₫ cho mỗi giao dịch
-            </strong>{' '}
-            (ví dụ với các thiết bị hi-end giá trên 10.000.000₫ ở mức 5%, phí vẫn chỉ tối đa 500.000₫). Người bán tự
-            chọn phương thức chia phí (Người bán chịu / Người mua chịu / Chia đôi) dựa trên mức phí đã áp trần; giá hiển
-            thị cho người mua luôn là giá trọn gói.
+            <strong>Miễn phí trung gian 0% — Phi lợi nhuận vì cộng đồng:</strong> {BRAND_NAME} hoạt động hoàn toàn phi
+            lợi nhuận và{' '}
+            <strong className="text-emerald-700 dark:text-emerald-400">không thu phí giao dịch (0%)</strong> cho mọi đơn
+            hàng trên sàn. Người mua trả đúng giá niêm yết và người bán nhận đủ 100% giá bán; hạ tầng vận hành được duy
+            trì hoàn toàn từ nguồn đóng góp tự nguyện của cộng đồng.
           </li>
           <li>
             <strong>Căn cứ giải quyết khiếu nại:</strong> Admin phân xử hoàn tiền hoặc giải ngân dựa trên đối chiếu{' '}

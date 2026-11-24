@@ -200,11 +200,7 @@ export default function Home() {
     );
   };
 
-  const feePctText = `${Number((feeBp / 100).toFixed(2))}%`;
-  const feeSummary =
-    feeBp === 0
-      ? '0% phí · Vì cộng đồng'
-      : `Phí sàn ${feePctText}${feeCapVnd > 0 ? ` (trần ${formatVND(feeCapVnd)}/đơn)` : ''}`;
+  const feeSummary = '0% phí · Miễn phí trung gian';
 
   return (
     <div className="space-y-4">
@@ -218,6 +214,10 @@ export default function Home() {
             <span className="font-medium text-neutral-900 dark:text-neutral-100">{total} tin đang bán</span>
             <span aria-hidden="true">·</span>
             <span className={feeBp < 500 ? 'font-medium text-emerald-700 dark:text-emerald-400' : ''}>{feeSummary}</span>
+            <span aria-hidden="true">·</span>
+            <Link to="/transparency" className="font-medium text-blue-700 hover:underline dark:text-blue-400">
+              Sổ minh bạch dòng tiền
+            </Link>
             <span aria-hidden="true">·</span>
             <Link to="/support" className="font-medium text-rose-600 hover:underline dark:text-rose-400">
               Ủng hộ duy trì sàn
@@ -432,16 +432,7 @@ function ListingCard({ listing: l, feeBp, feeCapVnd }: { listing: ListingCardIte
   const isMod = l.profiles?.is_mod ?? false;
   const dp = getDisplayPrice(l, { isMod, globalBp: feeBp, feeCapVnd });
   const condTag = l.box_status === 'full' ? `${SHORT_CONDITION[l.condition] ?? l.condition} · Fullbox` : (SHORT_CONDITION[l.condition] ?? l.condition);
-  const feeSubline =
-    dp.fees.feeRateBp === 0
-      ? isMod
-        ? 'Mod · 0% phí sàn'
-        : '0% phí · Vì cộng đồng'
-      : dp.fees.buyerFee > 0
-        ? dp.fees.isFeeCapped
-          ? `Đã gồm phí sàn (áp trần ${formatVND(dp.fees.feeCapVnd)})`
-          : 'Đã bao gồm phí sàn'
-        : 'Người bán chịu phí sàn';
+  const feeSubline = 'Miễn phí trung gian (0%)';
 
   return (
     <li className="min-w-0">
