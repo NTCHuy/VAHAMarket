@@ -102,7 +102,7 @@ export function getDisplayPrice(
   const fees = calcFees(l.price, l.fee_payer, opts.isMod, opts.globalBp, cap);
   const display = fees.buyerPays;
 
-  const promoActive = opts.globalBp < PLATFORM_FEE_BP && l.fee_payer !== 'SELLER';
+  const promoActive = opts.globalBp > 0 && opts.globalBp < PLATFORM_FEE_BP && l.fee_payer !== 'SELLER';
   const hasDiscount = l.original_price !== null && l.original_price > l.price;
 
   let strike: number | null = null;

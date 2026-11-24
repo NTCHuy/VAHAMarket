@@ -652,7 +652,12 @@ function ListingForm({ listingId }: { listingId?: string }) {
         <fieldset>
           <legend className="label">Ai chịu phí trung gian {feePctText}?</legend>
           {isMod && <div className="mb-2"><ModBadge full /></div>}
-          {!isMod && feeBp < 500 && <p className="mb-2 text-xs text-amber-700 dark:text-amber-300">Đang áp dụng ưu đãi phí sàn toàn hệ thống: {feePctText} (thay vì 5%).</p>}
+          {feeBp === 0 && (
+            <div className="mb-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3.5 py-2.5 text-xs text-emerald-900 dark:border-emerald-800/70 dark:bg-emerald-950/40 dark:text-emerald-200">
+              <strong>Miễn phí 0% — Sàn vì cộng đồng:</strong> Người bán nhận đủ 100% giá niêm yết và người mua chỉ trả đúng giá niêm yết.
+            </div>
+          )}
+          {!isMod && feeBp > 0 && feeBp < 500 && <p className="mb-2 text-xs text-amber-700 dark:text-amber-300">Đang áp dụng ưu đãi phí sàn toàn hệ thống: {feePctText} (thay vì 5%).</p>}
           <div className="grid gap-2 sm:grid-cols-3">
             {FEE_PAYER_OPTIONS.map((o) => {
               const f = priceValid ? calcFees(price, o.id, isMod, feeBp, feeCapVnd) : null;

@@ -114,8 +114,8 @@ export default function Terms() {
         </h2>
         <div className="space-y-2.5 text-sm leading-relaxed text-neutral-700 dark:text-neutral-300">
           <p>
-            <strong>{BRAND_NAME}</strong> và đội ngũ quản trị viên (Founder{' '}
-            <strong>Nguyễn Trần Công Huy — HweeHiFi</strong>) chỉ đóng vai trò cung cấp nền tảng kết nối giữa người mua
+            <strong>{BRAND_NAME}</strong> là nền tảng phi lợi nhuận <strong>của cộng đồng, vì cộng đồng</strong>{' '}
+            Hội người Việt nghiện tai nghe. Đội ngũ quản trị viên chỉ đóng vai trò cung cấp nền tảng kết nối giữa người mua
             và người bán, đồng thời cung cấp dịch vụ <strong>giữ tiền bảo lãnh trung gian (Escrow)</strong> dựa trên
             quy tắc đối soát bằng chứng minh bạch:
           </p>
@@ -217,8 +217,10 @@ export default function Terms() {
             đơn và mở khóa giải ngân cho người bán.
           </li>
           <li>
-            <strong>Phí trung gian &amp; Chính sách trần phí tối đa 500.000₫/đơn:</strong> Mức phí chuẩn là 5% giá niêm
-            yết (hoặc theo mức ưu đãi toàn sàn đang áp dụng; Mod Group được hưởng 0%), nhưng{' '}
+            <strong>Phí trung gian 0% — Phi lợi nhuận vì cộng đồng:</strong> Từ phiên bản v2.0, {BRAND_NAME} áp dụng{' '}
+            <strong className="text-emerald-700 dark:text-emerald-400">0% phí trung gian</strong> cho mọi giao dịch và
+            duy trì hạ tầng bằng nguồn đóng góp tự nguyện của thành viên. Trong trường hợp có điều chỉnh chính sách phí ở
+            từng giai đoạn (Mod Group luôn hưởng 0%),{' '}
             <strong className="text-emerald-700 dark:text-emerald-400">
               tổng phí sàn được giới hạn trần tối đa 500.000₫ cho mỗi giao dịch
             </strong>{' '}

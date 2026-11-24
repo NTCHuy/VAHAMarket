@@ -17,7 +17,7 @@ import { formatCountdown, useCountdown } from '@/hooks/useCountdown';
 import BuyerProtectionSteps from '@/components/BuyerProtectionSteps';
 import CopyButton from '@/components/CopyButton';
 import ErrorBoundary from '@/components/ErrorBoundary';
-import ModBadge from '@/components/ModBadge';
+
 import PriceBreakdown from '@/components/PriceBreakdown';
 import OrderStatusBadge from '@/components/OrderStatusBadge';
 import NotificationHint from '@/components/NotificationHint';
@@ -318,7 +318,19 @@ function OrderDetailContent() {
               <strong>{formatVND(order.fee_cap_vnd ?? 500_000)}</strong>.
             </p>
           )}
-          {order.fee_rate_bp === 0 && <ModBadge full />}
+          {order.fee_rate_bp === 0 && (
+            <span className="inline-flex items-center gap-1 rounded border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/60 dark:text-emerald-300">
+              0% phí trung gian · Sàn cộng đồng
+            </span>
+          )}
+          {(order.status === 'COMPLETED' || order.status === 'PAID_OUT') && (
+            <p className="rounded-lg border border-blue-100 bg-blue-50/70 px-3 py-2 text-xs text-blue-900 dark:border-blue-900/60 dark:bg-blue-950/40 dark:text-blue-200">
+              Giao dịch hoàn tất với <strong>0% phí</strong>! Nếu thấy VAHA Market hữu ích, bạn có thể{' '}
+              <Link to="/support" className="font-semibold underline">
+                ủng hộ duy trì sàn
+              </Link>.
+            </p>
+          )}
           {isSeller && payout && (
             <p className="rounded-lg bg-neutral-50 dark:bg-neutral-800/60 px-3 py-2 text-xs text-neutral-600 dark:text-neutral-400">
               Tài khoản nhận: {payout.bank_name} ••••{payout.account_number.slice(-4)} · <strong>{PAYOUT_LABEL[payout.status]}</strong>

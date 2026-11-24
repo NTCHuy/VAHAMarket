@@ -1,5 +1,5 @@
 import { Link, Outlet, useLocation } from 'react-router-dom';
-import { ExternalLink } from 'lucide-react';
+import { ExternalLink, Heart } from 'lucide-react';
 import { BRAND_NAME, DISCORD_SERVER_URL, GROUP_URL } from '@/constants/links';
 import { useAuth } from '@/context/AuthContext';
 import BannedScreen from './BannedScreen';
@@ -22,20 +22,20 @@ export default function Layout() {
       <footer className="border-t border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-950">
         <div className="mx-auto max-w-6xl px-4 py-7 sm:px-6">
           <div className="grid gap-6 text-sm sm:grid-cols-3">
-            {/* Cột 1 */}
             <div className="min-w-0 space-y-1.5">
-              <p className="font-semibold tracking-tight text-neutral-950 dark:text-neutral-50">{BRAND_NAME}</p>
+              <div className="flex items-center gap-2">
+                <img src="/logo.png" alt="" className="h-6 w-6 rounded-md object-cover" />
+                <p className="font-semibold tracking-tight text-neutral-950 dark:text-neutral-50">{BRAND_NAME}</p>
+              </div>
               <p className="text-xs leading-relaxed text-neutral-600 dark:text-neutral-400">
-                Nền tảng giao dịch trung gian thiết bị âm thanh cho cộng đồng{' '}
-                <em>Hội người Việt nghiện tai nghe</em>, phát triển và vận hành bởi{' '}
-                <strong className="font-medium text-neutral-800 dark:text-neutral-200">Huy Nguyễn (HweeHiFi)</strong>.
+                Nền tảng giao dịch trung gian thiết bị âm thanh <strong>0% phí</strong> của cộng đồng{' '}
+                <em>Hội người Việt nghiện tai nghe</em> — phi lợi nhuận, minh bạch và bảo vệ người chơi.
               </p>
             </div>
 
-            {/* Cột 2 */}
             <div className="min-w-0 space-y-1.5">
               <p className="text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
-                Quy định &amp; Pháp lý
+                Quy định &amp; Đóng góp
               </p>
               <ul className="space-y-1 text-xs text-neutral-600 dark:text-neutral-400">
                 <li>
@@ -43,10 +43,17 @@ export default function Layout() {
                     Điều khoản dịch vụ
                   </Link>
                 </li>
+                <li>
+                  <Link
+                    to="/support"
+                    className="inline-flex items-center gap-1 font-medium text-blue-700 hover:underline dark:text-blue-400"
+                  >
+                    <Heart size={12} strokeWidth={2} className="shrink-0" /> Ủng hộ duy trì sàn
+                  </Link>
+                </li>
               </ul>
             </div>
 
-            {/* Cột 3 */}
             <div className="min-w-0 space-y-1.5">
               <p className="text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
                 Cộng đồng &amp; Hỗ trợ
@@ -77,7 +84,7 @@ export default function Layout() {
           </div>
 
           <div className="mt-6 border-t border-neutral-100 pt-4 text-xs text-neutral-500 dark:border-neutral-900">
-            © {new Date().getFullYear()} {BRAND_NAME}
+            © {new Date().getFullYear()} {BRAND_NAME} · Của cộng đồng, vì cộng đồng.
           </div>
         </div>
       </footer>

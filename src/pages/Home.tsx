@@ -11,6 +11,7 @@ import { ListingGridSkeleton } from '@/components/Skeletons';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { usePlatformSettings } from '@/context/PlatformSettingsContext';
 import { formatVND, getDisplayPrice } from '@/lib/money';
+import { removeVietnameseTones } from '@/lib/vietqr';
 import type { Listing } from '@/types';
 
 type ListingCardItem = Pick<
@@ -113,7 +114,7 @@ export default function Home() {
         .select(COLUMNS, { count: 'exact' })
         .eq('status', 'active');
 
-      if (q) query = query.ilike('title', `%${escapeLike(q)}%`);
+      if (q) query = query.ilike('search_text', `%${escapeLike(removeVietnameseTones(q).toLowerCase())}%`);
       if (category) query = query.eq('category', category);
       if (province) query = query.eq('province', province);
       if (condition) query = query.eq('condition', condition);
@@ -174,7 +175,7 @@ export default function Home() {
   const feePctText = `${Number((feeBp / 100).toFixed(2))}%`;
   const feeSummary =
     feeBp === 0
-      ? 'Ưu đãi 0% phí sàn'
+      ? '0% phí · Vì cộng đồng'
       : `Phí sàn ${feePctText}${feeCapVnd > 0 ? ` (trần ${formatVND(feeCapVnd)}/đơn)` : ''}`;
 
   return (
@@ -183,16 +184,19 @@ export default function Home() {
       <div className="-mx-4 -mt-5 border-b border-neutral-200 bg-neutral-100 px-4 py-2.5 text-xs text-neutral-700 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-300 sm:-mx-6 sm:-mt-6 sm:px-6">
         <div className="mx-auto flex flex-col gap-1.5 lg:flex-row lg:items-center lg:justify-between">
           <p className="leading-snug">
-            <strong className="font-semibold text-neutral-900 dark:text-neutral-100">VAHA Market</strong> — Sàn giao dịch trung gian thiết bị âm thanh dành cho cộng đồng Hội người Việt nghiện tai nghe · Vận hành độc lập bởi{' '}
-            <span className="font-medium text-neutral-900 dark:text-neutral-100">Huy Nguyễn (HweeHiFi)</span>.
+            <strong className="font-semibold text-neutral-900 dark:text-neutral-100">VAHA Market</strong> — Sàn trung gian <strong>0% phí</strong> của cộng đồng Hội người Việt nghiện tai nghe · Phi lợi nhuận, vì cộng đồng.
           </p>
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 tabular-nums text-neutral-600 dark:text-neutral-400">
             <span className="font-medium text-neutral-900 dark:text-neutral-100">{total} tin đang bán</span>
             <span aria-hidden="true">·</span>
             <span className={feeBp < 500 ? 'font-medium text-emerald-700 dark:text-emerald-400' : ''}>{feeSummary}</span>
             <span aria-hidden="true">·</span>
+            <Link to="/support" className="font-medium text-rose-600 hover:underline dark:text-rose-400">
+              Ủng hộ duy trì sàn
+            </Link>
+            <span aria-hidden="true">·</span>
             <Link to="/terms" className="font-medium text-blue-700 hover:underline dark:text-blue-400">
-              Quy trình 3 bước &amp; Điều khoản
+              Quy trình &amp; Điều khoản
             </Link>
           </div>
         </div>
@@ -361,10 +365,10 @@ function ListingCard({ listing: l, feeBp, feeCapVnd }: { listing: ListingCardIte
     dp.fees.feeRateBp === 0
       ? isMod
         ? 'Mod · 0% phí sàn'
-        : 'Ưu đãi 0% phí sàn'
+        : '0% phí · Vì cộng đồng'
       : dp.fees.buyerFee > 0
         ? dp.fees.isFeeCapped
-          ? 'Đã gồm phí sàn (áp trần 500k)'
+          ? `Đã gồm phí sàn (áp trần ${formatVND(dp.fees.feeCapVnd)})`
           : 'Đã bao gồm phí sàn'
         : 'Người bán chịu phí sàn';
 

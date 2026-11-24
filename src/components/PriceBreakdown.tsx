@@ -28,7 +28,11 @@ export default function PriceBreakdown({
 }: Props) {
   const share = feePayer === 'BUYER' ? feeRateBp / 100 : feePayer === 'SPLIT' ? feeRateBp / 200 : 0;
   const waived =
-    feePayer === 'SELLER' ? 'Miễn phí (Người bán chịu)' : `Miễn phí (${waivedReason ?? 'Ưu đãi phí sàn'})`;
+    feeRateBp === 0
+      ? 'Miễn phí (0% · Sàn cộng đồng)'
+      : feePayer === 'SELLER'
+        ? 'Miễn phí (Người bán chịu)'
+        : `Miễn phí (${waivedReason ?? 'Ưu đãi phí sàn'})`;
   const capLabel = formatVND(feeCapVnd > 0 ? feeCapVnd : PLATFORM_FEE_CAP);
 
   return (

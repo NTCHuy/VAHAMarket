@@ -4,6 +4,7 @@ import {
   Bell,
   BellOff,
   ChevronDown,
+  Heart,
   LogIn,
   LogOut,
   Menu,
@@ -145,14 +146,14 @@ export default function Navbar() {
     <>
       <header className="sticky top-0 z-40 h-14 border-b border-neutral-200 bg-white/95 backdrop-blur dark:border-neutral-800 dark:bg-neutral-950/95">
         <div className="mx-auto flex h-full max-w-6xl items-center gap-2 px-3 sm:gap-3 sm:px-6">
-          <Link to="/" className="flex min-w-0 shrink-0 items-center gap-1.5 tracking-tight text-neutral-950 dark:text-neutral-50 sm:gap-2">
+          <Link to="/" className="flex min-w-0 shrink-0 items-center gap-2 tracking-tight text-neutral-950 dark:text-neutral-50">
+            <img src="/logo.png" alt="VAHA Market" className="h-7 w-7 rounded-md object-cover" />
             <span className="text-sm font-bold tracking-wider">VAHA MARKET</span>
-            <span className="rounded border border-neutral-200 bg-neutral-100 px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wider text-neutral-600 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-400">
-              ESCROW
+            <span className="hidden rounded border border-emerald-200 bg-emerald-50 px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wider text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 sm:inline-block">
+              0% FEE
             </span>
           </Link>
 
-          {/* Desktop nav */}
           <nav className="ml-3 hidden items-center gap-0.5 md:flex">
             <NavLink to="/" end className={navLinkClass}>
               Khám phá
@@ -167,6 +168,9 @@ export default function Navbar() {
                 </NavLink>
               </>
             )}
+            <NavLink to="/support" className={navLinkClass}>
+              <Heart size={14} strokeWidth={1.9} className="text-rose-500" /> Ủng hộ
+            </NavLink>
             {isAdmin && (
               <NavLink to="/admin" className={navLinkClass}>
                 <Shield size={15} strokeWidth={1.75} /> Admin
@@ -257,7 +261,6 @@ export default function Navbar() {
           </div>
         </div>
 
-        {/* Mobile panel */}
         {mobileOpen && (
           <div className="border-b border-neutral-200 bg-white px-4 pb-4 pt-2 dark:border-neutral-800 dark:bg-neutral-950 md:hidden">
             {!blocked && (
@@ -267,6 +270,9 @@ export default function Navbar() {
             )}
             <div className="flex flex-col gap-0.5">
               <NavLink to="/" end className={navLinkClass}>Khám phá</NavLink>
+              <NavLink to="/support" className={navLinkClass}>
+                <Heart size={15} strokeWidth={1.9} className="text-rose-500" /> Ủng hộ duy trì sàn
+              </NavLink>
               {user ? (
                 <>
                   <div className="my-1 flex items-center gap-2 border-y border-neutral-100 py-2 dark:border-neutral-800">

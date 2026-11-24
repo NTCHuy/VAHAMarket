@@ -7,10 +7,10 @@ import { usePlatformSettings } from '@/context/PlatformSettingsContext';
 import { Alert } from '@/components/ui';
 
 const PRESETS: { bp: number; label: string }[] = [
-  { bp: 0, label: '0% (Ưu đãi ra mắt)' },
+  { bp: 0, label: '0% (Cộng đồng · Mặc định v2)' },
   { bp: 200, label: '2%' },
   { bp: 300, label: '3%' },
-  { bp: 500, label: '5% (Mặc định)' },
+  { bp: 500, label: '5%' },
 ];
 
 const CAP_PRESETS: { value: number; label: string }[] = [
