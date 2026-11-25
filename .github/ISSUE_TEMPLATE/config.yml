@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Báo cáo lỗ hổng bảo mật (Riêng tư)
+    url: https://github.com/NTCHuy/VAHAMarket/security/advisories/new
+    about: Gửi báo cáo riêng tư các lỗ hổng bảo mật, KHÔNG mở Issue công khai.
+  - name: Hỗ trợ cộng đồng & Đơn hàng (Discord)
+    url: https://discord.com/invite/4KJw8syZgX
+    about: Trao đổi về giao dịch, đơn hàng hoặc hỏi đáp cách sử dụng sàn trên Discord.

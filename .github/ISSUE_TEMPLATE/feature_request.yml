@@ -1,0 +1,24 @@
+name: Đề xuất tính năng (Feature Request)
+description: Đề xuất cải tiến hoặc tính năng mới cho VAHA Market
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Vấn đề hoặc nhu cầu
+      description: Mô tả ngắn gọn vấn đề hiện tại hoặc nhu cầu của người dùng.
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: Giải pháp đề xuất
+      description: Mô tả cách bạn muốn tính năng hoạt động.
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: Ghi chú thêm (tùy chọn)
+      description: Bổ sung ngữ cảnh, bản phác thảo hoặc các phương án thay thế nếu có.

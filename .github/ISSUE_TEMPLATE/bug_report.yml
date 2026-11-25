@@ -1,0 +1,45 @@
+name: Báo lỗi (Bug Report)
+description: Báo cáo sự cố kỹ thuật hoặc lỗi giao diện trên VAHA Market
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Cảm ơn bạn đã báo lỗi. Lưu ý: nếu đây là lỗ hổng bảo mật, vui lòng KHÔNG tạo Issue công khai mà báo qua Security Advisories trong mục Security.
+  - type: textarea
+    id: description
+    attributes:
+      label: Mô tả lỗi
+      description: Mô tả ngắn gọn lỗi bạn gặp phải là gì.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Các bước tái hiện
+      description: Liệt kê các bước để tái hiện lỗi.
+      placeholder: |
+        1. Mở trang '...'
+        2. Bấm vào '...'
+        3. Xuất hiện lỗi '...'
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Kết quả mong đợi và kết quả thực tế
+      description: Bạn mong đợi điều gì xảy ra và thực tế đã xảy ra gì?
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Môi trường
+      description: Trình duyệt, thiết bị, hệ điều hành hoặc phiên bản Node.js (nếu chạy cục bộ).
+      placeholder: "Ví dụ: Chrome 130 / Windows 11 hoặc Mobile Safari / iOS 18"
+  - type: textarea
+    id: logs
+    attributes:
+      label: Log lỗi hoặc ảnh chụp màn hình (tùy chọn)
+      description: Dán thông báo lỗi trên Console/Terminal hoặc kéo thả ảnh chụp vào đây (che thông tin nhạy cảm trước khi tải lên).

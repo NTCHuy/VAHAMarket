@@ -88,8 +88,16 @@ export default function Layout() {
             </div>
           </div>
 
-          <div className="mt-6 border-t border-neutral-100 pt-4 text-xs text-neutral-500 dark:border-neutral-900">
-            © {new Date().getFullYear()} {BRAND_NAME} · Của cộng đồng, vì cộng đồng.
+          <div className="mt-6 flex flex-wrap items-center justify-between gap-2 border-t border-neutral-100 pt-4 text-xs text-neutral-500 dark:border-neutral-900">
+            <span>© {new Date().getFullYear()} {BRAND_NAME} · Của cộng đồng, vì cộng đồng.</span>
+            <a
+              href="https://github.com/NTCHuy/VAHAMarket"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 hover:text-neutral-950 hover:underline dark:hover:text-neutral-100"
+            >
+              Mã nguồn mở (AGPL-3.0) <ExternalLink size={12} strokeWidth={1.75} className="shrink-0" />
+            </a>
           </div>
         </div>
       </footer>
