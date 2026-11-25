@@ -10,11 +10,11 @@ import {
   ShieldCheck,
   Video,
 } from 'lucide-react';
-import { BRAND_FULL_NAME, BRAND_NAME, DISCORD_SERVER_URL, FOUNDER_FACEBOOK_URL, GROUP_URL } from '@/constants/links';
+import { BRAND_NAME, DISCORD_SERVER_URL, GROUP_URL } from '@/constants/links';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 
 export default function Terms() {
-  useDocumentTitle('Điều khoản dịch vụ');
+  useDocumentTitle('Điều khoản sử dụng');
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <div>
@@ -22,24 +22,24 @@ export default function Terms() {
           to="/"
           className="inline-flex items-center gap-1.5 text-sm font-medium text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
         >
-          <ArrowLeft className="h-4 w-4" /> Quay lại trang chủ
+          <ArrowLeft className="h-4 w-4" /> Về trang chủ
         </Link>
         <div className="mt-3 flex items-start gap-2.5">
           <FileText size={18} strokeWidth={1.75} className="mt-1 shrink-0 text-blue-700 dark:text-blue-400" />
           <div>
             <h1 className="text-2xl font-semibold tracking-tight text-neutral-900 dark:text-neutral-50">
-              Điều khoản dịch vụ &amp; Quy định giao dịch
+              Điều khoản sử dụng
             </h1>
             <p className="text-sm text-neutral-600 dark:text-neutral-400">
-              {BRAND_NAME} ({BRAND_FULL_NAME}) · Áp dụng cho toàn bộ người mua và người bán trên sàn.
+              Áp dụng cho mọi thành viên mua và bán trên {BRAND_NAME}.
             </p>
           </div>
         </div>
       </div>
 
-      {/* KHUNG CẢNH BÁO ĐỎ NỔI BẬT — PHỐI HỢP CƠ QUAN CHỨC NĂNG & LUẬT HÌNH SỰ */}
+      {/* CẢNH BÁO PHÁP LÝ */}
       <section
-        aria-label="Cảnh báo chống lừa đảo và trách nhiệm hình sự"
+        aria-label="Cảnh báo chống lừa đảo"
         className="rounded-lg border-2 border-red-600 bg-red-50 p-5 text-red-950 dark:border-red-500/80 dark:bg-red-950/60 dark:text-red-50 sm:p-6"
       >
         <div className="flex items-start gap-2.5">
@@ -47,234 +47,158 @@ export default function Terms() {
           <div className="min-w-0 space-y-3">
             <div>
               <p className="text-xs font-bold uppercase tracking-wider text-red-700 dark:text-red-300">
-                Cảnh báo pháp lý bắt buộc
+                Cảnh báo pháp lý
               </p>
               <h2 className="mt-0.5 text-lg font-bold text-red-900 dark:text-red-100">
-                Cam kết phối hợp Cơ quan chức năng &amp; Truy cứu trách nhiệm hình sự
+                Xử lý lừa đảo &amp; Phối hợp cơ quan Công an
               </h2>
             </div>
 
             <p className="text-sm leading-relaxed text-red-900 dark:text-red-100/95">
-              Mọi hành vi lừa đảo chiếm đoạt tài sản trên {BRAND_NAME} — bao gồm nhưng không giới hạn ở:{' '}
-              <strong>
-                đăng bán hàng giả/hàng hỏng cố ý, tráo hàng, giả mạo chứng từ/ảnh xác thực, lừa đảo tay ba
-              </strong>{' '}
-              — sẽ bị <strong>khóa tài khoản vĩnh viễn</strong>, <strong>đóng băng toàn bộ tiền giải ngân</strong>{' '}
-              và <strong>Admin sẽ cung cấp toàn bộ dữ liệu định danh</strong> cho{' '}
-              <strong>Cơ quan Cảnh sát điều tra (Công an)</strong> để khởi tố theo quy định pháp luật, bao gồm:
+              Hành vi lừa đảo trên {BRAND_NAME} (bán hàng giả/hỏng cố ý, tráo hàng, làm giả ảnh xác thực, lừa đảo tay ba) sẽ bị <strong>khóa vĩnh viễn</strong>, <strong>giữ lại tiền giải ngân</strong> và cung cấp đầy đủ dữ liệu cho <strong>Cơ quan Công an</strong>:
             </p>
 
             <ul className="grid gap-1.5 rounded-lg border border-red-200 bg-white/80 p-3.5 text-xs font-medium text-red-950 dark:border-red-800/80 dark:bg-red-950/80 dark:text-red-100 sm:grid-cols-2">
-              <li>• Email tài khoản Google đăng nhập</li>
+              <li>• Email Google đăng nhập</li>
               <li>• Số điện thoại liên hệ</li>
-              <li>• Đường dẫn trang cá nhân Facebook</li>
-              <li>• Số tài khoản &amp; tên chủ tài khoản ngân hàng</li>
-              <li>• Lịch sử IP &amp; nhật ký giao dịch ngân hàng</li>
-              <li>• Toàn bộ bằng chứng video, hình ảnh đối soát</li>
+              <li>• Đường dẫn Facebook cá nhân</li>
+              <li>• Số tài khoản &amp; chủ tài khoản ngân hàng</li>
+              <li>• Nhật ký giao dịch ngân hàng</li>
+              <li>• Toàn bộ ảnh và video đối soát</li>
             </ul>
 
-            <div className="space-y-2.5 rounded-lg border border-red-300 bg-white p-4 text-sm text-neutral-900 dark:border-red-800 dark:bg-neutral-950/90 dark:text-neutral-100">
+            <div className="space-y-2 rounded-lg border border-red-300 bg-white p-4 text-xs leading-relaxed text-neutral-700 dark:border-red-800 dark:bg-neutral-950/90 dark:text-neutral-300 sm:text-sm">
               <p className="flex items-center gap-1.5 font-semibold text-red-700 dark:text-red-400">
-                <Scale className="h-4 w-4 shrink-0" /> Căn cứ pháp luật hiện hành tại Việt Nam
+                <Scale className="h-4 w-4 shrink-0" /> Căn cứ Bộ luật Hình sự 2015 (sửa đổi 2017)
               </p>
-              <div className="space-y-2 text-xs leading-relaxed text-neutral-700 dark:text-neutral-300 sm:text-sm">
-                <p>
-                  <strong className="text-neutral-900 dark:text-neutral-100">
-                    1. Điều 174 Bộ luật Hình sự 2015 (sửa đổi, bổ sung 2017) — Tội lừa đảo chiếm đoạt tài sản:
-                  </strong>{' '}
-                  Hành vi dùng thủ đoạn gian dối chiếm đoạt tài sản trị giá từ{' '}
-                  <strong className="text-red-700 dark:text-red-400">2.000.000 đồng trở lên</strong> (hoặc dưới
-                  2.000.000 đồng nhưng gây hậu quả nghiêm trọng, đã bị xử phạt vi phạm hành chính về hành vi chiếm đoạt
-                  tài sản hoặc có tiền án chưa được xóa án tích) sẽ bị truy cứu trách nhiệm hình sự: phạt cải tạo không
-                  giam giữ đến 3 năm hoặc{' '}
-                  <strong className="text-red-700 dark:text-red-400">
-                    phạt tù từ 06 tháng đến 20 năm, hoặc tù chung thân
-                  </strong>{' '}
-                  tùy theo giá trị tài sản chiếm đoạt (từ 500 triệu đồng trở lên).
-                </p>
-                <p>
-                  <strong className="text-neutral-900 dark:text-neutral-100">
-                    2. Điều 175 Bộ luật Hình sự 2015 (sửa đổi, bổ sung 2017) — Tội lạm dụng tín nhiệm chiếm đoạt tài sản:
-                  </strong>{' '}
-                  Hành vi vay, mượn, thuê tài sản hoặc nhận được tài sản bằng hình thức hợp đồng rồi dùng thủ đoạn gian
-                  dối, bỏ trốn để chiếm đoạt tài sản sẽ bị xử lý hình sự với mức{' '}
-                  <strong className="text-red-700 dark:text-red-400">phạt tù từ 06 tháng đến 20 năm</strong>.
-                </p>
-              </div>
+              <p>
+                <strong className="text-neutral-900 dark:text-neutral-100">Điều 174 (Lừa đảo chiếm đoạt tài sản):</strong>{' '}
+                Chiếm đoạt từ <strong className="text-red-700 dark:text-red-400">2.000.000₫</strong> trở lên (hoặc dưới mức này nếu có tình tiết tăng nặng) bị xử lý hình sự, phạt tù từ <strong>6 tháng đến 20 năm hoặc chung thân</strong>.
+              </p>
+              <p>
+                <strong className="text-neutral-900 dark:text-neutral-100">Điều 175 (Lạm dụng tín nhiệm chiếm đoạt tài sản):</strong>{' '}
+                Gian dối, bỏ trốn để chiếm đoạt tài sản bị phạt tù từ <strong className="text-red-700 dark:text-red-400">6 tháng đến 20 năm</strong>.
+              </p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* 1. VAI TRÒ TRUNG GIAN & MIỄN TRỪ TRÁCH NHIỆM */}
+      {/* 1. VAI TRÒ TRUNG GIAN */}
       <section id="video-rules" className="card space-y-3 p-5 sm:p-6">
         <h2 className="flex items-center gap-2 text-base font-semibold text-neutral-900 dark:text-neutral-50">
           <ShieldCheck className="h-5 w-5 text-brand-700 dark:text-brand-400" />
-          1. Vai trò trung gian &amp; Miễn trừ trách nhiệm của Admin
+          1. Vai trò trung gian &amp; Bằng chứng bắt buộc
         </h2>
         <div className="space-y-2.5 text-sm leading-relaxed text-neutral-700 dark:text-neutral-300">
           <p>
-            <strong>{BRAND_NAME}</strong> là nền tảng phi lợi nhuận <strong>của cộng đồng, vì cộng đồng</strong>{' '}
-            Hội người Việt nghiện tai nghe. Đội ngũ quản trị viên chỉ đóng vai trò cung cấp nền tảng kết nối giữa người mua
-            và người bán, đồng thời cung cấp dịch vụ <strong>giữ tiền bảo lãnh trung gian (Escrow)</strong> dựa trên
-            quy tắc đối soát bằng chứng minh bạch:
+            <strong>{BRAND_NAME}</strong> là sàn phi lợi nhuận <strong>0% phí</strong> của cộng đồng Hội người Việt nghiện tai nghe. Sàn giữ tiền trung gian và phân xử dựa trên bằng chứng:
           </p>
           <ul className="list-disc space-y-1.5 pl-5">
             <li>
-              <strong>Ảnh xác thực chính chủ</strong>: chụp sản phẩm đặt cạnh mảnh giấy viết tay ghi rõ{' '}
+              <strong>Ảnh xác thực:</strong> Sản phẩm đặt cạnh giấy viết tay ghi{' '}
               <code className="rounded bg-neutral-100 px-1.5 py-0.5 text-xs dark:bg-neutral-800">
-                VAHA + Ngày tháng + Tên Facebook
-              </code>
-              .
+                VAHA + Ngày + Tên Facebook
+              </code>.
             </li>
             <li>
-              <strong>Video đầu gửi (người bán)</strong>: video test chức năng &amp; đóng gói liền mạch 6 mặt hộp hàng,
-              thể hiện rõ tình trạng sản phẩm và mã vận đơn.
+              <strong>Video người bán:</strong> Quay liền mạch lúc kiểm tra sản phẩm và đóng gói đủ 6 mặt cùng mã vận đơn.
             </li>
             <li>
-              <strong>Video đầu nhận (người mua)</strong>: video mở hộp liền mạch 6 mặt từ lúc gói hàng còn nguyên vẹn
-              chưa cắt băng dính cho tới khi kiểm tra ngoại quan và chức năng sản phẩm.
+              <strong>Video người mua:</strong> Quay liền mạch mở hộp đủ 6 mặt từ lúc còn nguyên niêm phong đến lúc kiểm tra máy.
             </li>
           </ul>
           <div className="rounded-lg border border-amber-200 bg-amber-50 p-3.5 text-xs leading-relaxed text-amber-950 dark:border-amber-800/70 dark:bg-amber-950/40 dark:text-amber-200 sm:text-sm">
             <p className="flex items-center gap-1.5 font-semibold text-amber-900 dark:text-amber-300">
-              <AlertTriangle className="h-4 w-4 shrink-0" /> Phạm vi miễn trừ trách nhiệm
+              <AlertTriangle className="h-4 w-4 shrink-0" /> Miễn trừ trách nhiệm
             </p>
             <ul className="mt-1.5 list-disc space-y-1 pl-5">
-              <li>
-                Admin <strong>không phải là người bán</strong> và không chịu trách nhiệm về chất lượng nội tại, tuổi thọ
-                linh kiện, chai pin hoặc hao mòn tự nhiên của hàng hóa âm thanh đã qua sử dụng.
-              </li>
-              <li>
-                Admin được miễn trừ trách nhiệm đối với hư hỏng, thất lạc phát sinh từ phía{' '}
-                <strong>đơn vị vận chuyển bên thứ ba</strong> nằm ngoài phạm vi đối soát bằng chứng của hai bên (hai
-                bên chủ động làm việc và khiếu nại bồi thường với hãng vận chuyển dựa trên video đóng gói/mở hộp).
-              </li>
-              <li>
-                Admin <strong>không giải quyết và không chịu trách nhiệm</strong> với bất kỳ thỏa thuận chuyển khoản
-                riêng, đặt cọc trực tiếp hoặc giao dịch ngầm nào thực hiện ngoài hệ thống {BRAND_NAME}.
-              </li>
+              <li>Sàn không phải người bán và không bảo hành hao mòn tự nhiên của hàng đã qua sử dụng.</li>
+              <li>Sàn không chịu trách nhiệm nếu đơn vị vận chuyển làm hỏng hoặc thất lạc hàng (hai bên dùng video để khiếu nại hãng vận chuyển).</li>
+              <li>Sàn không hỗ trợ giao dịch chuyển khoản riêng ngoài hệ thống.</li>
             </ul>
           </div>
         </div>
       </section>
 
-      {/* 2. QUY ĐỊNH ĐỊNH DANH & BẰNG CHỨNG */}
+      {/* 2. ĐỊNH DANH & DUYỆT TIN */}
       <section className="card space-y-3 p-5 sm:p-6">
         <h2 className="flex items-center gap-2 text-base font-semibold text-neutral-900 dark:text-neutral-50">
           <Camera className="h-5 w-5 text-brand-700 dark:text-brand-400" />
-          2. Quy định định danh, tiền kiểm &amp; chống giao dịch ngoài sàn
+          2. Định danh người bán &amp; Duyệt tin
         </h2>
         <ul className="list-disc space-y-2 pl-5 text-sm leading-relaxed text-neutral-700 dark:text-neutral-300">
           <li>
-            <strong>Hồ sơ người bán bắt buộc:</strong> Người bán phải cung cấp đầy đủ Số điện thoại, Link trang cá nhân
-            Facebook công khai và ít nhất 01 tài khoản ngân hàng nhận tiền. Tên chủ tài khoản ngân hàng phải là{' '}
-            <strong>tên chính chủ, khớp với tên trên trang cá nhân Facebook của bạn</strong> để được giải ngân.
+            <strong>Hồ sơ bắt buộc:</strong> Cần có số điện thoại, Facebook cá nhân công khai và ít nhất 1 tài khoản ngân hàng. Tên chủ tài khoản phải là <strong>tên chính chủ, khớp với tên Facebook</strong>.
           </li>
           <li>
-            <strong>Khóa thông tin định danh:</strong> Khi có tin đang hiển thị/chờ duyệt hoặc đơn bán đang xử lý, hệ
-            thống tự động khóa chỉnh sửa Link Facebook và thông tin tài khoản ngân hàng đã lưu.
+            <strong>Khóa thông tin:</strong> Khi có tin đang mở/chờ duyệt hoặc đơn đang xử lý, không thể tự đổi Facebook hay thông tin ngân hàng.
           </li>
           <li>
-            <strong>Tiền kiểm bài đăng:</strong> Tin đăng mới của thành viên thường ở trạng thái chờ duyệt cho đến khi
-            Admin xác minh ảnh viết tay chính chủ và nội dung hợp lệ. Tin đã duyệt nếu chỉnh sửa nội dung, ảnh hoặc tài
-            khoản nhận tiền sẽ quay lại hàng chờ duyệt.
+            <strong>Duyệt tin:</strong> Tin mới chờ duyệt ảnh xác thực trước khi hiển thị. Nếu sửa nội dung, ảnh hoặc tài khoản nhận tiền, tin sẽ cần duyệt lại.
           </li>
           <li className="flex items-start gap-1.5 list-none -ml-5 rounded-lg border border-neutral-200 bg-neutral-50 p-3 dark:border-neutral-800 dark:bg-neutral-800/50">
             <Ban className="mt-0.5 h-4 w-4 shrink-0 text-red-600 dark:text-red-400" />
             <span>
-              <strong>Nghiêm cấm dẫn dụ giao dịch ngoài sàn:</strong> Không chèn số điện thoại, Zalo hoặc kêu gọi
-              &ldquo;chuyển khoản trực tiếp / không qua sàn&rdquo; trong tiêu đề và mô tả tin đăng.
+              <strong>Cấm giao dịch ngoài sàn:</strong> Không ghi số điện thoại, Zalo hoặc kêu gọi chuyển khoản riêng trong tin đăng.
             </span>
           </li>
         </ul>
       </section>
 
-      {/* 3. QUY TRÌNH TRANH CHẤP & PHÍ DỊCH VỤ */}
+      {/* 3. THANH TOÁN & KHIẾU NẠI */}
       <section id="fee-cap" className="card space-y-3 p-5 sm:p-6">
         <h2 className="flex items-center gap-2 text-base font-semibold text-neutral-900 dark:text-neutral-50">
           <Video className="h-5 w-5 text-brand-700 dark:text-brand-400" />
-          3. Thanh toán trung gian &amp; giải quyết khiếu nại
+          3. Thanh toán, giao hàng &amp; khiếu nại
         </h2>
         <ul className="list-disc space-y-2 pl-5 text-sm leading-relaxed text-neutral-700 dark:text-neutral-300">
           <li>
-            <strong>Thanh toán VietQR tự động &amp; Tài khoản nhận hoàn tiền:</strong> Đơn hàng giữ chỗ trong 15 phút.
-            Người mua cần lưu ít nhất 01 tài khoản ngân hàng trong hồ sơ để nhận hoàn tiền tự động khi đơn bị hủy. Tiền
-            được giữ an toàn tại tài khoản trung gian của sàn cho đến khi người mua bấm xác nhận đã nhận hàng ổn định
-            hoặc có phán quyết cuối cùng từ Admin.
+            <strong>Thanh toán VietQR (15 phút):</strong> Người mua cần lưu sẵn 1 tài khoản ngân hàng để nhận hoàn tiền nếu đơn hủy. Sàn giữ tiền đến khi người mua xác nhận đã nhận hàng ổn định.
           </li>
           <li>
-            <strong>Thời hạn gửi hàng 48 giờ:</strong> Kể từ khi đơn hàng được xác nhận thanh toán thành công
-            (<code>PAID_HELD</code>), người bán có tối đa <strong>48 giờ</strong> để đóng gói, gửi hàng và cập nhật mã
-            vận đơn cùng video đóng gói 6 mặt. Nếu người bán báo hết hàng hoặc quá 48 giờ chưa gửi hàng, người mua (hoặc
-            Admin) có quyền hủy đơn để sàn hoàn tiền về tài khoản ngân hàng của người mua.
+            <strong>Hạn gửi hàng 48 giờ:</strong> Sau khi nhận tiền, người bán có 48 giờ để gửi hàng và cập nhật vận đơn + video đóng gói. Quá hạn, người mua được hủy đơn để nhận hoàn tiền.
           </li>
           <li>
-            <strong>Bảo vệ người bán — Rà soát vận đơn sau 14 ngày:</strong> Đối với đơn đã gửi hàng
-            (<code>SHIPPED</code>) quá <strong>14 ngày</strong> kể từ thời điểm cập nhật vận đơn mà người mua không xác
-            nhận nhận hàng và cũng không mở khiếu nại, đơn sẽ được chuyển sang danh sách Admin rà soát mã vận đơn. Nếu
-            kết quả tra cứu từ đơn vị vận chuyển xác nhận bưu phẩm đã giao thành công, Admin có quyền xác nhận hoàn tất
-            đơn và mở khóa giải ngân cho người bán.
+            <strong>Rà soát sau 14 ngày:</strong> Nếu đơn đã gửi quá 14 ngày mà người mua không xác nhận và không khiếu nại, quản trị viên sẽ kiểm tra vận đơn để mở khóa giải ngân cho người bán.
           </li>
           <li>
-            <strong>Miễn phí trung gian 0% — Phi lợi nhuận vì cộng đồng:</strong> {BRAND_NAME} hoạt động hoàn toàn phi
-            lợi nhuận và{' '}
-            <strong className="text-emerald-700 dark:text-emerald-400">không thu phí giao dịch (0%)</strong> cho mọi đơn
-            hàng trên sàn. Người mua trả đúng giá niêm yết và người bán nhận đủ 100% giá bán; hạ tầng vận hành được duy
-            trì hoàn toàn từ nguồn đóng góp tự nguyện của cộng đồng.
+            <strong>Miễn phí 0%:</strong> Mọi đơn hàng đều 0% phí. Người mua trả đúng giá đăng, người bán nhận đủ 100%.
           </li>
           <li>
-            <strong>Căn cứ giải quyết khiếu nại:</strong> Admin phân xử hoàn tiền hoặc giải ngân dựa trên đối chiếu{' '}
-            <em>video test &amp; đóng gói 6 mặt</em> của người bán và <em>video mở hộp liền mạch 6 mặt</em> của người
-            mua. Thiếu video mở hộp hợp lệ đồng nghĩa người mua mất quyền khiếu nại về ngoại quan/thiếu phụ kiện/tráo
-            hàng.
+            <strong>Giải quyết khiếu nại:</strong> Dựa trên video đóng gói của người bán và video mở hộp đủ 6 mặt của người mua. Không có video mở hộp hợp lệ sẽ không đủ căn cứ hoàn tiền.
           </li>
         </ul>
       </section>
 
-      {/* 4. CƠ CHẾ CẢNH BÁO 3 LẦN TỰ ĐỘNG BAN & CHẶN THIẾT BỊ */}
+      {/* 4. CẢNH BÁO & KHÓA TÀI KHOẢN */}
       <section className="card space-y-3 border-red-200 p-5 dark:border-red-900/70 sm:p-6">
         <h2 className="flex items-center gap-2 text-base font-semibold text-neutral-900 dark:text-neutral-50">
           <ShieldAlert className="h-5 w-5 text-red-600 dark:text-red-400" />
-          4. Cơ chế Cảnh báo 3 lần tự động khóa vĩnh viễn (3-Strike) &amp; Chặn thiết bị
+          4. Cảnh báo vi phạm &amp; Khóa tài khoản
         </h2>
         <ul className="list-disc space-y-2 pl-5 text-sm leading-relaxed text-neutral-700 dark:text-neutral-300">
           <li>
-            <strong>Hệ thống 3 lần cảnh báo (3-Strike Auto-Ban):</strong> Mỗi hành vi vi phạm quy định sàn (đăng ảnh
-            không trung thực, cố tình dẫn dụ giao dịch ngoài sàn, giao hàng sai mô tả, thái độ thiếu hợp tác khi đối
-            soát...) sẽ bị Admin ghi nhận <strong>+1 cảnh báo</strong> vào lịch sử tài khoản. Khi đạt mốc{' '}
-            <strong className="text-red-700 dark:text-red-400">3/3 cảnh báo</strong>, hệ thống sẽ{' '}
-            <strong>tự động khóa tài khoản vĩnh viễn</strong> và gỡ bỏ toàn bộ tin đăng đang hoạt động.
+            <strong>3 cảnh báo tự khóa:</strong> Mỗi lần vi phạm nhận 1 cảnh báo. Đủ <strong className="text-red-700 dark:text-red-400">3/3 cảnh báo</strong>, tài khoản tự động bị khóa vĩnh viễn và gỡ toàn bộ tin.
           </li>
           <li>
-            <strong>Khóa thẳng không cần cảnh báo:</strong> Đối với các hành vi lừa đảo nghiêm trọng (hàng giả, tráo
-            hàng, giả mạo chứng từ, lừa đảo tay ba), Admin có quyền <strong>khóa vĩnh viễn ngay lập tức</strong> mà
-            không cần chờ đủ 3 cảnh báo.
+            <strong>Khóa ngay lập tức:</strong> Hành vi lừa đảo nghiêm trọng sẽ bị khóa thẳng không cần cảnh báo trước.
           </li>
           <li>
-            <strong>Nhận diện thiết bị (Device Fingerprinting) &amp; Danh sách đen toàn sàn:</strong> Khi tài khoản bị
-            khóa vĩnh viễn, toàn bộ dấu vết định danh bao gồm <strong>mã định danh thiết bị</strong>,{' '}
-            <strong>tài khoản ngân hàng</strong>, <strong>link Facebook</strong>, <strong>số điện thoại</strong> và{' '}
-            <strong>email Google</strong> sẽ bị đưa vào danh sách đen. Mọi nỗ lực tạo tài khoản Google mới từ thiết bị
-            đã bị cấm hoặc sử dụng lại thông tin trùng danh sách đen đều sẽ bị hệ thống tự động phát hiện và khóa ngay
-            lập tức.
+            <strong>Danh sách đen:</strong> Thông tin định danh của tài khoản bị khóa (thiết bị, ngân hàng, Facebook, số điện thoại, email) bị đưa vào danh sách đen để chặn lập tài khoản mới.
           </li>
         </ul>
       </section>
 
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-neutral-200 bg-white p-4 text-xs text-neutral-600 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-400">
-        <span>Cần hỗ trợ hoặc báo cáo gian lận? Liên hệ trực tiếp kênh chính thức của {BRAND_NAME}:</span>
+        <span>Cần hỗ trợ hoặc báo cáo gian lận?</span>
         <div className="flex flex-wrap gap-2">
-          <a href={FOUNDER_FACEBOOK_URL} target="_blank" rel="noopener noreferrer" className="font-medium text-brand-700 hover:underline dark:text-brand-400">
-            Facebook Founder
-          </a>
-          <span>·</span>
           <a href={GROUP_URL} target="_blank" rel="noopener noreferrer" className="font-medium text-brand-700 hover:underline dark:text-brand-400">
-            Group Cộng đồng
+            Nhóm Facebook
           </a>
           <span>·</span>
           <a href={DISCORD_SERVER_URL} target="_blank" rel="noopener noreferrer" className="font-medium text-brand-700 hover:underline dark:text-brand-400">
-            Discord
+            Discord hỗ trợ
           </a>
         </div>
       </div>

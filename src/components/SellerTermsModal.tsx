@@ -23,23 +23,23 @@ export function acceptSellerTerms(): void {
 const RULES = [
   {
     num: '01',
-    title: 'Định danh người bán & Khóa thông tin định danh',
-    body: 'Tên chủ tài khoản ngân hàng phải là tên chính chủ, khớp với tên trên trang cá nhân Facebook của bạn để được giải ngân. Link Facebook và thông tin tài khoản ngân hàng đã lưu sẽ tự động khóa chỉnh sửa khi có tin đang hiển thị/chờ duyệt hoặc đơn bán đang xử lý.',
+    title: 'Định danh chính chủ',
+    body: 'Tên chủ tài khoản ngân hàng phải khớp tên Facebook cá nhân để được giải ngân. Đường dẫn Facebook và tài khoản ngân hàng tự động khóa khi đang có tin mở hoặc đơn chưa xong.',
   },
   {
     num: '02',
-    title: 'Ảnh xác thực chính chủ & Video đóng gói 6 mặt',
-    body: 'Tin đăng mới bắt buộc có ảnh chụp sản phẩm đặt cạnh giấy viết tay ghi VAHA + Ngày tháng + Tên Facebook. Khi gửi hàng, bắt buộc quay video test chức năng và đóng gói liền mạch 6 mặt. Nghiêm cấm dẫn dụ giao dịch ngoài sàn.',
+    title: 'Ảnh xác thực & Video đóng gói',
+    body: 'Tin mới cần ảnh sản phẩm kèm giấy viết tay ghi "VAHA + Ngày + Tên Facebook". Khi gửi hàng phải quay video kiểm tra và đóng gói đủ 6 mặt. Cấm kéo giao dịch ra ngoài sàn.',
   },
   {
     num: '03',
-    title: 'Miễn phí trung gian 0% — Sàn vì cộng đồng',
-    body: 'VAHA Market hoạt động hoàn toàn phi lợi nhuận và không thu phí giao dịch: người bán nhận đủ 100% giá bán, người mua chỉ trả đúng giá niêm yết.',
+    title: 'Miễn phí trung gian 0%',
+    body: 'Sàn phi lợi nhuận, không thu phí giao dịch. Người bán nhận đủ 100% giá bán, người mua trả đúng giá niêm yết.',
   },
   {
     num: '04',
-    title: 'Cảnh báo 3 lần tự động khóa vĩnh viễn & Pháp luật hình sự',
-    body: 'Đạt 3/3 cảnh báo sẽ tự động khóa tài khoản vĩnh viễn và đưa toàn bộ dấu vết định danh (mã định danh thiết bị, tài khoản ngân hàng, Facebook, SĐT, email Google) vào danh sách đen. Hành vi lừa đảo chiếm đoạt tài sản sẽ bị cung cấp toàn bộ dữ liệu định danh và bằng chứng cho Cơ quan Cảnh sát điều tra (Công an) theo Điều 174 & Điều 175 Bộ luật Hình sự 2015 (sửa đổi, bổ sung 2017).',
+    title: 'Xử lý vi phạm & Lừa đảo',
+    body: '3 lần cảnh báo sẽ tự khóa vĩnh viễn và đưa thông tin vào danh sách đen. Hành vi lừa đảo sẽ bị chuyển đầy đủ dữ liệu định danh cho Công an theo Điều 174 & 175 Bộ luật Hình sự 2015.',
   },
 ] as const;
 
@@ -89,11 +89,11 @@ export default function SellerTermsModal({ open, onAccept, onCancel }: Props) {
             <div className="flex items-center gap-2 text-neutral-900 dark:text-neutral-100">
               <ShieldAlert size={18} strokeWidth={1.75} className="shrink-0 text-red-600 dark:text-red-400" />
               <h2 id="seller-terms-title" className="text-sm font-semibold tracking-tight sm:text-base">
-                Cam kết người bán &amp; Quy định giao dịch
+                Quy định trước khi đăng bán
               </h2>
             </div>
             <p className="mt-0.5 text-xs text-neutral-500 dark:text-neutral-400">
-              Tóm tắt các quy định tại Điều khoản dịch vụ trước khi đăng tin.
+              Tóm tắt quy định bắt buộc dành cho người bán.
             </p>
           </div>
           <button
@@ -127,7 +127,7 @@ export default function SellerTermsModal({ open, onAccept, onCancel }: Props) {
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1.5 text-xs font-medium text-blue-700 hover:underline dark:text-blue-400"
           >
-            Đọc toàn văn Điều khoản dịch vụ (/terms)
+            Xem toàn bộ Điều khoản sử dụng
             <ExternalLink size={13} strokeWidth={1.75} />
           </Link>
 
@@ -138,15 +138,15 @@ export default function SellerTermsModal({ open, onAccept, onCancel }: Props) {
               onChange={(e) => setChecked(e.target.checked)}
               className="mt-0.5 h-4 w-4 shrink-0 rounded border-neutral-300 text-blue-700 focus:ring-blue-600 dark:border-neutral-700"
             />
-            <span>Tôi đã đọc, hiểu rõ và cam kết tuân thủ toàn bộ quy định giao dịch trên VAHA Market.</span>
+            <span>Tôi đã đọc và đồng ý tuân thủ quy định trên VAHA Market.</span>
           </label>
 
           <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
             <button type="button" onClick={onCancel} className="btn-secondary">
-              Hủy / Quay lại
+              Quay lại
             </button>
             <button type="button" disabled={!checked} onClick={handleConfirm} className="btn-primary">
-              Xác nhận &amp; Tiếp tục đăng bán
+              Đồng ý &amp; Đăng bán
             </button>
           </div>
         </div>

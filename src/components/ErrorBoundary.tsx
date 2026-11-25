@@ -35,9 +35,9 @@ export default class ErrorBoundary extends Component<Props, State> {
       <div className={fullscreen ? 'flex min-h-screen items-center justify-center bg-neutral-50 p-4 dark:bg-neutral-950' : 'flex justify-center py-10'}>
         <div role="alert" className="w-full max-w-md rounded-lg border border-neutral-200 bg-white p-6 text-center dark:border-neutral-800 dark:bg-neutral-900">
           <AlertTriangle size={24} strokeWidth={1.75} className="mx-auto text-amber-600 dark:text-amber-400" />
-          <h1 className="mt-3 text-lg font-semibold text-neutral-900 dark:text-neutral-50">Đã có lỗi hiển thị</h1>
+          <h1 className="mt-3 text-lg font-semibold text-neutral-900 dark:text-neutral-50">Có lỗi hiển thị</h1>
           <p className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
-            Trang gặp sự cố ngoài ý muốn. Dữ liệu và tiền của bạn không bị ảnh hưởng. Hãy tải lại trang hoặc quay về trang chủ.
+            Trang gặp sự cố tạm thời. Dữ liệu và tiền của bạn vẫn an toàn. Hãy tải lại trang.
           </p>
           <p className="mt-3 break-words rounded-lg bg-neutral-50 px-3 py-2 text-left font-mono text-xs text-neutral-500 dark:bg-neutral-950 dark:text-neutral-400">{error.message}</p>
           <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:justify-center">

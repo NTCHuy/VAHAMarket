@@ -8,41 +8,30 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#ffffff" />
 
-    <script>
-      (function () {
-        try {
-          var saved = localStorage.getItem('vaha-theme');
-          var mode = saved === 'light' || saved === 'dark' || saved === 'system' ? saved : 'system';
-          var isDark = mode === 'dark' || (mode === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
-          document.documentElement.classList.toggle('dark', isDark);
-          var meta = document.querySelector('meta[name="theme-color"]');
-          if (meta) meta.setAttribute('content', isDark ? '#0a0a0a' : '#ffffff');
-        } catch (e) {}
-      })();
-    </script>
+    <script src="/theme-init.js"></script>
 
     <title>VAHA Market — Sàn Trung Gian Âm Thanh 0% Phí</title>
     <link rel="canonical" href="https://vahamarket.vercel.app/" />
 
-    <meta name="description" content="Sàn giao dịch trung gian bảo lãnh 0% phí của cộng đồng Hội người Việt nghiện tai nghe. Giữ tiền an toàn, thanh toán VietQR tự động." />
+    <meta name="description" content="Sàn trung gian đồ âm thanh 0% phí của Hội người Việt nghiện tai nghe. Giữ tiền an toàn, VietQR tự động." />
 
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="VAHA Market" />
     <meta property="og:locale" content="vi_VN" />
-    <meta property="og:title" content="VAHA Market — Sàn Trung Gian Thiết Bị Âm Thanh 0% Phí" />
-    <meta property="og:description" content="Mua bán IEM, Over-ear, DAC/Amp an toàn 100% với cơ chế giữ tiền bảo lãnh (Escrow) miễn phí cho cộng đồng và thanh toán VietQR tự động." />
+    <meta property="og:title" content="VAHA Market — Sàn Trung Gian Âm Thanh 0% Phí" />
+    <meta property="og:description" content="Mua bán tai nghe, DAC/Amp an toàn, giữ tiền trung gian 0% phí, thanh toán VietQR tự động." />
     <meta property="og:url" content="https://vahamarket.vercel.app/" />
     <meta property="og:image" content="https://vahamarket.vercel.app/og-preview.png?v=2" />
     <meta property="og:image:type" content="image/png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="VAHA Market — Sàn giao dịch trung gian thiết bị âm thanh 0% phí của cộng đồng" />
+    <meta property="og:image:alt" content="VAHA Market — Sàn trung gian âm thanh 0% phí của cộng đồng" />
 
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="VAHA Market — Sàn Trung Gian Thiết Bị Âm Thanh 0% Phí" />
-    <meta name="twitter:description" content="Mua bán IEM, Over-ear, DAC/Amp an toàn 100% với cơ chế giữ tiền bảo lãnh (Escrow) miễn phí cho cộng đồng và thanh toán VietQR tự động." />
+    <meta name="twitter:title" content="VAHA Market — Sàn Trung Gian Âm Thanh 0% Phí" />
+    <meta name="twitter:description" content="Mua bán tai nghe, DAC/Amp an toàn, giữ tiền trung gian 0% phí, thanh toán VietQR tự động." />
     <meta name="twitter:image" content="https://vahamarket.vercel.app/og-preview.png?v=2" />
-    <meta name="twitter:image:alt" content="VAHA Market — Sàn giao dịch trung gian thiết bị âm thanh 0% phí của cộng đồng" />
+    <meta name="twitter:image:alt" content="VAHA Market — Sàn trung gian âm thanh 0% phí của cộng đồng" />
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />

@@ -17,7 +17,7 @@ const STATUS_BADGE: Record<ListingStatus, { label: string; cls: string }> = {
   active: { label: 'Đang bán', cls: 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400' },
   draft: { label: 'Nháp', cls: 'bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-200' },
   pending_review: { label: 'Chờ duyệt', cls: 'bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300' },
-  rejected: { label: 'Bị từ chối', cls: 'bg-red-50 dark:bg-red-950/50 text-red-700 dark:text-red-400' },
+  rejected: { label: 'Từ chối', cls: 'bg-red-50 dark:bg-red-950/50 text-red-700 dark:text-red-400' },
   hidden: { label: 'Đang ẩn', cls: 'bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300' },
   reserved: { label: 'Đang giữ chỗ', cls: 'bg-brand-50 dark:bg-brand-900/40 text-brand-800 dark:text-brand-300' },
   sold: { label: 'Đã bán', cls: 'bg-neutral-100 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400' },
@@ -27,7 +27,7 @@ const STATUS_BADGE: Record<ListingStatus, { label: string; cls: string }> = {
 const EDITABLE: ListingStatus[] = ['draft', 'pending_review', 'rejected', 'active', 'hidden'];
 
 export default function MyListings() {
-  useDocumentTitle('Tin đăng của tôi');
+  useDocumentTitle('Tin của tôi');
   const { user } = useAuth();
   const [items, setItems] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(true);
@@ -67,7 +67,7 @@ export default function MyListings() {
   return (
     <div className="mx-auto max-w-3xl space-y-5">
       <div className="flex items-center justify-between gap-3">
-        <h1 className="text-2xl font-semibold tracking-tight">Tin đăng của tôi</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Tin của tôi</h1>
         <Link to="/sell" className="btn-primary"><Plus className="h-4 w-4" /> Đăng bán</Link>
       </div>
 
@@ -78,7 +78,7 @@ export default function MyListings() {
       {loading ? (
         <ListRowsSkeleton count={4} />
       ) : items.length === 0 ? (
-        <div className="card px-4 py-12 text-center text-sm text-neutral-600 dark:text-neutral-400">Bạn chưa đăng tin nào.</div>
+        <div className="card px-4 py-12 text-center text-sm text-neutral-600 dark:text-neutral-400">Bạn chưa có tin đăng nào.</div>
       ) : (
         <ul className="space-y-3">
           {items.map((l) => {
@@ -93,9 +93,9 @@ export default function MyListings() {
                   <p className="line-clamp-2 text-sm font-medium text-neutral-900 dark:text-neutral-100">{l.title}</p>
                   <div className="mt-0.5"><PriceTag display={l.price} strike={l.original_price} percent={discountPercent(l.price, l.original_price)} /></div>
                   <span className={`badge mt-1 ${badge.cls}`}>{badge.label}</span>
-                  {l.status === 'pending_review' && <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">Đang chờ Admin duyệt — chưa hiển thị công khai.</p>}
+                  {l.status === 'pending_review' && <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">Đang chờ duyệt.</p>}
                   {l.status === 'rejected' && l.rejection_reason && (
-                    <p className="mt-1.5 rounded-lg bg-red-50 dark:bg-red-950/50 px-2.5 py-1.5 text-xs text-red-800 dark:text-red-300"><strong>Lý do từ chối:</strong> {l.rejection_reason}</p>
+                    <p className="mt-1.5 rounded-lg bg-red-50 dark:bg-red-950/50 px-2.5 py-1.5 text-xs text-red-800 dark:text-red-300"><strong>Lý do:</strong> {l.rejection_reason}</p>
                   )}
                   {editable && (
                     <div className="mt-2 flex flex-wrap items-center gap-2">

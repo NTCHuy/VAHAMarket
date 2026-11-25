@@ -164,14 +164,22 @@ export interface TransformOptions {
 
 /** Thêm transformation (f_auto,q_auto,w_..) vào URL Cloudinary để giảm dung lượng hiển thị. */
 export function cldUrl(url: string, { width, height, crop = 'limit', quality = 'auto' }: TransformOptions = {}): string {
-  const marker = '/upload/';
-  const idx = url.indexOf(marker);
-  if (idx === -1 || !url.includes('res.cloudinary.com')) return url;
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol !== 'https:' || parsed.hostname !== 'res.cloudinary.com') return '';
+    const marker = '/upload/';
+    const idx = parsed.pathname.indexOf(marker);
+    if (idx === -1) return parsed.toString();
 
-  const parts = ['f_auto', `q_${quality}`];
-  if (width) parts.push(`w_${width}`);
-  if (height) parts.push(`h_${height}`);
-  if (width || height) parts.push(`c_${crop}`);
+    const parts = ['f_auto', `q_${quality}`];
+    if (width) parts.push(`w_${width}`);
+    if (height) parts.push(`h_${height}`);
+    if (width || height) parts.push(`c_${crop}`);
 
-  return `${url.slice(0, idx + marker.length)}${parts.join(',')}/${url.slice(idx + marker.length)}`;
+    const prefix = parsed.pathname.slice(0, idx + marker.length);
+    const suffix = parsed.pathname.slice(idx + marker.length);
+    return `https://res.cloudinary.com${prefix}${parts.join(',')}/${suffix}`;
+  } catch {
+    return '';
+  }
 }

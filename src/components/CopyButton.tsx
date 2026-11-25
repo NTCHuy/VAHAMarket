@@ -18,7 +18,7 @@ async function copyText(text: string): Promise<boolean> {
   }
 }
 
-export default function CopyButton({ value, label = 'Sao chép' }: { value: string; label?: string }) {
+export default function CopyButton({ value, label = 'Chép' }: { value: string; label?: string }) {
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {

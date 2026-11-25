@@ -12,6 +12,7 @@ import {
   buyerCancelOverdueOrder, cancelOrder, confirmReceived, expireOrderIfDue, getSellerFacebook, markShipped, openDispute, sellerCancelPaidOrder, subscribeToOrder,
 } from '@/lib/orders';
 import { getErrorMessage } from '@/lib/errors';
+import { isUuid, safeHttpUrl } from '@/lib/url';
 import { CARRIERS } from '@/constants/orderStatus';
 import { formatCountdown, useCountdown } from '@/hooks/useCountdown';
 import BuyerProtectionSteps from '@/components/BuyerProtectionSteps';
@@ -23,7 +24,7 @@ import OrderStatusBadge from '@/components/OrderStatusBadge';
 import NotificationHint from '@/components/NotificationHint';
 import { Alert, Avatar, Field, PageLoader } from '@/components/ui';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
-import type { Order, OrderPayout, OrderStatus, Profile } from '@/types';
+import type { Order, OrderPayout, OrderRefundAccount, OrderStatus, Profile } from '@/types';
 
 const URL_RE = /^https?:\/\/[^\s]+$/i;
 
@@ -50,13 +51,14 @@ export default function OrderDetail() {
 
 function OrderDetailContent() {
   const { id } = useParams<{ id: string }>();
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [counterpart, setCounterpart] = useState<Profile | null>(null);
   const [sellerFb, setSellerFb] = useState<string | null>(null);
   const [payout, setPayout] = useState<OrderPayout | null>(null);
+  const [refundAccount, setRefundAccount] = useState<OrderRefundAccount | null>(null);
   const [paidNotice, setPaidNotice] = useState(false);
   const [busy, setBusy] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -69,7 +71,10 @@ function OrderDetailContent() {
   const isSeller = !!order && user?.id === order.seller_id;
 
   const fetchOrder = useCallback(async () => {
-    if (!id) return;
+    if (!id || !isUuid(id)) {
+      setOrder(null);
+      return;
+    }
     const { data, error } = await supabase.from('orders').select('*').eq('id', id).maybeSingle();
     if (error) {
       setLoadError(getErrorMessage(error));
@@ -157,6 +162,21 @@ function OrderDetailContent() {
     };
   }, [id, isSeller, status]);
 
+  // Tài khoản nhận hoàn tiền (chỉ người mua hoặc quản trị viên đọc được)
+  useEffect(() => {
+    if (!id || (!isBuyer && !isAdmin) || status !== 'REFUNDED') return;
+    let alive = true;
+    supabase
+      .from('order_refund_accounts')
+      .select('*')
+      .eq('order_id', id)
+      .maybeSingle()
+      .then(({ data }) => alive && setRefundAccount((data as OrderRefundAccount | null) ?? null));
+    return () => {
+      alive = false;
+    };
+  }, [id, isBuyer, isAdmin, status]);
+
   /** Chạy 1 RPC, cập nhật đơn từ kết quả. Trả về true nếu thành công. */
   const run = async (fn: () => Promise<Order>): Promise<boolean> => {
     setBusy(true);
@@ -240,7 +260,7 @@ function OrderDetailContent() {
         <PaymentPanel order={order} secondsLeft={secondsLeft} busy={busy} onCancel={() => run(() => cancelOrder(order.id))} />
       )}
       {order.status === 'PENDING_PAYMENT' && isSeller && (
-        <Alert kind="info">Đang chờ người mua thanh toán vào tài khoản trung gian. Bạn chưa cần gửi hàng.</Alert>
+        <Alert kind="info">Đang chờ người mua thanh toán. Bạn chưa cần gửi hàng.</Alert>
       )}
 
       {order.status === 'PAID_HELD' && isBuyer && (
@@ -267,16 +287,18 @@ function OrderDetailContent() {
           onDispute={(reason, video) => run(() => openDispute(order.id, reason, video))} />
       )}
 
-      {order.status === 'COMPLETED' && <Alert kind="success">Đơn đã hoàn tất giao nhận. {isSeller ? 'Sàn sẽ chuyển tiền cho bạn trong thời gian sớm nhất.' : 'Cảm ơn bạn đã mua hàng!'}</Alert>}
-      {order.status === 'PAID_OUT' && <Alert kind="success">Đơn hàng đã hoàn tất{isSeller ? ' và tiền đã được chuyển cho bạn.' : '.'}</Alert>}
-      {order.status === 'CANCELLED' && <Alert kind="info">Đơn đã bị hủy{order.cancel_reason ? `: ${order.cancel_reason}` : '.'}</Alert>}
+      {order.status === 'COMPLETED' && <Alert kind="success">Đơn đã hoàn tất. {isSeller ? 'Sàn sẽ chuyển tiền cho bạn sớm nhất.' : 'Cảm ơn bạn đã mua hàng.'}</Alert>}
+      {order.status === 'PAID_OUT' && <Alert kind="success">Đơn đã hoàn tất{isSeller ? ' và tiền đã chuyển cho bạn.' : '.'}</Alert>}
+      {order.status === 'CANCELLED' && <Alert kind="info">Đơn đã hủy{order.cancel_reason ? `: ${order.cancel_reason}` : '.'}</Alert>}
       {order.status === 'EXPIRED' && (
         <Alert kind="info">
-          Đơn đã hết hạn thanh toán và sản phẩm được mở bán lại. Nếu bạn đã lỡ chuyển tiền sau khi hết hạn, hãy liên hệ admin kèm mã đơn <strong>{order.payment_code}</strong> để được hoàn tiền.
+          Đơn đã hết hạn và mở bán lại. Nếu bạn lỡ chuyển tiền sau khi hết hạn, hãy liên hệ hỗ trợ kèm mã <strong>{order.payment_code}</strong> để được hoàn tiền.
         </Alert>
       )}
       {order.status === 'DISPUTED' && <DisputeInfo order={order} />}
-      {order.status === 'REFUNDED' && <RefundStatusCard order={order} />}
+      {order.status === 'REFUNDED' && (
+        <RefundStatusCard order={order} refundAccount={refundAccount} canViewRefundBank={isBuyer || isAdmin} />
+      )}
 
       {/* Thông tin chi tiết */}
       <div className="grid min-w-0 gap-5 md:grid-cols-2">
@@ -341,8 +363,8 @@ function OrderDetailContent() {
           ) : (
             <p className="text-sm text-neutral-500 dark:text-neutral-400">—</p>
           )}
-          {isBuyer && sellerFb && (
-            <a href={sellerFb} target="_blank" rel="noopener noreferrer nofollow" className="btn-secondary w-full">
+          {isBuyer && safeHttpUrl(sellerFb) && (
+            <a href={safeHttpUrl(sellerFb)!} target="_blank" rel="noopener noreferrer nofollow" className="btn-secondary w-full">
               <Facebook className="h-4 w-4 text-[#1877F2]" /> Facebook người bán <ExternalLink className="h-3.5 w-3.5 text-neutral-400 dark:text-neutral-500" />
             </a>
           )}
@@ -400,14 +422,14 @@ function PaymentPanel({ order, secondsLeft, busy, onCancel }: {
       </div>
 
       {expired ? (
-        <Alert kind="info">Đã quá thời hạn giữ chỗ. Hệ thống đang đóng đơn — vui lòng <strong>không chuyển khoản</strong>. Bạn có thể đặt mua lại nếu sản phẩm còn.</Alert>
+        <Alert kind="info">Đã quá hạn thanh toán. Hệ thống đang đóng đơn — vui lòng <strong>không chuyển khoản</strong>.</Alert>
       ) : (
         <>
-          <p className="text-sm text-neutral-600 dark:text-neutral-400">Quét mã bằng app ngân hàng hoặc chuyển khoản thủ công. Hệ thống tự nhận biết khi tiền về, bạn không cần báo lại.</p>
+          <p className="text-sm text-neutral-600 dark:text-neutral-400">Quét mã bằng ứng dụng ngân hàng hoặc chuyển khoản thủ công. Hệ thống tự xác nhận khi nhận tiền.</p>
           <div className="grid gap-4 sm:grid-cols-[220px_1fr]">
             <div className="mx-auto w-[220px]">
               {qrFailed || !qrUrl ? (
-                <div className="flex aspect-square items-center justify-center rounded-lg border border-dashed border-neutral-300 dark:border-neutral-700 p-3 text-center text-xs text-neutral-500 dark:text-neutral-400">Không tải được mã QR. Hãy chuyển khoản thủ công theo thông tin bên cạnh.</div>
+                <div className="flex aspect-square items-center justify-center rounded-lg border border-dashed border-neutral-300 dark:border-neutral-700 p-3 text-center text-xs text-neutral-500 dark:text-neutral-400">Không tải được QR. Hãy chuyển khoản theo thông tin bên cạnh.</div>
               ) : (
                 <div className="rounded-lg border border-neutral-200 bg-white p-3 dark:border-neutral-700"><img src={qrUrl} alt="Mã VietQR thanh toán đơn hàng" className="w-full rounded-lg bg-white" onError={() => setQrFailed(true)} /></div>
               )}
@@ -420,7 +442,7 @@ function PaymentPanel({ order, secondsLeft, busy, onCancel }: {
               <CopyRow label="Nội dung CK" value={order.payment_code} mono />
             </dl>
           </div>
-          <Alert kind="info">Nhập <strong>đúng số tiền</strong> và <strong>đúng nội dung chuyển khoản</strong> để đơn được xác nhận tự động.</Alert>
+          <Alert kind="info">Chuyển <strong>đúng số tiền</strong> và <strong>đúng nội dung</strong> để tự động xác nhận.</Alert>
         </>
       )}
 
@@ -520,8 +542,8 @@ function ShipForm({ order, busy, onSubmit }: {
           <input id="otherCarrier" className="input" value={otherCarrier} maxLength={60} onChange={(e) => setOtherCarrier(e.target.value)} />
         </Field>
       )}
-      <Field label="Link video test & đóng gói liền mạch" htmlFor="video" required error={errors.video}
-        hint="Bắt buộc. Quay liền mạch từ lúc test sản phẩm đến khi đóng gói xong, tải lên YouTube (không công khai), Google Drive hoặc Facebook rồi dán link. Đây là bằng chứng nếu có khiếu nại.">
+      <Field label="Đường dẫn video kiểm tra & đóng gói" htmlFor="video" required error={errors.video}
+        hint="Quay liền mạch từ lúc kiểm tra máy đến khi đóng gói đủ 6 mặt, tải lên YouTube (không công khai), Google Drive hoặc Facebook rồi dán vào đây.">
         <input id="video" className="input" inputMode="url" placeholder="https://..." value={video} maxLength={500} onChange={(e) => setVideo(e.target.value)} />
       </Field>
 
@@ -568,19 +590,19 @@ function ShippedPanel({ order, isBuyer, busy, onConfirm, onDispute }: {
             {order.carrier ?? 'Đơn vị vận chuyển'} · Mã vận đơn: <span className="font-mono font-medium text-neutral-900 dark:text-neutral-100">{order.tracking_code}</span>{' '}
             {order.tracking_code && <CopyButton value={order.tracking_code} label="Chép mã" />}
           </p>
-          <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">Dùng mã vận đơn để tra cứu trên website/app của đơn vị vận chuyển.</p>
+          <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">Tra cứu mã vận đơn tại hãng vận chuyển.</p>
           {order.shipped_at && (
             <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
-              Quy tắc bảo vệ 14 ngày: nếu sau ngày{' '}
+              Sau ngày{' '}
               <strong className="text-neutral-700 dark:text-neutral-300">
                 {new Date(new Date(order.shipped_at).getTime() + 14 * 24 * 3600_000).toLocaleDateString('vi-VN')}
               </strong>{' '}
-              người mua không xác nhận nhận hàng hoặc mở khiếu nại, đơn sẽ chuyển Admin rà soát mã vận đơn để giải ngân cho người bán.
+              (14 ngày), nếu người mua không phản hồi, quản trị viên sẽ rà soát vận đơn để giải ngân.
             </p>
           )}
-          {order.packing_video_url && (
-            <a href={order.packing_video_url} target="_blank" rel="noopener noreferrer nofollow" className="mt-2 inline-flex items-center gap-1.5 text-brand-700 dark:text-brand-400 hover:underline">
-              <Video className="h-4 w-4" /> Xem video test của người bán <ExternalLink className="h-3.5 w-3.5" />
+          {safeHttpUrl(order.packing_video_url) && (
+            <a href={safeHttpUrl(order.packing_video_url)!} target="_blank" rel="noopener noreferrer nofollow" className="mt-2 inline-flex items-center gap-1.5 text-brand-700 dark:text-brand-400 hover:underline">
+              <Video className="h-4 w-4" /> Xem video đóng gói <ExternalLink className="h-3.5 w-3.5" />
             </a>
           )}
         </div>
@@ -592,13 +614,13 @@ function ShippedPanel({ order, isBuyer, busy, onConfirm, onDispute }: {
         <form onSubmit={submitDispute} noValidate className="space-y-4 rounded-lg border border-red-200 dark:border-red-900/70 bg-red-50/40 dark:bg-red-950/30 p-4">
           <h3 className="flex items-center gap-2 text-sm font-semibold text-red-800 dark:text-red-300"><ShieldAlert className="h-4 w-4" /> Khiếu nại / Hàng lỗi</h3>
           <Field label="Lý do khiếu nại" htmlFor="reason" required error={errors.reason}>
-            <textarea id="reason" rows={4} className="input" maxLength={1000} placeholder="Mô tả chi tiết lỗi: hàng không đúng mô tả, lỗi âm thanh, thiếu phụ kiện..." value={reason} onChange={(e) => setReason(e.target.value)} />
+            <textarea id="reason" rows={4} className="input" maxLength={1000} placeholder="Mô tả rõ lỗi: không đúng mô tả, lỗi âm thanh, thiếu phụ kiện..." value={reason} onChange={(e) => setReason(e.target.value)} />
           </Field>
-          <Field label="Link video mở hộp (unbox)" htmlFor="dvideo" required error={errors.video}
-            hint="Video quay liền mạch từ lúc bưu kiện còn nguyên niêm phong. Tải lên YouTube (không công khai), Google Drive hoặc Facebook rồi dán link.">
+          <Field label="Đường dẫn video mở hộp" htmlFor="dvideo" required error={errors.video}
+            hint="Video quay liền mạch từ lúc còn nguyên niêm phong. Tải lên YouTube (không công khai), Google Drive hoặc Facebook rồi dán vào đây.">
             <input id="dvideo" className="input" inputMode="url" placeholder="https://..." value={video} maxLength={500} onChange={(e) => setVideo(e.target.value)} />
           </Field>
-          <p className="text-xs text-red-800 dark:text-red-300">Khi gửi khiếu nại, tiền sẽ tiếp tục được sàn giữ cho đến khi admin xem xét và xử lý.</p>
+          <p className="text-xs text-red-800 dark:text-red-300">Sàn sẽ tiếp tục giữ tiền cho đến khi phân xử xong.</p>
           <div className="flex justify-end gap-2">
             <button type="button" className="btn-ghost" onClick={() => setDisputing(false)} disabled={busy}>Quay lại</button>
             <button type="submit" className="btn bg-red-600 text-white hover:bg-red-700" disabled={busy}>
@@ -611,22 +633,22 @@ function ShippedPanel({ order, isBuyer, busy, onConfirm, onDispute }: {
           <div role="alert" className="flex gap-3 rounded-lg border-2 border-amber-400 dark:border-amber-600/80 bg-amber-50 dark:bg-amber-950/50 p-4 text-amber-950 dark:text-amber-100">
             <AlertTriangle className="mt-0.5 h-6 w-6 shrink-0 text-amber-600 dark:text-amber-400" />
             <p className="text-sm font-semibold leading-relaxed sm:text-base">
-              QUY TẮC BẮT BUỘC: Vui lòng quay video mở hộp liền mạch từ lúc gói hàng còn nguyên niêm phong 6 mặt đến khi cắm test âm thanh. VAHA Market từ chối giải quyết khiếu nại hoàn tiền nếu không có video mở hộp nguyên vẹn.
+              BẮT BUỘC: Quay video mở hộp liền mạch đủ 6 mặt từ lúc còn nguyên niêm phong đến lúc kiểm tra sản phẩm. Thiếu video mở hộp sẽ không đủ căn cứ hoàn tiền.
             </p>
           </div>
           <label className="flex cursor-pointer items-start gap-2 text-sm text-neutral-700 dark:text-neutral-200">
             <input type="checkbox" checked={checked} onChange={(e) => setChecked(e.target.checked)} className="mt-0.5 h-4 w-4 rounded border-neutral-300 dark:border-neutral-700 text-brand-700 dark:text-brand-400" />
-            <span>Tôi đã quay video mở hộp liền mạch và kiểm tra tai nghe hoạt động đúng mô tả.</span>
+            <span>Tôi đã quay video mở hộp và kiểm tra sản phẩm đúng mô tả.</span>
           </label>
           <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
             <button type="button" className="btn-secondary text-red-700 dark:text-red-400" onClick={() => setDisputing(true)} disabled={busy}>
               <AlertTriangle className="h-4 w-4" /> Khiếu nại / Hàng lỗi
             </button>
             <button type="button" className="btn-primary" disabled={!checked || busy} onClick={() => void onConfirm()}>
-              {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <PackageCheck className="h-4 w-4" />} Đã nhận được hàng (Giải ngân cho người bán)
+              {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <PackageCheck className="h-4 w-4" />} Đã nhận hàng (Giải ngân)
             </button>
           </div>
-          <p className="text-xs text-neutral-500 dark:text-neutral-400">Sau khi bấm xác nhận, tiền sẽ được chuyển cho người bán và không thể hoàn tác.</p>
+          <p className="text-xs text-neutral-500 dark:text-neutral-400">Sau khi xác nhận, tiền sẽ chuyển cho người bán và không thể hoàn tác.</p>
         </div>
       )}
     </section>
@@ -634,28 +656,30 @@ function ShippedPanel({ order, isBuyer, busy, onConfirm, onDispute }: {
 }
 
 function DisputeInfo({ order }: { order: Order }) {
+  const disputeVideo = safeHttpUrl(order.dispute_video_url);
+  const packingVideo = safeHttpUrl(order.packing_video_url);
   return (
     <section className="card space-y-3 border-red-200 dark:border-red-900/70 p-5">
-      <h2 className="flex items-center gap-2 text-base font-semibold text-red-800 dark:text-red-300"><ShieldAlert className="h-5 w-5" /> Đơn đang có khiếu nại</h2>
-      <p className="text-sm text-neutral-600 dark:text-neutral-400">Sàn đang giữ tiền và admin sẽ xem xét bằng chứng của hai bên.</p>
+      <h2 className="flex items-center gap-2 text-base font-semibold text-red-800 dark:text-red-300"><ShieldAlert className="h-5 w-5" /> Đơn đang khiếu nại</h2>
+      <p className="text-sm text-neutral-600 dark:text-neutral-400">Sàn đang giữ tiền và kiểm tra bằng chứng của hai bên.</p>
       {order.disputed_at && <p className="text-xs text-neutral-500 dark:text-neutral-400">Gửi lúc {new Date(order.disputed_at).toLocaleString('vi-VN')}</p>}
       <div className="rounded-lg bg-red-50/60 dark:bg-red-950/40 p-3 text-sm">
         <p className="font-medium text-neutral-900 dark:text-neutral-100">Lý do của người mua</p>
         <p className="mt-1 whitespace-pre-line text-neutral-700 dark:text-neutral-200">{order.dispute_reason}</p>
       </div>
       <div className="flex flex-wrap gap-3 text-sm">
-        {order.dispute_video_url && (
-          <a href={order.dispute_video_url} target="_blank" rel="noopener noreferrer nofollow" className="inline-flex items-center gap-1.5 text-brand-700 dark:text-brand-400 hover:underline">
+        {disputeVideo && (
+          <a href={disputeVideo} target="_blank" rel="noopener noreferrer nofollow" className="inline-flex items-center gap-1.5 text-brand-700 dark:text-brand-400 hover:underline">
             <Video className="h-4 w-4" /> Video mở hộp của người mua <ExternalLink className="h-3.5 w-3.5" />
           </a>
         )}
-        {order.packing_video_url && (
-          <a href={order.packing_video_url} target="_blank" rel="noopener noreferrer nofollow" className="inline-flex items-center gap-1.5 text-brand-700 dark:text-brand-400 hover:underline">
-            <Video className="h-4 w-4" /> Video test của người bán <ExternalLink className="h-3.5 w-3.5" />
+        {packingVideo && (
+          <a href={packingVideo} target="_blank" rel="noopener noreferrer nofollow" className="inline-flex items-center gap-1.5 text-brand-700 dark:text-brand-400 hover:underline">
+            <Video className="h-4 w-4" /> Video đóng gói của người bán <ExternalLink className="h-3.5 w-3.5" />
           </a>
         )}
       </div>
-      <p className="flex items-center gap-1.5 text-xs text-neutral-500 dark:text-neutral-400"><CheckCircle2 className="h-3.5 w-3.5" /> Hai bên chưa cần thao tác thêm. Hãy liên hệ admin nếu cần bổ sung bằng chứng.</p>
+      <p className="flex items-center gap-1.5 text-xs text-neutral-500 dark:text-neutral-400"><CheckCircle2 className="h-3.5 w-3.5" /> Hai bên chưa cần thao tác thêm.</p>
     </section>
   );
 }
@@ -833,9 +857,20 @@ function SellerCancelPaidPanel({
 /* ----------------------------------------------------------------------------
  *  Thông tin trạng thái hoàn tiền (REFUNDED)
  * -------------------------------------------------------------------------- */
-function RefundStatusCard({ order }: { order: Order }) {
+function RefundStatusCard({
+  order,
+  refundAccount,
+  canViewRefundBank,
+}: {
+  order: Order;
+  refundAccount: OrderRefundAccount | null;
+  canViewRefundBank: boolean;
+}) {
   const refundAmount = order.paid_amount > 0 ? order.paid_amount : order.amount;
   const done = Boolean(order.refund_completed_at);
+  const bankName = refundAccount?.bank_name ?? order.refund_bank_name;
+  const accNo = refundAccount?.account_number ?? order.refund_account_number;
+  const accName = refundAccount?.account_name ?? order.refund_account_name;
 
   return (
     <section
@@ -854,14 +889,14 @@ function RefundStatusCard({ order }: { order: Order }) {
               : 'border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-800 dark:bg-amber-950/50 dark:text-amber-300'
           }`}
         >
-          {done ? 'Admin đã hoàn tiền thành công' : 'Đang chờ Admin chuyển khoản hoàn tiền'}
+          {done ? 'Đã hoàn tiền' : 'Đang chờ hoàn tiền'}
         </span>
       </div>
 
       <dl className="divide-y divide-neutral-100 text-sm dark:divide-neutral-800">
         {(order.cancel_reason || order.admin_note) && (
           <div className="flex items-start justify-between gap-4 py-2">
-            <dt className="shrink-0 text-neutral-500 dark:text-neutral-400">Lý do hủy / hoàn tiền</dt>
+            <dt className="shrink-0 text-neutral-500 dark:text-neutral-400">Lý do</dt>
             <dd className="min-w-0 break-words text-right text-neutral-900 dark:text-neutral-100">
               {order.cancel_reason ?? order.admin_note}
             </dd>
@@ -871,18 +906,18 @@ function RefundStatusCard({ order }: { order: Order }) {
           <dt className="shrink-0 text-neutral-500 dark:text-neutral-400">Số tiền hoàn</dt>
           <dd className="font-semibold text-neutral-950 dark:text-neutral-50">{formatVND(refundAmount)}</dd>
         </div>
-        {order.refund_bank_name && order.refund_account_number && (
+        {canViewRefundBank && bankName && accNo && (
           <div className="flex items-start justify-between gap-4 py-2">
-            <dt className="shrink-0 text-neutral-500 dark:text-neutral-400">Tài khoản nhận hoàn tiền</dt>
+            <dt className="shrink-0 text-neutral-500 dark:text-neutral-400">Tài khoản nhận</dt>
             <dd className="min-w-0 break-words text-right text-neutral-900 dark:text-neutral-100">
-              {order.refund_bank_name} · <span className="font-mono">{order.refund_account_number}</span>
-              {order.refund_account_name && <span className="block text-xs text-neutral-500 dark:text-neutral-400">{order.refund_account_name}</span>}
+              {bankName} · <span className="font-mono">{accNo}</span>
+              {accName && <span className="block text-xs text-neutral-500 dark:text-neutral-400">{accName}</span>}
             </dd>
           </div>
         )}
         {order.refund_completed_at && (
           <div className="flex items-start justify-between gap-4 py-2">
-            <dt className="shrink-0 text-neutral-500 dark:text-neutral-400">Thời gian hoàn tiền</dt>
+            <dt className="shrink-0 text-neutral-500 dark:text-neutral-400">Thời gian hoàn</dt>
             <dd className="text-right text-neutral-900 dark:text-neutral-100">
               {new Date(order.refund_completed_at).toLocaleString('vi-VN')}
             </dd>
@@ -890,7 +925,7 @@ function RefundStatusCard({ order }: { order: Order }) {
         )}
         {order.refund_reference && (
           <div className="flex items-start justify-between gap-4 py-2">
-            <dt className="shrink-0 text-neutral-500 dark:text-neutral-400">Mã giao dịch hoàn tiền</dt>
+            <dt className="shrink-0 text-neutral-500 dark:text-neutral-400">Mã giao dịch</dt>
             <dd className="font-mono text-right text-neutral-900 dark:text-neutral-100">{order.refund_reference}</dd>
           </div>
         )}

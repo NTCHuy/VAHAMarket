@@ -47,25 +47,25 @@ export default function AdminDashboard() {
     { id: 'refunds', label: 'Hoàn tiền', badge: stats?.refund_pending_count },
     { id: 'disputes', label: 'Khiếu nại', badge: stats?.dispute_count },
     { id: 'transactions', label: 'Giao dịch lệch', badge: stats?.flagged_tx_count },
-    { id: 'orders', label: 'Tất cả đơn hàng', badge: stats?.overdue_shipped_count },
-    { id: 'listings', label: 'Tin đăng & giá' },
-    { id: 'members', label: 'Mod' },
-    { id: 'bans', label: 'Cảnh báo & Ban', badge: stats?.banned_count },
+    { id: 'orders', label: 'Đơn hàng', badge: stats?.overdue_shipped_count },
+    { id: 'listings', label: 'Tin & giá' },
+    { id: 'members', label: 'Điều hành' },
+    { id: 'bans', label: 'Cảnh báo & Khóa', badge: stats?.banned_count },
   ];
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Quản trị</h1>
-        <p className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">Giải ngân, xử lý khiếu nại và tra soát biến động số dư.</p>
+        <p className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">Duyệt tin, giải ngân, hoàn tiền và xử lý khiếu nại.</p>
       </div>
 
       {error && <Alert kind="error">{error}</Alert>}
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <StatCard icon={Banknote} label="Tổng giá trị giao dịch (GMV)" value={stats ? formatVND(stats.gmv) : '—'} sub="Giá hàng, đơn đã hoàn tất" />
+        <StatCard icon={Banknote} label="Tổng giá trị giao dịch" value={stats ? formatVND(stats.gmv) : '—'} sub="Đơn đã hoàn tất" />
         <StatCard icon={Percent} label="Phí sàn đã thu" value={stats ? formatVND(stats.fees) : '—'} sub={stats ? `Chờ giải ngân: ${formatVND(stats.payout_pending_amount)}` : undefined} />
-        <StatCard icon={Lock} label="Đơn đang giữ tiền" value={stats ? String(stats.held_count) : '—'} sub={stats ? `${formatVND(stats.held_amount)} (đã TT / đang giao)` : undefined} />
+        <StatCard icon={Lock} label="Đơn đang giữ tiền" value={stats ? String(stats.held_count) : '—'} sub={stats ? `${formatVND(stats.held_amount)}` : undefined} />
         <StatCard icon={AlertTriangle} label="Đơn đang khiếu nại" value={stats ? String(stats.dispute_count) : '—'} sub="Cần phân xử" tone={stats && stats.dispute_count > 0 ? 'danger' : 'normal'} />
       </div>
 

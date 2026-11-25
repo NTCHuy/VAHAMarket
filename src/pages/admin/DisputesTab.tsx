@@ -5,6 +5,7 @@ import { issueWarning, resolveDispute, type DisputeDecision } from '@/lib/admin'
 import { cldUrl } from '@/lib/cloudinary';
 import { formatVND } from '@/lib/money';
 import { getErrorMessage } from '@/lib/errors';
+import { safeHttpUrl } from '@/lib/url';
 import CopyButton from '@/components/CopyButton';
 import { Alert, Avatar, Field, PageLoader } from '@/components/ui';
 import type { Order, Profile, ProfileContact } from '@/types';
@@ -92,8 +93,8 @@ function Party({ title, profile, contact, extraPhone }: { title: string; profile
         {extraPhone && extraPhone !== contact?.phone && (
           <p className="flex items-center gap-2 text-xs text-neutral-500 dark:text-neutral-400">SĐT nhận hàng trong đơn: <span className="font-mono">{extraPhone}</span> <CopyButton value={extraPhone} /></p>
         )}
-        {(profile?.facebook_url ?? contact?.facebook_url) && (
-          <a href={(profile?.facebook_url ?? contact?.facebook_url) as string} target="_blank" rel="noopener noreferrer nofollow" className="inline-flex items-center gap-1.5 text-brand-700 dark:text-brand-400 hover:underline">
+        {safeHttpUrl(profile?.facebook_url ?? contact?.facebook_url) && (
+          <a href={safeHttpUrl(profile?.facebook_url ?? contact?.facebook_url)!} target="_blank" rel="noopener noreferrer nofollow" className="inline-flex items-center gap-1.5 text-brand-700 dark:text-brand-400 hover:underline">
             <Facebook className="h-3.5 w-3.5" /> Facebook <ExternalLink className="h-3 w-3" />
           </a>
         )}
@@ -103,9 +104,10 @@ function Party({ title, profile, contact, extraPhone }: { title: string; profile
 }
 
 function VideoLink({ href, label }: { href: string | null; label: string }) {
-  if (!href) return <span className="text-sm text-neutral-400 dark:text-neutral-500">{label}: không có</span>;
+  const safeUrl = safeHttpUrl(href);
+  if (!safeUrl) return <span className="text-sm text-neutral-400 dark:text-neutral-500">{label}: không có</span>;
   return (
-    <a href={href} target="_blank" rel="noopener noreferrer nofollow" className="inline-flex items-center gap-1.5 text-sm text-brand-700 dark:text-brand-400 hover:underline">
+    <a href={safeUrl} target="_blank" rel="noopener noreferrer nofollow" className="inline-flex items-center gap-1.5 text-sm text-brand-700 dark:text-brand-400 hover:underline">
       <Video className="h-4 w-4" /> {label} <ExternalLink className="h-3.5 w-3.5" />
     </a>
   );
@@ -176,8 +178,8 @@ function DisputeCard({ order, buyer, seller, buyerContact, sellerContact, onDone
         <p className="font-medium text-neutral-900 dark:text-neutral-100">Lý do khiếu nại của người mua</p>
         <p className="mt-1 whitespace-pre-line text-neutral-700 dark:text-neutral-200">{order.dispute_reason}</p>
         <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1">
-          <VideoLink href={order.dispute_video_url} label="Video unbox của người mua" />
-          <VideoLink href={order.packing_video_url} label="Video test của người bán" />
+          <VideoLink href={order.dispute_video_url} label="Video mở hộp của người mua" />
+          <VideoLink href={order.packing_video_url} label="Video đóng gói của người bán" />
         </div>
         {(order.carrier || order.tracking_code) && (
           <p className="mt-2 text-xs text-neutral-500 dark:text-neutral-400">Vận chuyển: {order.carrier} · {order.tracking_code}</p>
@@ -222,8 +224,8 @@ function DisputeCard({ order, buyer, seller, buyerContact, sellerContact, onDone
         <div className="space-y-2 rounded-lg border border-amber-200 dark:border-amber-800/70 bg-amber-50 dark:bg-amber-950/50 p-3 text-sm text-amber-900 dark:text-amber-200">
           <p>
             {pending === 'REFUND_TO_BUYER'
-              ? `Xác nhận HOÀN TIỀN cho người mua? Đơn chuyển sang “Đã hoàn tiền”. Bạn cần tự chuyển khoản ${formatVND(order.amount)} cho người mua (xin STK qua SĐT/Zalo).`
-              : `Xác nhận BÁC BỎ khiếu nại? Đơn chuyển sang “Hoàn tất” và vào hàng đợi giải ngân ${formatVND(order.seller_payout)} cho người bán.`}
+              ? `Xác nhận HOÀN TIỀN cho người mua? Đơn sẽ chuyển sang tab Hoàn tiền (${formatVND(order.amount)}).`
+              : `Xác nhận BÁC BỎ khiếu nại? Đơn chuyển sang Hoàn tất và chờ giải ngân ${formatVND(order.seller_payout)} cho người bán.`}
           </p>
           <div className="flex justify-end gap-2">
             <button type="button" className="btn-ghost" onClick={() => setPending(null)} disabled={busy}>Quay lại</button>

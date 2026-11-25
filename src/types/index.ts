@@ -189,6 +189,18 @@ export interface OrderPayout {
   reference: string | null;
 }
 
+/** Tài khoản nhận hoàn tiền của người mua (chỉ người mua và quản trị viên đọc được). */
+export interface OrderRefundAccount {
+  order_id: string;
+  buyer_id: string;
+  bank_bin: string;
+  bank_code: string;
+  bank_name: string;
+  account_number: string;
+  account_name: string;
+  created_at: string;
+}
+
 export type TransactionMatchStatus =
   | 'MATCHED' | 'OVERPAID' | 'UNDERPAID' | 'UNMATCHED' | 'LATE_PAYMENT' | 'EXTRA_PAYMENT' | 'IGNORED';
 

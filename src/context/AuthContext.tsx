@@ -71,7 +71,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     let active = true;
     getVisitorId()
       .then(async (vid) => {
-        if (!active) return;
+        if (!active || !vid) return;
         setVisitorId(vid);
         const { data: res, error: rpcErr } = await supabase.rpc('check_device_banned', { p_visitor_id: vid });
         if (!active || rpcErr || !res || typeof res !== 'object') return;

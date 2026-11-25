@@ -8,7 +8,7 @@ import { formatVND } from '@/lib/money';
 import { getErrorMessage } from '@/lib/errors';
 import CopyButton from '@/components/CopyButton';
 import { Alert, PageLoader } from '@/components/ui';
-import type { Order } from '@/types';
+import type { Order, OrderRefundAccount } from '@/types';
 
 interface RefundRow extends Order {
   buyer: { display_name: string } | null;
@@ -16,6 +16,7 @@ interface RefundRow extends Order {
 
 export default function RefundsTab({ onChanged }: { onChanged: () => void }) {
   const [rows, setRows] = useState<RefundRow[]>([]);
+  const [refundAccounts, setRefundAccounts] = useState<Record<string, OrderRefundAccount>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -28,11 +29,24 @@ export default function RefundsTab({ onChanged }: { onChanged: () => void }) {
       .is('refund_completed_at', null)
       .order('refund_requested_at', { ascending: true, nullsFirst: false });
 
-    if (err) setError(getErrorMessage(err));
-    else {
-      setRows((data ?? []) as unknown as RefundRow[]);
-      setError(null);
+    if (err) {
+      setError(getErrorMessage(err));
+      setLoading(false);
+      return;
     }
+
+    const list = (data ?? []) as unknown as RefundRow[];
+    setRows(list);
+    if (list.length > 0) {
+      const orderIds = list.map((o) => o.id);
+      const { data: accData } = await supabase.from('order_refund_accounts').select('*').in('order_id', orderIds);
+      if (accData) {
+        setRefundAccounts(Object.fromEntries((accData as OrderRefundAccount[]).map((a) => [a.order_id, a])));
+      }
+    } else {
+      setRefundAccounts({});
+    }
+    setError(null);
     setLoading(false);
   }, []);
 
@@ -57,6 +71,7 @@ export default function RefundsTab({ onChanged }: { onChanged: () => void }) {
         <RefundCard
           key={r.id}
           order={r}
+          refundAccount={refundAccounts[r.id]}
           onDone={async () => {
             await load();
             onChanged();
@@ -67,7 +82,15 @@ export default function RefundsTab({ onChanged }: { onChanged: () => void }) {
   );
 }
 
-function RefundCard({ order, onDone }: { order: RefundRow; onDone: () => Promise<void> }) {
+function RefundCard({
+  order,
+  refundAccount,
+  onDone,
+}: {
+  order: RefundRow;
+  refundAccount?: OrderRefundAccount;
+  onDone: () => Promise<void>;
+}) {
   const [reference, setReference] = useState('');
   const [confirming, setConfirming] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -75,14 +98,18 @@ function RefundCard({ order, onDone }: { order: RefundRow; onDone: () => Promise
 
   const refundAmount = order.paid_amount > 0 ? order.paid_amount : order.amount;
   const transferContent = `Hoan tien don ${order.payment_code}`;
+  const bankBin = refundAccount?.bank_bin ?? order.refund_bank_bin;
+  const bankName = refundAccount?.bank_name ?? order.refund_bank_name;
+  const accountNumber = refundAccount?.account_number ?? order.refund_account_number;
+  const accountName = refundAccount?.account_name ?? order.refund_account_name;
 
   let qrUrl = '';
-  if (order.refund_bank_bin && order.refund_account_number && order.refund_account_name) {
+  if (bankBin && accountNumber && accountName) {
     try {
       qrUrl = buildPayoutQrUrl({
-        bankBin: order.refund_bank_bin,
-        accountNumber: order.refund_account_number,
-        accountName: order.refund_account_name,
+        bankBin,
+        accountNumber,
+        accountName,
         amount: refundAmount,
         paymentCode: order.payment_code,
         addInfo: transferContent,
@@ -119,7 +146,7 @@ function RefundCard({ order, onDone }: { order: RefundRow; onDone: () => Promise
             </div>
           ) : (
             <div className="flex aspect-square items-center justify-center rounded-lg border border-dashed border-neutral-300 p-3 text-center text-xs text-neutral-500 dark:border-neutral-700 dark:text-neutral-400">
-              Đơn cũ chưa có snapshot TK ngân hàng người mua — liên hệ SĐT {order.phone} để lấy STK hoàn tiền.
+              Đơn cũ chưa lưu sẵn tài khoản người mua — liên hệ SĐT {order.phone} để lấy STK hoàn tiền.
             </div>
           )}
         </div>
@@ -150,9 +177,9 @@ function RefundCard({ order, onDone }: { order: RefundRow; onDone: () => Promise
 
           <dl className="grid gap-2 text-sm sm:grid-cols-2">
             <Info label="Người mua" value={`${order.buyer?.display_name ?? order.recipient_name} (${order.phone})`} />
-            <Info label="Ngân hàng nhận" value={order.refund_bank_name ?? 'Chưa có'} />
-            <Info label="Số tài khoản" value={order.refund_account_number ?? '—'} mono copy={Boolean(order.refund_account_number)} />
-            <Info label="Chủ tài khoản" value={order.refund_account_name ?? '—'} copy={Boolean(order.refund_account_name)} />
+            <Info label="Ngân hàng nhận" value={bankName ?? 'Chưa có'} />
+            <Info label="Số tài khoản" value={accountNumber ?? '—'} mono copy={Boolean(accountNumber)} />
+            <Info label="Chủ tài khoản" value={accountName ?? '—'} copy={Boolean(accountName)} />
             <Info label="Số tiền hoàn" value={formatVND(refundAmount)} copyValue={String(refundAmount)} strong />
             <Info label="Nội dung chuyển khoản" value={transferContent} copy />
           </dl>

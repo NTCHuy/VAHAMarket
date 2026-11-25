@@ -89,7 +89,7 @@ export default function ListingsTab() {
 
   return (
     <div className="space-y-4">
-      <p className="text-sm text-neutral-600 dark:text-neutral-400">Chỉnh trực tiếp giá bán và giá gốc để chạy deal nhanh mà không cần người bán sửa tay. Giá gốc phải lớn hơn giá bán; để trống để bỏ giảm giá.</p>
+      <p className="text-sm text-neutral-600 dark:text-neutral-400">Chỉnh nhanh giá bán và giá gốc. Giá gốc phải lớn hơn giá bán; để trống để bỏ giảm giá.</p>
 
       <div className="flex flex-col gap-2 sm:flex-row">
         <div className="relative flex-1">

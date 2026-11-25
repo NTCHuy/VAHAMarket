@@ -7,6 +7,7 @@ import { cldUrl, uploadImage, validateImage } from '@/lib/cloudinary';
 import { calcFees, formatVND } from '@/lib/money';
 import { getErrorMessage } from '@/lib/errors';
 import { validateListingContent } from '@/lib/moderation';
+import { isUuid } from '@/lib/url';
 import { BOX_STATUS_OPTIONS, CATEGORIES, LISTING_CONDITIONS, type BoxStatus, type ListingCondition } from '@/constants/categories';
 import { type FeePayer } from '@/constants/fees';
 import { PROVINCES } from '@/constants/provinces';
@@ -129,6 +130,7 @@ function ListingForm({ listingId }: { listingId?: string }) {
         setAccounts(banks);
 
         if (listingId) {
+          if (!isUuid(listingId)) throw new Error('Không tìm thấy tin đăng.');
           const res = await supabase.from('listings').select('*').eq('id', listingId).maybeSingle();
           if (res.error) throw res.error;
           const l = res.data as Listing | null;
@@ -297,26 +299,27 @@ function ListingForm({ listingId }: { listingId?: string }) {
   const uploadFailed = images.some((i) => i.state === 'error');
 
   // Bộ lọc dẫn dụ giao dịch ngoài sàn (cùng quy tắc với trigger trong DB)
-  const contentErrors = useMemo(() => validateListingContent(title, description), [title, description]);
+  const contentErrors = useMemo(() => validateListingContent(title, description, brand), [title, description, brand]);
 
   const errors = useMemo(() => {
     const e: Record<string, string> = {};
     if (images.length === 0) e.images = 'Cần ít nhất 1 ảnh.';
-    else if (uploading) e.images = 'Đang tải ảnh lên, vui lòng đợi.';
-    else if (uploadFailed) e.images = 'Có ảnh tải lên thất bại. Hãy thử lại hoặc xóa ảnh đó.';
+    else if (uploading) e.images = 'Đang tải ảnh lên...';
+    else if (uploadFailed) e.images = 'Có ảnh tải lỗi. Hãy thử lại hoặc xóa.';
     const t = title.trim();
     if (t.length < 5 || t.length > 120) e.title = 'Tiêu đề từ 5 đến 120 ký tự.';
     if (!category) e.category = 'Chọn phân loại.';
-    if (!condition) e.condition = 'Chọn tình trạng ngoại hình.';
+    if (!condition) e.condition = 'Chọn tình trạng.';
     if (!priceValid) e.price = `Giá bán từ ${formatVND(MIN_PRICE)} đến ${formatVND(MAX_PRICE)}.`;
-    if (!province && !shipCod) e.delivery = 'Chọn ít nhất một hình thức: giao dịch trực tiếp hoặc ship COD.';
+    if (!province && !shipCod) e.delivery = 'Chọn gặp trực tiếp hoặc gửi hàng.';
     const d = description.trim();
     if (d.length < 10 || d.length > 5000) e.description = 'Mô tả từ 10 đến 5000 ký tự.';
-    if (!bankAccountId) e.bank = 'Chọn tài khoản ngân hàng nhận tiền.';
-    if (!verification) e.verification = 'Bắt buộc có ảnh xác thực chính chủ.';
-    else if (verification.state === 'uploading') e.verification = 'Đang tải ảnh xác thực lên, vui lòng đợi.';
-    else if (verification.state === 'error' || !verification.url) e.verification = 'Ảnh xác thực tải lên thất bại. Hãy chọn lại ảnh.';
+    if (!bankAccountId) e.bank = 'Chọn tài khoản ngân hàng.';
+    if (!verification) e.verification = 'Cần ảnh xác thực chính chủ.';
+    else if (verification.state === 'uploading') e.verification = 'Đang tải ảnh xác thực...';
+    else if (verification.state === 'error' || !verification.url) e.verification = 'Ảnh xác thực lỗi. Hãy chọn lại.';
     if (contentErrors.title) e.title = contentErrors.title;
+    if (contentErrors.brand) e.brand = contentErrors.brand;
     if (contentErrors.description) e.description = contentErrors.description;
     return e;
   }, [verification, contentErrors, images.length, uploading, uploadFailed, title, category, condition, priceValid, province, shipCod, description, bankAccountId]);
@@ -403,9 +406,9 @@ function ListingForm({ listingId }: { listingId?: string }) {
 
   // Hồ sơ người bán bắt buộc: SĐT + Facebook + tài khoản ngân hàng
   const checklist = [
-    { label: 'Số điện thoại (Zalo)', ok: Boolean(contact?.phone?.trim()) },
-    { label: 'Link Facebook cá nhân', ok: Boolean(profile?.facebook_url?.trim()) },
-    { label: 'Tài khoản ngân hàng nhận giải ngân', ok: accounts.length > 0 },
+    { label: 'Số điện thoại', ok: Boolean(contact?.phone?.trim()) },
+    { label: 'Facebook cá nhân', ok: Boolean(profile?.facebook_url?.trim()) },
+    { label: 'Tài khoản ngân hàng nhận tiền', ok: accounts.length > 0 },
   ];
   if (checklist.some((c) => !c.ok)) {
     return (
@@ -413,8 +416,8 @@ function ListingForm({ listingId }: { listingId?: string }) {
         <div className="flex items-start gap-2.5">
           <AlertTriangle size={18} strokeWidth={1.75} className="mt-0.5 shrink-0 text-amber-600 dark:text-amber-400" />
           <div>
-            <h1 className="text-lg font-semibold">Hoàn tất hồ sơ người bán trước khi đăng tin</h1>
-            <p className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">VAHA Market yêu cầu xác thực danh tính người bán để bảo vệ cộng đồng khỏi lừa đảo.</p>
+            <h1 className="text-lg font-semibold">Hoàn tất hồ sơ trước khi đăng tin</h1>
+            <p className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">Cần đủ 3 mục sau để xác minh người bán.</p>
           </div>
         </div>
         <ul className="space-y-2 text-sm">
@@ -425,8 +428,8 @@ function ListingForm({ listingId }: { listingId?: string }) {
             </li>
           ))}
         </ul>
-        <p className="text-xs text-neutral-500 dark:text-neutral-400">Tên chủ tài khoản ngân hàng phải là tên chính chủ, khớp với tên trên trang cá nhân Facebook của bạn thì mới được giải ngân.</p>
-        <Link to="/settings" className="btn-primary w-full"><Landmark className="h-4 w-4" /> Đến Cài đặt tài khoản để hoàn tất</Link>
+        <p className="text-xs text-neutral-500 dark:text-neutral-400">Tên chủ tài khoản ngân hàng phải khớp tên Facebook cá nhân.</p>
+        <Link to="/settings" className="btn-primary w-full"><Landmark className="h-4 w-4" /> Mở Cài đặt tài khoản</Link>
       </div>
     );
   }
@@ -437,16 +440,16 @@ function ListingForm({ listingId }: { listingId?: string }) {
   return (
     <form onSubmit={onSubmit} className="mx-auto max-w-3xl space-y-6" noValidate>
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">{isEdit ? 'Sửa tin đăng' : 'Đăng bán đồ audio'}</h1>
-        <p className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">Mô tả trung thực, ảnh rõ nét sẽ giúp bạn bán nhanh và tránh tranh chấp.</p>
+        <h1 className="text-2xl font-semibold tracking-tight">{isEdit ? 'Sửa tin đăng' : 'Đăng bán sản phẩm'}</h1>
+        <p className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">Ảnh rõ, mô tả đúng giúp bán nhanh và tránh khiếu nại.</p>
       </div>
 
       {listingStatus === 'rejected' && rejectionReason && (
-        <Alert kind="error"><strong>Tin bị từ chối:</strong> {rejectionReason}. Hãy sửa lại rồi bấm gửi duyệt lại.</Alert>
+        <Alert kind="error"><strong>Tin chưa được duyệt:</strong> {rejectionReason}. Hãy sửa lại rồi gửi duyệt.</Alert>
       )}
-      {listingStatus === 'pending_review' && <Alert kind="info">Tin đang chờ Admin duyệt. Bạn vẫn có thể chỉnh sửa; tin sẽ hiển thị công khai sau khi được duyệt.</Alert>}
+      {listingStatus === 'pending_review' && <Alert kind="info">Tin đang chờ duyệt. Bạn vẫn có thể sửa trước khi hiển thị.</Alert>}
       {!canAutoApprove && listingStatus !== 'rejected' && listingStatus !== 'pending_review' && (
-        <Alert kind="info">Tin mới cần Admin duyệt trước khi hiển thị công khai. Với tin đã duyệt, sửa tiêu đề / mô tả / ảnh / tài khoản nhận tiền sẽ phải duyệt lại.</Alert>
+        <Alert kind="info">Tin mới cần duyệt ảnh xác thực trước khi hiển thị. Nếu sửa nội dung, ảnh hoặc tài khoản nhận tiền, tin sẽ cần duyệt lại.</Alert>
       )}
 
       <NotificationHint />
@@ -515,10 +518,10 @@ function ListingForm({ listingId }: { listingId?: string }) {
 
       {/* Ảnh xác thực chính chủ */}
       <section className="card space-y-3 p-5 sm:p-6">
-        <h2 className="text-base font-semibold">Ảnh xác thực chính chủ (Bắt buộc) <span className="text-red-500">*</span></h2>
+        <h2 className="text-base font-semibold">Ảnh xác thực chính chủ <span className="text-red-500">*</span></h2>
         <div className="rounded-lg border border-amber-200 dark:border-amber-800/70 bg-amber-50 dark:bg-amber-950/50 p-3 text-sm text-amber-900 dark:text-amber-200">
-          <p><strong>Chụp sản phẩm đặt cạnh mảnh giấy viết tay</strong> ghi rõ chữ <strong>“VAHA + Ngày hôm nay + Tên Facebook của bạn”</strong>.</p>
-          <p className="mt-1 text-xs">Ví dụ: <span className="font-mono font-semibold">VAHA {new Date().toLocaleDateString('vi-VN')} Nguyễn Văn A</span> — chữ phải rõ nét, nằm cùng khung hình với sản phẩm thật. Ảnh chỉ dùng để Admin kiểm duyệt.</p>
+          <p><strong>Chụp sản phẩm cạnh giấy viết tay</strong> ghi rõ <strong>“VAHA + Ngày hôm nay + Tên Facebook”</strong>.</p>
+          <p className="mt-1 text-xs">Ví dụ: <span className="font-mono font-semibold">VAHA {new Date().toLocaleDateString('vi-VN')} Nguyễn Văn A</span>. Chữ rõ nét, cùng khung hình với sản phẩm.</p>
         </div>
 
         {verification ? (
@@ -571,7 +574,7 @@ function ListingForm({ listingId }: { listingId?: string }) {
               ))}
             </select>
           </Field>
-          <Field label="Thương hiệu" htmlFor="brand" hint="Không bắt buộc.">
+          <Field label="Thương hiệu" htmlFor="brand" error={contentErrors.brand ?? show('brand')} hint="Không bắt buộc.">
             <input id="brand" className="input" value={brand} maxLength={60} onChange={(e) => setBrand(e.target.value)} />
           </Field>
         </div>
@@ -631,7 +634,7 @@ function ListingForm({ listingId }: { listingId?: string }) {
         )}
 
         <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3.5 py-2.5 text-xs text-emerald-900 dark:border-emerald-800/70 dark:bg-emerald-950/40 dark:text-emerald-200">
-          <strong>Miễn phí trung gian 0%:</strong> VAHA Market không thu phí giao dịch — người bán nhận đủ 100% giá niêm yết và người mua chỉ trả đúng giá niêm yết.
+          <strong>Miễn phí 0%:</strong> Người bán nhận đủ 100% giá bán, người mua trả đúng giá niêm yết.
         </div>
 
         <dl className="divide-y divide-neutral-100 rounded-lg border border-neutral-200 bg-neutral-50 text-sm tabular-nums dark:divide-neutral-800 dark:border-neutral-800 dark:bg-neutral-800/60">
@@ -668,8 +671,8 @@ function ListingForm({ listingId }: { listingId?: string }) {
         <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-neutral-200 dark:border-neutral-800 p-3 hover:bg-neutral-50 dark:hover:bg-neutral-800">
           <input type="checkbox" checked={shipCod} onChange={(e) => setShipCod(e.target.checked)} className="mt-0.5 h-4 w-4 rounded border-neutral-300 dark:border-neutral-700 text-brand-700 dark:text-brand-400" />
           <span>
-            <span className="flex items-center gap-1.5 text-sm font-medium text-neutral-900 dark:text-neutral-100"><Truck className="h-4 w-4 text-neutral-400 dark:text-neutral-500" /> Ship COD — người mua trả phí ship</span>
-            <span className="mt-0.5 block text-xs text-neutral-500 dark:text-neutral-400">Bạn gửi hàng qua bưu tá; người mua tự thanh toán phí ship cho bưu tá khi nhận hàng (không tính vào tiền trung gian).</span>
+            <span className="flex items-center gap-1.5 text-sm font-medium text-neutral-900 dark:text-neutral-100"><Truck className="h-4 w-4 text-neutral-400 dark:text-neutral-500" /> Gửi hàng toàn quốc — người mua trả phí giao hàng</span>
+            <span className="mt-0.5 block text-xs text-neutral-500 dark:text-neutral-400">Người mua tự trả phí giao hàng cho bưu tá (không gộp vào tiền trung gian).</span>
           </span>
         </label>
         {show('delivery') && <p className="text-xs text-red-600 dark:text-red-400">{show('delivery')}</p>}
@@ -713,11 +716,11 @@ function ListingForm({ listingId }: { listingId?: string }) {
       {submitted && Object.keys(errors).length > 0 && <Alert kind="error">Vui lòng kiểm tra lại các mục được đánh dấu đỏ.</Alert>}
 
       <p className="text-xs text-neutral-500 dark:text-neutral-400">
-        Bằng việc đăng tin, bạn đồng ý với{' '}
+        Đăng tin đồng nghĩa đồng ý với{' '}
         <Link to="/terms" className="font-medium text-brand-700 hover:underline dark:text-brand-400">
-          Điều khoản dịch vụ
-        </Link>{' '}
-        của VAHA Market.
+          Điều khoản sử dụng
+        </Link>
+        .
       </p>
 
       <div className="sticky bottom-0 flex flex-col-reverse gap-2 border-t border-neutral-200 bg-white/95 py-3 backdrop-blur dark:border-neutral-800 dark:bg-neutral-950/95 sm:static sm:flex-row sm:justify-end sm:border-0 sm:bg-transparent sm:p-0">

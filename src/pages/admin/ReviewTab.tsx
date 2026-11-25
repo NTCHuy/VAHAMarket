@@ -5,6 +5,7 @@ import { issueWarning, reviewListing } from '@/lib/admin';
 import { cldUrl } from '@/lib/cloudinary';
 import { formatVND } from '@/lib/money';
 import { getErrorMessage } from '@/lib/errors';
+import { safeCloudinaryUrl, safeHttpUrl } from '@/lib/url';
 import { getBoxStatusLabel, getCategory, getConditionLabel } from '@/constants/categories';
 import CopyButton from '@/components/CopyButton';
 import ModBadge from '@/components/ModBadge';
@@ -126,6 +127,8 @@ function ReviewCard({ listing, seller, contact, bank, onDone }: {
   };
 
   const postedDate = new Date(listing.created_at).toLocaleDateString('vi-VN');
+  const safeVerification = safeCloudinaryUrl(listing.verification_image_url);
+  const safeSellerFb = safeHttpUrl(seller?.facebook_url);
 
   return (
     <li className="card space-y-4 border-amber-200 dark:border-amber-800/70 p-4 sm:p-5">
@@ -143,15 +146,15 @@ function ReviewCard({ listing, seller, contact, bank, onDone }: {
         {/* Ảnh xác thực: nổi bật nhất */}
         <div className="space-y-2 rounded-lg border-2 border-amber-300 dark:border-amber-700/80 bg-amber-50/60 dark:bg-amber-950/40 p-3">
           <p className="flex items-center gap-1.5 text-sm font-semibold text-amber-900 dark:text-amber-200"><BadgeCheck className="h-4 w-4" /> Ảnh xác thực giấy viết tay</p>
-          {listing.verification_image_url ? (
-            <a href={listing.verification_image_url} target="_blank" rel="noopener noreferrer" className="block overflow-hidden rounded-lg border border-amber-200 dark:border-amber-800/70 bg-white dark:bg-neutral-900">
-              <img src={cldUrl(listing.verification_image_url, { width: 900 })} alt="Ảnh xác thực" className="max-h-96 w-full object-contain" />
+          {safeVerification ? (
+            <a href={safeVerification} target="_blank" rel="noopener noreferrer" className="block overflow-hidden rounded-lg border border-amber-200 dark:border-amber-800/70 bg-white dark:bg-neutral-900">
+              <img src={cldUrl(safeVerification, { width: 900 })} alt="Ảnh xác thực" className="max-h-96 w-full object-contain" />
             </a>
           ) : (
-            <p className="rounded-lg bg-red-50 dark:bg-red-950/50 px-3 py-2 text-sm text-red-700 dark:text-red-400">Tin này chưa có ảnh xác thực.</p>
+            <p className="rounded-lg bg-red-50 dark:bg-red-950/50 px-3 py-2 text-sm text-red-700 dark:text-red-400">Tin chưa có ảnh xác thực hợp lệ.</p>
           )}
           <p className="text-xs text-amber-900 dark:text-amber-200">
-            Kiểm tra giấy viết tay có đủ: <strong>VAHA</strong> + <strong>ngày {postedDate}</strong> + <strong>tên Facebook</strong> khớp với hồ sơ bên cạnh, và sản phẩm thật nằm cùng khung hình.
+            Kiểm tra giấy viết tay: <strong>VAHA</strong> + <strong>ngày {postedDate}</strong> + <strong>tên Facebook</strong> khớp hồ sơ bên cạnh, cùng khung hình với sản phẩm.
           </p>
         </div>
 
@@ -164,21 +167,21 @@ function ReviewCard({ listing, seller, contact, bank, onDone }: {
                 <span className="truncate">{seller?.display_name ?? '—'}</span>
                 {seller?.is_mod && <ModBadge />}
                 {seller?.is_banned ? (
-                  <span className="badge bg-red-600 text-white dark:bg-red-600 dark:text-white"><ShieldBan className="mr-1 h-3 w-3" /> Đã bị Ban</span>
+                  <span className="badge bg-red-600 text-white dark:bg-red-600 dark:text-white"><ShieldBan className="mr-1 h-3 w-3" /> Đã khóa</span>
                 ) : (seller?.warning_count ?? 0) > 0 ? (
                   <span className="badge bg-amber-100 text-amber-800 dark:bg-amber-950/70 dark:text-amber-300">Cảnh báo {seller?.warning_count}/3</span>
                 ) : null}
               </p>
-              <p className="text-xs text-neutral-500 dark:text-neutral-400">{seller?.sold_count ?? 0} đơn bán thành công · tham gia {seller ? new Date(seller.created_at).toLocaleDateString('vi-VN') : '—'}</p>
+              <p className="text-xs text-neutral-500 dark:text-neutral-400">{seller?.sold_count ?? 0} đơn bán · tham gia {seller ? new Date(seller.created_at).toLocaleDateString('vi-VN') : '—'}</p>
             </div>
           </div>
 
-          {seller?.facebook_url ? (
-            <a href={seller.facebook_url} target="_blank" rel="noopener noreferrer nofollow" className="btn-primary w-full">
-              <Facebook className="h-4 w-4" /> Mở Facebook cá nhân của người bán <ExternalLink className="h-3.5 w-3.5" />
+          {safeSellerFb ? (
+            <a href={safeSellerFb} target="_blank" rel="noopener noreferrer nofollow" className="btn-primary w-full">
+              <Facebook className="h-4 w-4" /> Mở Facebook người bán <ExternalLink className="h-3.5 w-3.5" />
             </a>
           ) : (
-            <p className="rounded-lg bg-red-50 dark:bg-red-950/50 px-3 py-2 text-sm text-red-700 dark:text-red-400">Người bán chưa khai báo link Facebook.</p>
+            <p className="rounded-lg bg-red-50 dark:bg-red-950/50 px-3 py-2 text-sm text-red-700 dark:text-red-400">Người bán chưa khai báo Facebook.</p>
           )}
 
           <p className="flex items-center gap-2 text-sm">
@@ -187,15 +190,15 @@ function ReviewCard({ listing, seller, contact, bank, onDone }: {
           </p>
 
           <div className="rounded-lg bg-neutral-50 dark:bg-neutral-800/60 p-3 text-sm">
-            <p className="mb-1 flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-neutral-500 dark:text-neutral-400"><Landmark className="h-3.5 w-3.5" /> Tài khoản nhận giải ngân</p>
+            <p className="mb-1 flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-neutral-500 dark:text-neutral-400"><Landmark className="h-3.5 w-3.5" /> Tài khoản nhận tiền</p>
             {bank ? (
               <>
                 <p className="font-medium text-neutral-900 dark:text-neutral-100">{bank.bank_name} · <span className="font-mono">{bank.account_number}</span> <CopyButton value={bank.account_number} /></p>
                 <p className="text-neutral-700 dark:text-neutral-200">Chủ TK: <strong>{bank.account_name}</strong></p>
-                <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">Tên chủ TK phải là tên chính chủ, khớp Facebook / giấy viết tay.</p>
+                <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">Tên chủ TK phải khớp Facebook / giấy viết tay.</p>
               </>
             ) : (
-              <p className="text-red-600 dark:text-red-400">Không tìm thấy tài khoản ngân hàng.</p>
+              <p className="text-red-600 dark:text-red-400">Chưa có tài khoản ngân hàng.</p>
             )}
           </div>
         </div>
@@ -205,13 +208,17 @@ function ReviewCard({ listing, seller, contact, bank, onDone }: {
       <div className="space-y-2">
         <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100">Ảnh sản phẩm ({listing.images.length})</p>
         <ul className="flex gap-2 overflow-x-auto pb-1">
-          {listing.images.map((img, i) => (
-            <li key={`${img.url}-${i}`} className="shrink-0">
-              <a href={img.url} target="_blank" rel="noopener noreferrer" className="block h-24 w-24 overflow-hidden rounded-lg border border-neutral-200 dark:border-neutral-800 bg-neutral-100 dark:bg-neutral-800">
-                <img src={cldUrl(img.url, { width: 240, height: 240, crop: 'fill' })} alt={`Ảnh ${i + 1}`} loading="lazy" className="h-full w-full object-cover" />
-              </a>
-            </li>
-          ))}
+          {listing.images.map((img, i) => {
+            const safeImg = safeCloudinaryUrl(img.url);
+            if (!safeImg) return null;
+            return (
+              <li key={`${safeImg}-${i}`} className="shrink-0">
+                <a href={safeImg} target="_blank" rel="noopener noreferrer" className="block h-24 w-24 overflow-hidden rounded-lg border border-neutral-200 dark:border-neutral-800 bg-neutral-100 dark:bg-neutral-800">
+                  <img src={cldUrl(safeImg, { width: 240, height: 240, crop: 'fill' })} alt={`Ảnh ${i + 1}`} loading="lazy" className="h-full w-full object-cover" />
+                </a>
+              </li>
+            );
+          })}
         </ul>
         <p className="whitespace-pre-line rounded-lg bg-neutral-50 dark:bg-neutral-800/60 px-3 py-2 text-sm text-neutral-700 dark:text-neutral-200">{listing.description}</p>
       </div>

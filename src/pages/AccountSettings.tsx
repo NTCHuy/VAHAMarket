@@ -80,7 +80,7 @@ export default function AccountSettings() {
     <div className="mx-auto max-w-3xl space-y-6">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Cài đặt tài khoản</h1>
-        <p className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">Quản lý thông tin liên hệ và tài khoản ngân hàng nhận tiền khi bán hàng.</p>
+        <p className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">Thông tin liên hệ và tài khoản ngân hàng.</p>
       </div>
 
       {checklistReady && (
@@ -108,9 +108,9 @@ function SellerChecklist({
   ready: boolean;
 }) {
   const items = [
-    { label: 'Số điện thoại liên hệ', done: hasPhone },
-    { label: 'Link Facebook cá nhân', done: hasFacebook },
-    { label: 'Ít nhất 1 tài khoản ngân hàng nhận tiền', done: hasBank },
+    { label: 'Số điện thoại', done: hasPhone },
+    { label: 'Facebook cá nhân', done: hasFacebook },
+    { label: 'Tài khoản ngân hàng', done: hasBank },
   ];
 
   return (
@@ -122,12 +122,12 @@ function SellerChecklist({
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className={`text-sm font-semibold ${ready ? 'text-emerald-900 dark:text-emerald-200' : 'text-amber-900 dark:text-amber-200'}`}>
-            {ready ? 'Hồ sơ người bán đã đầy đủ' : 'Hoàn tất hồ sơ để mở quyền đăng bán'}
+            {ready ? 'Hồ sơ đã đầy đủ' : 'Hoàn tất hồ sơ để đăng bán'}
           </h2>
           <p className={`mt-0.5 text-xs ${ready ? 'text-emerald-800 dark:text-emerald-300' : 'text-amber-800 dark:text-amber-300'}`}>
             {ready
-              ? 'Bạn đã đủ điều kiện định danh để đăng tin trên VAHA Market.'
-              : 'Để chống lừa đảo, hệ thống yêu cầu đủ 3 thông tin dưới đây trước khi mở form đăng tin.'}
+              ? 'Bạn đã đủ điều kiện đăng tin trên VAHA Market.'
+              : 'Cần đủ 3 mục sau trước khi đăng bán.'}
           </p>
         </div>
         {ready && (
@@ -243,16 +243,16 @@ function ProfileSection({ identityLock }: { identityLock: IdentityLock }) {
         <Field label="Tên hiển thị" htmlFor="displayName" required error={errors.displayName}>
           <input id="displayName" className="input" value={displayName} maxLength={60} onChange={(e) => setDisplayName(e.target.value)} />
         </Field>
-        <Field label="Số điện thoại (Zalo)" htmlFor="phone" error={errors.phone} hint="Bắt buộc để đăng bán. Dùng để liên hệ xử lý đơn hàng khi cần.">
+        <Field label="Số điện thoại" htmlFor="phone" error={errors.phone} hint="Bắt buộc để đăng bán và xử lý đơn hàng.">
           <input id="phone" className="input" inputMode="tel" placeholder="0912 345 678" value={phone} maxLength={15} onChange={(e) => setPhone(e.target.value)} />
         </Field>
       </div>
 
       <Field
-        label="Link Facebook cá nhân"
+        label="Facebook cá nhân"
         htmlFor="facebook"
         error={errors.facebook}
-        hint="Hiển thị công khai trên tin đăng của bạn để người mua kiểm tra uy tín. Ví dụ: https://facebook.com/ten.cua.ban"
+        hint="Hiển thị trên tin đăng để người mua kiểm tra. Ví dụ: https://facebook.com/ten.cua.ban"
       >
         <input
           id="facebook"
@@ -447,8 +447,8 @@ function BankAccountsSection({
     <section className="card space-y-4 p-5 sm:p-6">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h2 className="text-base font-semibold">Tài khoản ngân hàng (nhận tiền bán hàng &amp; nhận hoàn tiền khi mua hàng)</h2>
-          <p className="mt-0.5 text-sm text-neutral-600 dark:text-neutral-400">Dùng để nhận giải ngân khi bạn bán hàng và tự động nhận hoàn tiền nếu đơn mua bị hủy hoặc quá hạn gửi hàng.</p>
+          <h2 className="text-base font-semibold">Tài khoản ngân hàng</h2>
+          <p className="mt-0.5 text-sm text-neutral-600 dark:text-neutral-400">Nhận tiền bán hàng và nhận hoàn tiền nếu đơn mua bị hủy.</p>
         </div>
         {!showForm && (
           <button type="button" className="btn-secondary shrink-0" onClick={() => setShowForm(true)}>

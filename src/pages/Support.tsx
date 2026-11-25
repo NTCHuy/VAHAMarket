@@ -13,23 +13,23 @@ import { Alert, Field } from '@/components/ui';
 const OPERATING_COSTS = [
   {
     icon: Server,
-    title: 'Hạ tầng & Cơ sở dữ liệu',
-    desc: 'Duy trì máy chủ Supabase, lưu trữ ảnh tin đăng và các tác vụ tự động đối soát 24/7.',
+    title: 'Máy chủ & Lưu trữ',
+    desc: 'Duy trì cơ sở dữ liệu, ảnh sản phẩm và đối soát tự động 24/7.',
   },
   {
     icon: ShieldCheck,
-    title: 'Hệ thống thông báo & Thanh toán',
-    desc: 'Webhook tự động nhận diện giao dịch ngân hàng (SePay) và gửi email xác nhận đơn hàng tức thì.',
+    title: 'Thanh toán & Thông báo',
+    desc: 'Nhận diện chuyển khoản tự động và gửi email đơn hàng tức thì.',
   },
   {
     icon: Users,
-    title: 'Vận hành phi lợi nhuận',
-    desc: '100% giao dịch trên sàn được miễn phí trung gian (0% phí) để anh em chơi âm thanh giao lưu an toàn.',
+    title: 'Vận hành 0% phí',
+    desc: 'Miễn phí 100% giao dịch trung gian cho cộng đồng chơi âm thanh.',
   },
 ] as const;
 
 export default function Support() {
-  useDocumentTitle('Ủng hộ duy trì sàn');
+  useDocumentTitle('Ủng hộ sàn');
   const [selectedPreset, setSelectedPreset] = useState<number | null>(50_000);
   const [customAmount, setCustomAmount] = useState('');
   const [senderNote, setSenderNote] = useState('');
@@ -76,16 +76,13 @@ export default function Support() {
     <div className="mx-auto max-w-4xl space-y-6">
       <header className="card space-y-3 p-5 sm:p-6">
         <div className="inline-flex items-center gap-1.5 rounded border border-blue-200 bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700 dark:border-blue-900 dark:bg-blue-950/60 dark:text-blue-300">
-          <Heart size={14} strokeWidth={1.75} /> 0% Phí Trung Gian · Của Cộng Đồng, Vì Cộng Đồng
+          <Heart size={14} strokeWidth={1.75} /> 0% Phí · Của Cộng Đồng, Vì Cộng Đồng
         </div>
         <h1 className="text-xl font-semibold tracking-tight text-neutral-950 dark:text-neutral-50 sm:text-2xl">
           Ủng hộ duy trì {BRAND_NAME}
         </h1>
         <p className="max-w-2xl text-sm leading-relaxed text-neutral-600 dark:text-neutral-400">
-          Từ phiên bản v2.0, {BRAND_NAME} hoạt động hoàn toàn phi lợi nhuận với mức{' '}
-          <strong className="font-semibold text-neutral-900 dark:text-neutral-100">0% phí giao dịch</strong> cho tất cả
-          thành viên cộng đồng Hội người Việt nghiện tai nghe. Mọi đóng góp tự nguyện giúp trang trải chi phí hạ tầng
-          để sân chơi luôn ổn định và miễn phí.
+          {BRAND_NAME} hoạt động phi lợi nhuận với <strong className="font-semibold text-neutral-900 dark:text-neutral-100">0% phí giao dịch</strong>. Mọi đóng góp tự nguyện giúp duy trì máy chủ để sàn luôn ổn định và miễn phí.
         </p>
       </header>
 
@@ -94,10 +91,10 @@ export default function Support() {
           <div className="space-y-1">
             <h2 className="flex items-center gap-2 text-base font-semibold text-neutral-950 dark:text-neutral-50">
               <Sparkles size={17} strokeWidth={1.75} className="text-blue-700 dark:text-blue-400" />
-              Chọn mức đóng góp tùy tâm
+              Chọn mức ủng hộ
             </h2>
             <p className="text-xs text-neutral-500 dark:text-neutral-400">
-              Chọn nhanh một mức gợi ý, nhập số tiền khác hoặc bỏ trống để tự nhập trên app ngân hàng.
+              Chọn mức gợi ý, nhập số tiền khác hoặc tự nhập trên ứng dụng ngân hàng.
             </p>
           </div>
 
@@ -136,7 +133,7 @@ export default function Support() {
           </div>
 
           {selectedPreset === null && (
-            <Field label="Số tiền ủng hộ (VNĐ)" htmlFor="support-amount" hint="Bỏ trống nếu bạn muốn tự nhập số tiền khi quét QR.">
+            <Field label="Số tiền ủng hộ (VNĐ)" htmlFor="support-amount" hint="Bỏ trống nếu muốn tự nhập khi quét QR.">
               <div className="relative">
                 <input
                   id="support-amount"
@@ -152,15 +149,15 @@ export default function Support() {
           )}
 
           <Field
-            label="Tên / Lời nhắn ngắn (không bắt buộc)"
+            label="Lời nhắn (không bắt buộc)"
             htmlFor="support-note"
-            hint={`Nội dung chuyển khoản sẽ là: ${transferContent}`}
+            hint={`Nội dung chuyển khoản: ${transferContent}`}
           >
             <input
               id="support-note"
               className="input"
               maxLength={30}
-              placeholder="Ví dụ: Ten Facebook hoac nickname"
+              placeholder="Ví dụ: Tên của bạn"
               value={senderNote}
               onChange={(e) => setSenderNote(e.target.value)}
             />
@@ -189,18 +186,16 @@ export default function Support() {
               Mã VietQR ủng hộ
             </h2>
             <p className="text-xs text-neutral-500 dark:text-neutral-400">
-              Quét bằng bất kỳ ứng dụng ngân hàng hoặc ví điện tử nào hỗ trợ VietQR.
+              Quét bằng ứng dụng ngân hàng hoặc ví điện tử.
             </p>
           </div>
 
           {conflictsWithEscrow ? (
             <div className="w-full space-y-3 py-4">
               <Alert kind="error">
-                <p className="font-semibold">Trùng số tài khoản Escrow ({ESCROW_ACCOUNT.accountNo})</p>
+                <p className="font-semibold">Tài khoản ủng hộ đang trùng tài khoản trung gian</p>
                 <p className="mt-1 text-xs leading-relaxed">
-                  Không dùng chung tài khoản Escrow đang gắn SePay Webhook cho mục ủng hộ. Hãy đổi{' '}
-                  <code className="rounded bg-red-100 px-1 py-0.5 font-mono text-[11px] dark:bg-red-900">VITE_SUPPORT_ACCOUNT_NO</code>{' '}
-                  sang tài khoản ngân hàng khác.
+                  Vui lòng cấu hình tài khoản ủng hộ khác với tài khoản giữ tiền trung gian.
                 </p>
               </Alert>
             </div>
@@ -209,11 +204,7 @@ export default function Support() {
               <Alert kind="info">
                 <p className="font-semibold">Chưa cấu hình tài khoản nhận ủng hộ</p>
                 <p className="mt-1 text-xs leading-relaxed">
-                  Điền các biến{' '}
-                  <code className="rounded bg-neutral-100 px-1 py-0.5 font-mono text-[11px] dark:bg-neutral-800">VITE_SUPPORT_BANK_BIN</code>,{' '}
-                  <code className="rounded bg-neutral-100 px-1 py-0.5 font-mono text-[11px] dark:bg-neutral-800">VITE_SUPPORT_ACCOUNT_NO</code> và{' '}
-                  <code className="rounded bg-neutral-100 px-1 py-0.5 font-mono text-[11px] dark:bg-neutral-800">VITE_SUPPORT_ACCOUNT_NAME</code>{' '}
-                  (hoặc sửa trực tiếp trong <code className="rounded bg-neutral-100 px-1 py-0.5 font-mono text-[11px] dark:bg-neutral-800">src/constants/support.ts</code>).
+                  Tài khoản nhận ủng hộ đang được cập nhật.
                 </p>
               </Alert>
             </div>
@@ -222,7 +213,7 @@ export default function Support() {
               <div className="rounded-lg border border-neutral-200 bg-white p-3 dark:border-neutral-800">
                 <img
                   src={qrUrl}
-                  alt="Mã VietQR ủng hộ duy trì VAHA Market"
+                  alt="Mã VietQR ủng hộ VAHA Market"
                   className="mx-auto h-auto w-60 max-w-full object-contain"
                 />
               </div>
@@ -236,7 +227,7 @@ export default function Support() {
                   <dt className="text-neutral-500 dark:text-neutral-400">Số tài khoản</dt>
                   <dd className="flex items-center gap-1.5 font-mono font-medium text-neutral-900 dark:text-neutral-100">
                     <span>{SUPPORT_ACCOUNT.accountNo}</span>
-                    <CopyButton value={SUPPORT_ACCOUNT.accountNo} label="Copy" />
+                    <CopyButton value={SUPPORT_ACCOUNT.accountNo} label="Chép" />
                   </dd>
                 </div>
                 <div className="flex items-center justify-between gap-2 px-3 py-2">
@@ -249,7 +240,7 @@ export default function Support() {
                   <dt className="text-neutral-500 dark:text-neutral-400">Nội dung CK</dt>
                   <dd className="flex items-center gap-1.5 font-mono font-medium text-blue-700 dark:text-blue-400">
                     <span className="max-w-[160px] truncate">{transferContent}</span>
-                    <CopyButton value={transferContent} label="Copy" />
+                    <CopyButton value={transferContent} label="Chép" />
                   </dd>
                 </div>
               </dl>
@@ -258,11 +249,11 @@ export default function Support() {
 
           <div className="flex w-full flex-wrap items-center justify-center gap-3 border-t border-neutral-200 pt-3 text-xs text-neutral-500 dark:border-neutral-800 dark:text-neutral-400">
             <Link to="/" className="font-medium text-blue-700 hover:underline dark:text-blue-400">
-              Quay lại sàn
+              Về trang chủ
             </Link>
             <span>·</span>
             <a href={GROUP_URL} target="_blank" rel="noopener noreferrer" className="hover:underline">
-              Group Facebook
+              Nhóm Facebook
             </a>
             <span>·</span>
             <a href={DISCORD_SERVER_URL} target="_blank" rel="noopener noreferrer" className="hover:underline">

@@ -6,7 +6,7 @@ const BASE_TITLE = 'VAHA Market';
 export function useDocumentTitle(title?: string | null) {
   useEffect(() => {
     const clean = title?.trim();
-    document.title = clean ? `${clean} — ${BASE_TITLE}` : `${BASE_TITLE} — Sàn Giao Dịch Trung Gian Thiết Bị Âm Thanh`;
+    document.title = clean ? `${clean} — ${BASE_TITLE}` : `${BASE_TITLE} — Sàn Trung Gian Âm Thanh 0% Phí`;
     return () => {
       document.title = BASE_TITLE;
     };

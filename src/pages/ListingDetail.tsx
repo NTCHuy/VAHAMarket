@@ -20,6 +20,7 @@ import { cldUrl } from '@/lib/cloudinary';
 import { calcFees, formatVND, getDisplayPrice } from '@/lib/money';
 import { createOrder, getSellerFacebook } from '@/lib/orders';
 import { getErrorMessage } from '@/lib/errors';
+import { isUuid, safeCloudinaryUrl, safeHttpUrl } from '@/lib/url';
 import { getBoxStatusLabel, getCategory, getConditionLabel } from '@/constants/categories';
 import { Alert, Avatar, Field } from '@/components/ui';
 import { ListingDetailSkeleton } from '@/components/Skeletons';
@@ -32,10 +33,10 @@ import { usePlatformSettings } from '@/context/PlatformSettingsContext';
 import type { BankAccount, Listing, Profile } from '@/types';
 
 const STATUS_TEXT: Partial<Record<Listing['status'], string>> = {
-  pending_review: 'Tin đang chờ Admin duyệt nên chưa hiển thị công khai.',
-  rejected: 'Tin bị từ chối. Mở “Sửa tin” để xem lý do và gửi duyệt lại.',
-  draft: 'Tin đang ở trạng thái nháp, chỉ mình bạn nhìn thấy.',
-  hidden: 'Tin đang bị ẩn, chỉ mình bạn nhìn thấy.',
+  pending_review: 'Tin đang chờ duyệt, chưa hiển thị công khai.',
+  rejected: 'Tin chưa được duyệt. Bấm "Sửa tin" để xem lý do và gửi lại.',
+  draft: 'Tin nháp, chỉ mình bạn thấy.',
+  hidden: 'Tin đang ẩn, chỉ mình bạn thấy.',
 };
 
 const PHONE_RE = /^[0-9+ ]{8,15}$/;
@@ -58,6 +59,11 @@ export default function ListingDetail() {
 
   useEffect(() => {
     if (!id) return;
+    if (!isUuid(id)) {
+      setListing(null);
+      setLoading(false);
+      return;
+    }
     let alive = true;
     setLoading(true);
     setError(null);
@@ -138,12 +144,14 @@ export default function ListingDetail() {
     ...(listing.brand ? [{ label: 'Thương hiệu', value: listing.brand }] : []),
     { label: 'Tình trạng', value: getConditionLabel(listing.condition) },
     { label: 'Hộp & phụ kiện', value: getBoxStatusLabel(listing.box_status) },
-    { label: 'Giao dịch trực tiếp', value: listing.province ?? 'Không (chỉ gửi hàng)' },
-    { label: 'Ship COD', value: listing.ship_cod ? 'Có — người mua trả phí ship cho bưu tá' : 'Không' },
+    { label: 'Gặp trực tiếp', value: listing.province ?? 'Không (chỉ gửi hàng)' },
+    { label: 'Gửi hàng', value: listing.ship_cod ? 'Có — người mua trả phí giao hàng' : 'Không' },
     { label: 'Ngày đăng', value: new Date(listing.created_at).toLocaleDateString('vi-VN') },
   ];
 
   const shareUrl = `${window.location.origin}/listing/${listing.id}`;
+  const safeVerificationUrl = safeCloudinaryUrl(listing.verification_image_url);
+  const safeFacebookUrl = safeHttpUrl(facebook);
 
   const handleCopyShare = async (mode: 'link' | 'snippet') => {
     const content =
@@ -254,20 +262,22 @@ export default function ListingDetail() {
               </div>
             ) : (
               <div className="space-y-2.5 p-3">
-                <a
-                  href={listing.verification_image_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block aspect-[4/3] w-full overflow-hidden rounded-md bg-neutral-100 dark:bg-neutral-950"
-                >
-                  <img
-                    src={cldUrl(listing.verification_image_url, { width: 1200 })}
-                    alt="Ảnh xác thực viết tay chính chủ"
-                    className="h-full w-full object-contain"
-                  />
-                </a>
+                {safeVerificationUrl && (
+                  <a
+                    href={safeVerificationUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block aspect-[4/3] w-full overflow-hidden rounded-md bg-neutral-100 dark:bg-neutral-950"
+                  >
+                    <img
+                      src={cldUrl(safeVerificationUrl, { width: 1200 })}
+                      alt="Ảnh xác thực viết tay chính chủ"
+                      className="h-full w-full object-contain"
+                    />
+                  </a>
+                )}
                 <p className="text-xs text-neutral-600 dark:text-neutral-400">
-                  Ảnh chụp thực tế sản phẩm cạnh giấy viết tay ghi &ldquo;VAHA + ngày đăng + tên Facebook&rdquo; đã qua kiểm duyệt.
+                  Ảnh sản phẩm kèm giấy viết tay ghi &ldquo;VAHA + ngày + tên Facebook&rdquo; đã được duyệt.
                 </p>
               </div>
             )}
@@ -324,12 +334,12 @@ export default function ListingDetail() {
                 )}
                 {listing.ship_cod && (
                   <span className="badge gap-1">
-                    <Truck size={12} strokeWidth={1.75} /> Ship COD
+                    <Truck size={12} strokeWidth={1.75} /> Gửi hàng toàn quốc
                   </span>
                 )}
                 {listing.verification_image_url && (
                   <span className="badge gap-1 border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/50 dark:text-emerald-400">
-                    <BadgeCheck size={12} strokeWidth={1.75} /> Ảnh viết tay chính chủ
+                    <BadgeCheck size={12} strokeWidth={1.75} /> Ảnh xác thực
                   </span>
                 )}
               </div>
@@ -342,7 +352,7 @@ export default function ListingDetail() {
                 total={fees.buyerPays}
                 feePayer={listing.fee_payer}
                 feeRateBp={fees.feeRateBp}
-                waivedReason={sellerIsMod ? 'Mod Group' : undefined}
+                waivedReason={sellerIsMod ? 'Mod' : undefined}
                 isFeeCapped={fees.isFeeCapped}
                 feeCapVnd={fees.feeCapVnd}
                 feeSavedAmount={fees.feeSavedAmount}
@@ -352,18 +362,18 @@ export default function ListingDetail() {
             {/* Hành động mua */}
             {listing.status !== 'active' ? (
               <Alert kind="info">
-                {isOwner ? STATUS_TEXT[listing.status] ?? `Tin đang ở trạng thái “${listing.status}”.` : 'Sản phẩm này hiện không còn mở bán.'}
+                {isOwner ? STATUS_TEXT[listing.status] ?? `Trạng thái: ${listing.status}.` : 'Sản phẩm không còn mở bán.'}
               </Alert>
             ) : isOwner ? (
               <div className="space-y-2">
-                <Alert kind="info">Đây là tin đăng của bạn.</Alert>
+                <Alert kind="info">Đây là tin của bạn.</Alert>
                 <Link to={`/sell/${listing.id}/edit`} className="btn-secondary w-full">
-                  Chỉnh sửa tin đăng
+                  Sửa tin
                 </Link>
               </div>
             ) : !listing.ship_cod ? (
               <Alert kind="info">
-                Tin chỉ giao dịch trực tiếp{listing.province ? ` tại ${listing.province}` : ''}. Liên hệ người bán qua Facebook bên dưới.
+                Tin chỉ gặp trực tiếp{listing.province ? ` tại ${listing.province}` : ''}. Xem Facebook người bán bên dưới.
               </Alert>
             ) : (
               <div className="space-y-2">
@@ -373,14 +383,14 @@ export default function ListingDetail() {
                   onClick={() => (user ? setBuyOpen(true) : void signIn())}
                 >
                   <ShieldCheck size={17} strokeWidth={1.75} />
-                  {user ? 'Đặt mua qua bảo lãnh sàn' : 'Đăng nhập để đặt mua qua bảo lãnh sàn'}
+                  {user ? 'Đặt mua qua trung gian' : 'Đăng nhập để đặt mua'}
                 </button>
                 <p className="text-center text-xs text-neutral-500 dark:text-neutral-400">
-                  Bằng việc đặt mua, bạn đồng ý với{' '}
+                  Đặt mua đồng nghĩa đồng ý với{' '}
                   <Link to="/terms" className="font-medium text-blue-700 hover:underline dark:text-blue-400">
-                    Điều khoản dịch vụ
-                  </Link>{' '}
-                  của VAHA Market.
+                    Điều khoản sử dụng
+                  </Link>
+                  .
                 </p>
               </div>
             )}
@@ -399,26 +409,26 @@ export default function ListingDetail() {
                     {seller.is_mod && <ModBadge />}
                   </p>
                   <p className="text-xs tabular-nums text-neutral-500 dark:text-neutral-400">
-                    Hoàn tất <strong className="text-neutral-800 dark:text-neutral-200">{seller.sold_count}</strong> đơn bán · Đã đối chiếu FB &amp; Ngân hàng
+                    Đã bán <strong className="text-neutral-800 dark:text-neutral-200">{seller.sold_count}</strong> đơn · Đã đối chiếu FB &amp; NH
                   </p>
                 </div>
               </div>
-              {facebook ? (
+              {safeFacebookUrl ? (
                 <a
-                  href={facebook}
+                  href={safeFacebookUrl}
                   target="_blank"
                   rel="noopener noreferrer nofollow"
                   className="btn-secondary w-full text-xs"
                 >
-                  Kiểm tra Facebook người bán <ExternalLink size={13} strokeWidth={1.75} />
+                  Xem Facebook người bán <ExternalLink size={13} strokeWidth={1.75} />
                 </a>
               ) : (
-                <p className="text-xs text-neutral-500 dark:text-neutral-400">Chưa có link Facebook công khai.</p>
+                <p className="text-xs text-neutral-500 dark:text-neutral-400">Chưa có Facebook công khai.</p>
               )}
             </div>
           )}
 
-          {/* Chia sẻ nhanh lên cộng đồng / Discord / Messenger */}
+          {/* Chia sẻ nhanh */}
           <div className="card space-y-2 p-4">
             <p className="flex items-center gap-1.5 text-xs font-semibold text-neutral-900 dark:text-neutral-100">
               <Share2 size={14} strokeWidth={1.75} className="text-blue-700 dark:text-blue-400" />
@@ -431,7 +441,7 @@ export default function ListingDetail() {
                 className="btn-secondary h-8 px-2.5 text-xs"
               >
                 {copiedMode === 'link' ? <Check size={14} strokeWidth={2} className="text-emerald-600" /> : <Copy size={14} strokeWidth={1.75} />}
-                {copiedMode === 'link' ? 'Đã chép link' : 'Chép link'}
+                {copiedMode === 'link' ? 'Đã chép' : 'Chép liên kết'}
               </button>
               <button
                 type="button"
@@ -439,13 +449,13 @@ export default function ListingDetail() {
                 className="btn-secondary h-8 px-2.5 text-xs"
               >
                 {copiedMode === 'snippet' ? <Check size={14} strokeWidth={2} className="text-emerald-600" /> : <Share2 size={14} strokeWidth={1.75} />}
-                {copiedMode === 'snippet' ? 'Đã chép mẫu' : 'Mẫu chia sẻ'}
+                {copiedMode === 'snippet' ? 'Đã chép' : 'Mẫu chia sẻ'}
               </button>
             </div>
           </div>
 
           <p className="px-1 text-xs leading-relaxed text-neutral-500 dark:text-neutral-400">
-            Bắt buộc quay video mở hộp liền mạch 6 mặt khi nhận hàng để làm căn cứ đối soát. Không chuyển khoản riêng ngoài mã QR trên đơn.
+            Quay video mở hộp đủ 6 mặt khi nhận hàng. Chỉ chuyển khoản qua mã QR trên đơn.
           </p>
         </aside>
       </div>
@@ -570,7 +580,7 @@ export default function ListingDetail() {
               className="btn-primary shrink-0 px-4 py-2.5 text-xs font-semibold sm:text-sm"
             >
               <ShieldCheck size={16} strokeWidth={1.75} />
-              {user ? 'Đặt mua bảo lãnh' : 'Đăng nhập để mua'}
+              {user ? 'Đặt mua' : 'Đăng nhập để mua'}
             </button>
           </div>
         </div>
@@ -685,26 +695,26 @@ function BuyDialog({ listing, buyerPays, onClose }: { listing: Listing; buyerPay
 
         {bankLoading ? (
           <div className="flex items-center gap-2 rounded-md border border-neutral-200 bg-neutral-50 px-3 py-2 text-xs text-neutral-500 dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-400">
-            <Loader2 size={14} className="animate-spin" /> Đang kiểm tra tài khoản ngân hàng nhận hoàn tiền...
+            <Loader2 size={14} className="animate-spin" /> Đang kiểm tra tài khoản ngân hàng...
           </div>
         ) : !buyerBank ? (
           <Alert kind="error">
-            <p className="font-medium">Bạn chưa lưu tài khoản ngân hàng.</p>
+            <p className="font-medium">Chưa có tài khoản ngân hàng.</p>
             <p className="mt-0.5 text-xs">
-              Cần ít nhất 1 tài khoản ngân hàng trong hồ sơ để sàn hoàn tiền tự động nếu người bán hủy đơn hoặc quá hạn gửi hàng 48h.{' '}
+              Cần lưu 1 tài khoản ngân hàng để nhận hoàn tiền nếu đơn bị hủy.{' '}
               <Link to="/settings" className="font-semibold underline">
-                Thêm tài khoản ngân hàng ngay
+                Thêm ngay
               </Link>
             </p>
           </Alert>
         ) : (
           <div className="rounded-md border border-neutral-200 bg-neutral-50 px-3 py-2 text-xs text-neutral-700 dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-300">
-            <span className="font-medium text-neutral-900 dark:text-neutral-100">TK nhận hoàn tiền (nếu hủy đơn):</span>{' '}
+            <span className="font-medium text-neutral-900 dark:text-neutral-100">Tài khoản nhận hoàn tiền:</span>{' '}
             {buyerBank.bank_name} · <span className="font-mono">{buyerBank.account_number}</span> · {buyerBank.account_name}
           </div>
         )}
 
-        {missing && <Alert kind="info">Điền SĐT và địa chỉ nhận hàng bên dưới để tiếp tục.</Alert>}
+        {missing && <Alert kind="info">Nhập SĐT và địa chỉ nhận hàng bên dưới.</Alert>}
 
         <Field label="Tên người nhận" htmlFor="b-name" required error={errors.name}>
           <input id="b-name" className="input" value={name} maxLength={80} onChange={(e) => setName(e.target.value)} />
@@ -715,21 +725,21 @@ function BuyDialog({ listing, buyerPays, onClose }: { listing: Listing; buyerPay
         <Field label="Địa chỉ nhận hàng" htmlFor="b-address" required error={errors.address}>
           <textarea id="b-address" rows={2} className="input" value={address} maxLength={400} onChange={(e) => setAddress(e.target.value)} />
         </Field>
-        <Field label="Ghi chú cho người bán" htmlFor="b-note" hint="Không bắt buộc.">
+        <Field label="Ghi chú" htmlFor="b-note" hint="Không bắt buộc.">
           <input id="b-note" className="input" value={note} maxLength={500} onChange={(e) => setNote(e.target.value)} />
         </Field>
 
         <label className="flex items-center gap-2 text-xs text-neutral-700 dark:text-neutral-300">
           <input type="checkbox" checked={saveProfile} onChange={(e) => setSaveProfile(e.target.checked)} className="h-4 w-4 rounded border-neutral-300 text-blue-700 dark:border-neutral-700" />
-          Lưu SĐT và địa chỉ này vào hồ sơ
+          Lưu SĐT và địa chỉ vào hồ sơ
         </label>
 
         <div className="rounded-md border border-neutral-200 bg-neutral-50 p-3 text-sm tabular-nums dark:border-neutral-800 dark:bg-neutral-950">
           <div className="flex justify-between">
-            <span className="text-neutral-600 dark:text-neutral-400">Tổng chuyển vào trung gian</span>
+            <span className="text-neutral-600 dark:text-neutral-400">Số tiền chuyển khoản</span>
             <strong className="font-semibold text-neutral-950 dark:text-neutral-50">{formatVND(buyerPays)}</strong>
           </div>
-          <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">Hạn chuyển khoản: 15 phút. Phí ship trả riêng cho bưu tá.</p>
+          <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">Hạn thanh toán: 15 phút. Phí giao hàng trả riêng cho bưu tá.</p>
         </div>
 
         <div>
@@ -738,9 +748,9 @@ function BuyDialog({ listing, buyerPays, onClose }: { listing: Listing; buyerPay
             <span>
               Tôi đồng ý với{' '}
               <Link to="/terms" target="_blank" rel="noopener noreferrer" className="font-medium text-blue-700 hover:underline dark:text-blue-400">
-                Điều khoản dịch vụ
+                Điều khoản sử dụng
               </Link>{' '}
-              và cam kết <strong>quay video mở hộp liền mạch 6 mặt</strong> khi nhận hàng.
+              và sẽ <strong>quay video mở hộp đủ 6 mặt</strong> khi nhận hàng.
             </span>
           </label>
           {errors.agree && <p className="mt-1 text-xs text-red-600 dark:text-red-400">{errors.agree}</p>}

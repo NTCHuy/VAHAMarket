@@ -5,3 +5,4 @@ Disallow: /orders
 Disallow: /my-listings
 Disallow: /settings
 Disallow: /sell
+Disallow: /create-listing

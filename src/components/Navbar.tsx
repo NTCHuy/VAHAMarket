@@ -33,9 +33,9 @@ const navLinkClass = ({ isActive }: { isActive: boolean }) =>
   }`;
 
 const THEME_LABEL: Record<ThemeMode, string> = {
-  light: 'Giao diện Sáng (bấm để chuyển Tối)',
-  dark: 'Giao diện Tối (bấm để chuyển Theo hệ thống)',
-  system: 'Giao diện Theo hệ thống (bấm để chuyển Sáng)',
+  light: 'Chế độ Sáng (chuyển sang Tối)',
+  dark: 'Chế độ Tối (chuyển sang Hệ thống)',
+  system: 'Theo hệ thống (chuyển sang Sáng)',
 };
 
 function ThemeToggleButton() {
@@ -57,9 +57,7 @@ function ThemeToggleButton() {
 function NotificationToggleButton() {
   const { browserSupported, browserEnabled, toggleBrowserNotifications } = useNotifications();
   if (!browserSupported) return null;
-  const label = browserEnabled
-    ? 'Đang bật thông báo đẩy trình duyệt (bấm để tắt)'
-    : 'Bật thông báo đẩy trình duyệt khi có đơn hàng mới';
+  const label = browserEnabled ? 'Tắt thông báo trình duyệt' : 'Bật thông báo trình duyệt';
 
   return (
     <button
@@ -150,7 +148,7 @@ export default function Navbar() {
             <img src="/logo.png" alt="VAHA Market" className="h-7 w-7 rounded-md object-cover" />
             <span className="text-sm font-bold tracking-wider">VAHA MARKET</span>
             <span className="hidden rounded border border-emerald-200 bg-emerald-50 px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wider text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 sm:inline-block">
-              0% FEE
+              0% PHÍ
             </span>
           </Link>
 
@@ -176,7 +174,7 @@ export default function Navbar() {
             </NavLink>
             {isAdmin && (
               <NavLink to="/admin" className={navLinkClass}>
-                <Shield size={15} strokeWidth={1.75} /> Admin
+                <Shield size={15} strokeWidth={1.75} /> Quản trị
               </NavLink>
             )}
           </nav>
@@ -230,7 +228,7 @@ export default function Navbar() {
                       to="/settings"
                       className="flex items-center gap-2 px-3 py-2 text-sm text-neutral-700 hover:bg-neutral-50 dark:text-neutral-200 dark:hover:bg-neutral-800"
                     >
-                      <Settings size={15} strokeWidth={1.75} className="text-neutral-400" /> Cài đặt tài khoản
+                      <Settings size={15} strokeWidth={1.75} className="text-neutral-400" /> Cài đặt
                     </Link>
                     <button
                       role="menuitem"
@@ -252,7 +250,7 @@ export default function Navbar() {
             <button
               type="button"
               onClick={() => setMobileOpen((v) => !v)}
-              aria-label={mobileOpen ? 'Đóng menu' : 'Mở menu'}
+              aria-label={mobileOpen ? 'Đóng danh mục' : 'Mở danh mục'}
               aria-expanded={mobileOpen}
               className="btn-ghost relative h-8 w-8 px-0 md:hidden"
             >
@@ -273,11 +271,9 @@ export default function Navbar() {
             )}
             <div className="flex flex-col gap-0.5">
               <NavLink to="/" end className={navLinkClass}>Khám phá</NavLink>
-              <NavLink to="/transparency" className={navLinkClass}>
-                Minh bạch dòng tiền
-              </NavLink>
+              <NavLink to="/transparency" className={navLinkClass}>Minh bạch</NavLink>
               <NavLink to="/support" className={navLinkClass}>
-                <Heart size={15} strokeWidth={1.9} className="text-rose-500" /> Ủng hộ duy trì sàn
+                <Heart size={15} strokeWidth={1.9} className="text-rose-500" /> Ủng hộ
               </NavLink>
               {user ? (
                 <>
@@ -290,8 +286,8 @@ export default function Navbar() {
                   </div>
                   <NavLink to="/orders" className={navLinkClass}>Đơn hàng <CountBadge count={alerts.total} /></NavLink>
                   <NavLink to="/my-listings" className={navLinkClass}>Tin của tôi</NavLink>
-                  {isAdmin && <NavLink to="/admin" className={navLinkClass}><Shield size={15} strokeWidth={1.75} /> Admin</NavLink>}
-                  <NavLink to="/settings" className={navLinkClass}>Cài đặt tài khoản</NavLink>
+                  {isAdmin && <NavLink to="/admin" className={navLinkClass}><Shield size={15} strokeWidth={1.75} /> Quản trị</NavLink>}
+                  <NavLink to="/settings" className={navLinkClass}>Cài đặt</NavLink>
                   <button
                     type="button"
                     onClick={handleSignOut}
@@ -302,7 +298,7 @@ export default function Navbar() {
                 </>
               ) : (
                 <button type="button" onClick={handleSignIn} disabled={signingIn} className="btn-secondary mt-2 w-full">
-                  <LogIn size={16} strokeWidth={1.75} /> Đăng nhập với Google
+                  <LogIn size={16} strokeWidth={1.75} /> Đăng nhập Google
                 </button>
               )}
             </div>

@@ -12,7 +12,17 @@ const GMAIL_USER = Deno.env.get('GMAIL_USER') ?? '';
 const GMAIL_APP_PASSWORD = (Deno.env.get('GMAIL_APP_PASSWORD') ?? '').replace(/\s+/g, '');
 const SITE_URL = (Deno.env.get('SITE_URL') ?? 'https://vahamarket.vercel.app').replace(/\/+$/, '');
 
-const EMAIL_FOOTER_REASON = 'Bạn nhận được email này do có hoạt động giao dịch hoặc tin đăng trên VAHA Market.';
+const EMAIL_FOOTER_REASON = 'Email tự động từ VAHA Market khi có cập nhật đơn hàng hoặc tin đăng.';
+const EMAIL_RE = /^[^\s@,;<>()[\]\\]+@[^\s@,;<>()[\]\\]+\.[^\s@,;<>()[\]\\]+$/;
+const VALID_EVENTS = new Set<EmailEvent>([
+  'ORDER_PAID',
+  'ORDER_SHIPPED',
+  'ORDER_COMPLETED',
+  'PAYOUT_DONE',
+  'LISTING_REVIEWED',
+  'ORDER_REFUND_REQUESTED',
+  'ORDER_REFUND_COMPLETED',
+]);
 
 type EmailEvent =
   | 'ORDER_PAID'
@@ -42,20 +52,30 @@ interface EmailPayload {
   reference?: string;
   reviewStatus?: 'active' | 'rejected';
   rejectionReason?: string;
-  isFeeCapped?: boolean;
-  feeCapVnd?: number;
-  feeSavedAmount?: number;
   cancelReason?: string;
   adminNote?: string;
 }
 
 const json = (body: unknown, status = 200) =>
-  new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
+  new Response(JSON.stringify(body), {
+    status,
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Content-Type-Options': 'nosniff',
+    },
+  });
 
-function safeEqual(a: string, b: string): boolean {
-  if (!a || a.length !== b.length) return false;
+async function safeEqual(a: string, b: string): Promise<boolean> {
+  if (!a || !b) return false;
+  const enc = new TextEncoder();
+  const [ha, hb] = await Promise.all([
+    crypto.subtle.digest('SHA-256', enc.encode(a)),
+    crypto.subtle.digest('SHA-256', enc.encode(b)),
+  ]);
+  const va = new Uint8Array(ha);
+  const vb = new Uint8Array(hb);
   let diff = 0;
-  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  for (let i = 0; i < va.length; i++) diff |= va[i] ^ vb[i];
   return diff === 0;
 }
 
@@ -66,6 +86,21 @@ function escapeHtml(input: string): string {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
+}
+
+function cleanHeaderLine(input: string): string {
+  return input.replace(/[\r\n]+/g, ' ').trim();
+}
+
+function toSafeHttpUrl(raw?: string): string | null {
+  if (!raw) return null;
+  try {
+    const u = new URL(raw.trim());
+    if (u.protocol === 'https:' || u.protocol === 'http:') return u.toString();
+  } catch {
+    // invalid URL
+  }
+  return null;
 }
 
 function formatVnd(value?: number): string {
@@ -86,39 +121,37 @@ function renderLayout(opts: {
   return `<!doctype html>
 <html lang="vi">
   <head><meta charset="utf-8" /></head>
-  <body style="margin:0;padding:0;background-color:#f8fafc;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#0f172a;">
-    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color:#f8fafc;padding:24px 12px;">
+  <body style="margin:0;padding:0;background-color:#f5f5f5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#171717;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color:#f5f5f5;padding:24px 12px;">
       <tr>
         <td align="center">
-          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px;background-color:#ffffff;border:1px solid #e2e8f0;border-radius:16px;overflow:hidden;">
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px;background-color:#ffffff;border:1px solid #e5e5e5;border-radius:12px;overflow:hidden;">
             <tr>
-              <td style="background-color:#1d3bc5;padding:18px 24px;color:#ffffff;">
+              <td style="background-color:#1d4ed8;padding:18px 24px;color:#ffffff;">
                 <div style="font-size:18px;font-weight:700;letter-spacing:-0.01em;">VAHA Market</div>
-                <div style="font-size:12px;color:#dbe6fe;margin-top:2px;">Sàn giao dịch trung gian bảo lãnh cộng đồng âm thanh Việt Nam</div>
+                <div style="font-size:12px;color:#dbeafe;margin-top:2px;">Sàn trung gian âm thanh 0% phí của cộng đồng</div>
               </td>
             </tr>
             <tr>
               <td style="padding:24px;">
-                <span style="display:inline-block;padding:4px 10px;border-radius:999px;font-size:12px;font-weight:600;background-color:${opts.badgeBg};color:${opts.badgeColor};">
+                <span style="display:inline-block;padding:4px 10px;border-radius:6px;font-size:12px;font-weight:600;background-color:${opts.badgeBg};color:${opts.badgeColor};">
                   ${escapeHtml(opts.badgeText)}
                 </span>
-                <h1 style="margin:12px 0 8px;font-size:20px;line-height:1.35;color:#0f172a;">${escapeHtml(opts.heading)}</h1>
-                <p style="margin:0 0 14px;font-size:14px;line-height:1.6;color:#334155;">${escapeHtml(opts.greeting)}</p>
-                <div style="font-size:14px;line-height:1.6;color:#334155;">${opts.bodyHtml}</div>
+                <h1 style="margin:12px 0 8px;font-size:20px;line-height:1.35;color:#171717;">${escapeHtml(opts.heading)}</h1>
+                <p style="margin:0 0 14px;font-size:14px;line-height:1.6;color:#404040;">${escapeHtml(opts.greeting)}</p>
+                <div style="font-size:14px;line-height:1.6;color:#404040;">${opts.bodyHtml}</div>
                 <div style="margin-top:22px;">
-                  <a href="${escapeHtml(opts.ctaUrl)}" style="display:inline-block;background-color:#1d3bc5;color:#ffffff;text-decoration:none;font-size:14px;font-weight:600;padding:11px 20px;border-radius:10px;">
+                  <a href="${escapeHtml(opts.ctaUrl)}" style="display:inline-block;background-color:#1d4ed8;color:#ffffff;text-decoration:none;font-size:14px;font-weight:600;padding:11px 20px;border-radius:8px;">
                     ${escapeHtml(opts.ctaLabel)}
                   </a>
                 </div>
               </td>
             </tr>
             <tr>
-              <td style="border-top:1px solid #e2e8f0;padding:16px 24px;background-color:#f8fafc;font-size:12px;line-height:1.6;color:#64748b;">
+              <td style="border-top:1px solid #e5e5e5;padding:16px 24px;background-color:#fafafa;font-size:12px;line-height:1.6;color:#737373;">
                 <div>${escapeHtml(EMAIL_FOOTER_REASON)}</div>
                 <div style="margin-top:4px;">
-                  Mọi giao dịch đều được bảo vệ theo
-                  <a href="${escapeHtml(SITE_URL)}/terms" style="color:#1d3bc5;text-decoration:underline;">Điều khoản dịch vụ</a>
-                  của <strong>VAHA Market</strong>.
+                  Xem <a href="${escapeHtml(SITE_URL)}/terms" style="color:#1d4ed8;text-decoration:underline;">Điều khoản sử dụng</a> của <strong>VAHA Market</strong>.
                 </div>
               </td>
             </tr>
@@ -138,7 +171,7 @@ function renderPlainText(lines: string[], ctaLabel: string, ctaUrl: string): str
     '',
     '---',
     EMAIL_FOOTER_REASON,
-    `Điều khoản dịch vụ: ${SITE_URL}/terms`,
+    `Điều khoản: ${SITE_URL}/terms`,
   ].join('\n');
 }
 
@@ -148,30 +181,27 @@ function buildEmail(payload: EmailPayload): { subject: string; html: string; tex
   const rawCode = payload.paymentCode?.trim() || '';
   const title = escapeHtml(rawTitle);
   const code = escapeHtml(rawCode);
-  const orderUrl = payload.orderId ? `${SITE_URL}/orders/${payload.orderId}` : `${SITE_URL}/orders`;
-  const feeCapHtml = '';
-  const feeCapText = '';
+  const orderUrl = payload.orderId ? `${SITE_URL}/orders/${encodeURIComponent(payload.orderId)}` : `${SITE_URL}/orders`;
 
   switch (payload.event) {
     case 'ORDER_PAID': {
-      const ctaLabel = 'Mở chi tiết đơn hàng';
+      const ctaLabel = 'Mở đơn hàng';
       return {
-        subject: `[VAHA Market] Bạn có đơn hàng mới đã thanh toán! (${rawCode})`.trim(),
+        subject: cleanHeaderLine(`[VAHA Market] Đơn hàng mới đã thanh toán (${rawCode})`),
         html: renderLayout({
           badgeText: 'Đã thanh toán · Chờ gửi hàng',
-          badgeBg: '#eff4ff',
-          badgeColor: '#1e3a9f',
-          heading: 'Bạn có đơn hàng mới đã thanh toán!',
-          greeting: `Xin chào ${name},`,
+          badgeBg: '#eff6ff',
+          badgeColor: '#1d4ed8',
+          heading: 'Bạn có đơn hàng mới',
+          greeting: `Chào ${name},`,
           bodyHtml: `
-            <p style="margin:0 0 12px;">Người mua đã chuyển khoản thành công cho sản phẩm <strong>${title}</strong>${code ? ` (Mã đơn: <strong>${code}</strong>)` : ''}.</p>
-            <div style="background-color:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:12px 14px;margin-bottom:14px;">
-              <div><strong>Số tiền sàn đang giữ:</strong> ${formatVnd(payload.amount)}</div>
-              <div style="margin-top:4px;"><strong>Thực nhận dự kiến sau khi hoàn tất:</strong> <span style="color:#047857;font-weight:700;">${formatVnd(payload.sellerPayout)}</span></div>
+            <p style="margin:0 0 12px;">Người mua đã chuyển khoản cho sản phẩm <strong>${title}</strong>${code ? ` (Mã: <strong>${code}</strong>)` : ''}.</p>
+            <div style="background-color:#fafafa;border:1px solid #e5e5e5;border-radius:8px;padding:12px 14px;margin-bottom:14px;">
+              <div><strong>Sàn đang giữ:</strong> ${formatVnd(payload.amount)}</div>
+              <div style="margin-top:4px;"><strong>Bạn thực nhận:</strong> <span style="color:#047857;font-weight:700;">${formatVnd(payload.sellerPayout)}</span></div>
             </div>
-            ${feeCapHtml}
-            <div style="background-color:#fffbeb;border:1px solid #fcd34d;border-radius:10px;padding:12px 14px;color:#78350f;font-size:13px;">
-              <strong>Lưu ý quan trọng trước khi gửi hàng:</strong> Vui lòng quay <strong>video test chức năng &amp; đóng gói liền mạch 6 mặt</strong> gói hàng, sau đó cập nhật đơn vị vận chuyển, mã vận đơn và link video lên VAHA Market.
+            <div style="background-color:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:12px 14px;color:#78350f;font-size:13px;">
+              <strong>Lưu ý trước khi gửi:</strong> Quay video kiểm tra hoạt động và đóng gói đủ 6 mặt trong 48 giờ, rồi cập nhật mã vận đơn lên sàn.
             </div>
           `,
           ctaLabel,
@@ -179,12 +209,11 @@ function buildEmail(payload: EmailPayload): { subject: string; html: string; tex
         }),
         text: renderPlainText(
           [
-            `Xin chào ${name},`,
-            `Người mua đã chuyển khoản thành công cho sản phẩm "${rawTitle}"${rawCode ? ` (Mã đơn: ${rawCode})` : ''}.`,
-            `- Số tiền sàn đang giữ: ${formatVnd(payload.amount)}`,
-            `- Thực nhận dự kiến sau khi hoàn tất: ${formatVnd(payload.sellerPayout)}`,
-            ...(feeCapText ? [feeCapText] : []),
-            'Lưu ý: Vui lòng quay video test chức năng & đóng gói liền mạch 6 mặt gói hàng, sau đó cập nhật đơn vị vận chuyển, mã vận đơn và link video lên VAHA Market.',
+            `Chào ${name},`,
+            `Người mua đã thanh toán sản phẩm "${rawTitle}"${rawCode ? ` (Mã: ${rawCode})` : ''}.`,
+            `- Sàn đang giữ: ${formatVnd(payload.amount)}`,
+            `- Bạn thực nhận: ${formatVnd(payload.sellerPayout)}`,
+            'Lưu ý: Quay video kiểm tra và đóng gói đủ 6 mặt trong 48 giờ, rồi cập nhật mã vận đơn lên sàn.',
           ],
           ctaLabel,
           orderUrl,
@@ -195,30 +224,30 @@ function buildEmail(payload: EmailPayload): { subject: string; html: string; tex
     case 'ORDER_SHIPPED': {
       const rawCarrier = payload.carrier?.trim() || 'Chưa cập nhật';
       const rawTracking = payload.trackingCode?.trim() || 'Chưa cập nhật';
-      const rawVideo = payload.packingVideoUrl?.trim() || '';
+      const safeVideo = toSafeHttpUrl(payload.packingVideoUrl);
       const carrier = escapeHtml(rawCarrier);
       const tracking = escapeHtml(rawTracking);
-      const videoLink = rawVideo
-        ? `<div style="margin-top:6px;"><strong>Video test &amp; đóng gói của người bán:</strong> <a href="${escapeHtml(rawVideo)}" style="color:#1d3bc5;">Xem video</a></div>`
+      const videoLink = safeVideo
+        ? `<div style="margin-top:6px;"><strong>Video đóng gói:</strong> <a href="${escapeHtml(safeVideo)}" style="color:#1d4ed8;">Xem video</a></div>`
         : '';
-      const ctaLabel = 'Theo dõi & xác nhận đơn hàng';
+      const ctaLabel = 'Theo dõi đơn hàng';
       return {
-        subject: `[VAHA Market] Đơn hàng của bạn đang được giao! (${rawCode})`.trim(),
+        subject: cleanHeaderLine(`[VAHA Market] Đơn hàng đang giao (${rawCode})`),
         html: renderLayout({
           badgeText: 'Đang giao hàng',
           badgeBg: '#f0f9ff',
           badgeColor: '#0369a1',
-          heading: 'Đơn hàng của bạn đang được giao!',
-          greeting: `Xin chào ${name},`,
+          heading: 'Đơn hàng đang được giao',
+          greeting: `Chào ${name},`,
           bodyHtml: `
-            <p style="margin:0 0 12px;">Người bán đã gửi đi sản phẩm <strong>${title}</strong>${code ? ` (Mã đơn: <strong>${code}</strong>)` : ''}.</p>
-            <div style="background-color:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:12px 14px;margin-bottom:14px;">
+            <p style="margin:0 0 12px;">Người bán đã gửi sản phẩm <strong>${title}</strong>${code ? ` (Mã: <strong>${code}</strong>)` : ''}.</p>
+            <div style="background-color:#fafafa;border:1px solid #e5e5e5;border-radius:8px;padding:12px 14px;margin-bottom:14px;">
               <div><strong>Đơn vị vận chuyển:</strong> ${carrier}</div>
               <div style="margin-top:4px;"><strong>Mã vận đơn:</strong> <code style="font-weight:700;">${tracking}</code></div>
               ${videoLink}
             </div>
-            <div style="background-color:#fffbeb;border:1px solid #fcd34d;border-radius:10px;padding:12px 14px;color:#78350f;font-size:13px;">
-              <strong>Bắt buộc khi nhận hàng:</strong> Hãy quay <strong>video mở hộp liền mạch 6 mặt</strong> từ lúc bưu kiện còn nguyên vẹn chưa cắt băng dính. Đây là căn cứ bắt buộc để VAHA Market giải quyết khiếu nại nếu có sự cố.
+            <div style="background-color:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:12px 14px;color:#78350f;font-size:13px;">
+              <strong>Bắt buộc khi nhận:</strong> Quay video mở hộp liền mạch đủ 6 mặt từ lúc còn nguyên niêm phong để làm bằng chứng nếu có lỗi.
             </div>
           `,
           ctaLabel,
@@ -226,12 +255,12 @@ function buildEmail(payload: EmailPayload): { subject: string; html: string; tex
         }),
         text: renderPlainText(
           [
-            `Xin chào ${name},`,
-            `Người bán đã gửi đi sản phẩm "${rawTitle}"${rawCode ? ` (Mã đơn: ${rawCode})` : ''}.`,
+            `Chào ${name},`,
+            `Người bán đã gửi sản phẩm "${rawTitle}"${rawCode ? ` (Mã: ${rawCode})` : ''}.`,
             `- Đơn vị vận chuyển: ${rawCarrier}`,
             `- Mã vận đơn: ${rawTracking}`,
-            ...(rawVideo ? [`- Video test & đóng gói của người bán: ${rawVideo}`] : []),
-            'Bắt buộc khi nhận hàng: Hãy quay video mở hộp liền mạch 6 mặt từ lúc bưu kiện còn nguyên vẹn chưa cắt băng dính để làm căn cứ giải quyết khiếu nại nếu có sự cố.',
+            ...(safeVideo ? [`- Video đóng gói: ${safeVideo}`] : []),
+            'Bắt buộc khi nhận: Quay video mở hộp liền mạch đủ 6 mặt từ lúc còn nguyên niêm phong.',
           ],
           ctaLabel,
           orderUrl,
@@ -240,26 +269,25 @@ function buildEmail(payload: EmailPayload): { subject: string; html: string; tex
     }
 
     case 'ORDER_COMPLETED': {
-      const ctaLabel = 'Xem trạng thái giải ngân';
+      const ctaLabel = 'Xem đơn hàng';
       const rawAdminNote = payload.adminNote?.trim() || '';
       const adminNoteHtml = rawAdminNote
-        ? `<div style="background-color:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:12px 14px;margin-bottom:14px;font-size:13px;color:#334155;"><strong>Ghi chú xác nhận từ Admin:</strong> ${escapeHtml(rawAdminNote)}</div>`
+        ? `<div style="background-color:#fafafa;border:1px solid #e5e5e5;border-radius:8px;padding:12px 14px;margin-bottom:14px;font-size:13px;color:#404040;"><strong>Ghi chú quản trị viên:</strong> ${escapeHtml(rawAdminNote)}</div>`
         : '';
       return {
-        subject: `[VAHA Market] Đơn hàng đã hoàn tất & mở khóa giải ngân (${rawCode})`.trim(),
+        subject: cleanHeaderLine(`[VAHA Market] Đơn đã hoàn tất, chờ giải ngân (${rawCode})`),
         html: renderLayout({
           badgeText: 'Đã hoàn tất · Chờ giải ngân',
           badgeBg: '#ecfdf5',
           badgeColor: '#047857',
-          heading: rawAdminNote ? 'Admin đã xác nhận giao thành công!' : 'Người mua đã xác nhận nhận hàng!',
-          greeting: `Xin chào ${name},`,
+          heading: rawAdminNote ? 'Đơn hàng đã được xác nhận giao xong' : 'Người mua đã xác nhận nhận hàng',
+          greeting: `Chào ${name},`,
           bodyHtml: `
-            <p style="margin:0 0 12px;">Đơn hàng <strong>${title}</strong>${code ? ` (Mã đơn: <strong>${code}</strong>)` : ''} đã được xác nhận hoàn tất giao nhận.</p>
+            <p style="margin:0 0 12px;">Đơn <strong>${title}</strong>${code ? ` (Mã: <strong>${code}</strong>)` : ''} đã hoàn tất giao nhận.</p>
             ${adminNoteHtml}
-            ${feeCapHtml}
-            <div style="background-color:#ecfdf5;border:1px solid #a7f3d0;border-radius:10px;padding:12px 14px;color:#065f46;">
+            <div style="background-color:#ecfdf5;border:1px solid #a7f3d0;border-radius:8px;padding:12px 14px;color:#065f46;">
               <strong>Số tiền thực nhận:</strong> <span style="font-size:16px;font-weight:700;">${formatVnd(payload.sellerPayout)}</span><br/>
-              <span style="font-size:13px;">Yêu cầu giải ngân đã được mở khóa. Admin VAHA Market sẽ chuyển khoản vào tài khoản ngân hàng bạn đã đăng ký trong thời gian sớm nhất.</span>
+              <span style="font-size:13px;">Sàn sẽ chuyển khoản về tài khoản ngân hàng của bạn sớm nhất.</span>
             </div>
           `,
           ctaLabel,
@@ -267,12 +295,11 @@ function buildEmail(payload: EmailPayload): { subject: string; html: string; tex
         }),
         text: renderPlainText(
           [
-            `Xin chào ${name},`,
-            `Đơn hàng "${rawTitle}"${rawCode ? ` (Mã đơn: ${rawCode})` : ''} đã được xác nhận hoàn tất giao nhận.`,
-            ...(rawAdminNote ? [`- Ghi chú từ Admin: ${rawAdminNote}`] : []),
+            `Chào ${name},`,
+            `Đơn "${rawTitle}"${rawCode ? ` (Mã: ${rawCode})` : ''} đã hoàn tất giao nhận.`,
+            ...(rawAdminNote ? [`- Ghi chú quản trị viên: ${rawAdminNote}`] : []),
             `- Số tiền thực nhận: ${formatVnd(payload.sellerPayout)}`,
-            ...(feeCapText ? [feeCapText] : []),
-            'Yêu cầu giải ngân đã được mở khóa. Admin VAHA Market sẽ chuyển khoản vào tài khoản ngân hàng bạn đã đăng ký trong thời gian sớm nhất.',
+            'Sàn sẽ chuyển khoản về tài khoản ngân hàng của bạn sớm nhất.',
           ],
           ctaLabel,
           orderUrl,
@@ -282,38 +309,38 @@ function buildEmail(payload: EmailPayload): { subject: string; html: string; tex
 
     case 'ORDER_REFUND_REQUESTED': {
       const ctaLabel = 'Xem trạng thái hoàn tiền';
-      const rawReason = payload.cancelReason?.trim() || 'Đơn hàng được hủy theo quy định hoàn tiền của VAHA Market.';
-      const rawBank = payload.bankName?.trim() || 'Tài khoản ngân hàng đã đăng ký';
+      const rawReason = payload.cancelReason?.trim() || 'Đơn hàng đã hủy theo quy định.';
+      const rawBank = payload.bankName?.trim() || 'Tài khoản đã lưu';
       const rawAccNo = payload.accountNumber?.trim() || '';
       const rawAccName = payload.accountName?.trim() || '';
       return {
-        subject: `[VAHA Market] Đơn hàng đã hủy & đang chờ hoàn tiền ${formatVnd(payload.amount)} (${rawCode})`.trim(),
+        subject: cleanHeaderLine(`[VAHA Market] Đơn đã hủy, chờ hoàn ${formatVnd(payload.amount)} (${rawCode})`),
         html: renderLayout({
           badgeText: 'Chờ hoàn tiền',
           badgeBg: '#fffbeb',
           badgeColor: '#92400e',
-          heading: 'Đơn hàng đã chuyển sang chờ hoàn tiền',
-          greeting: `Xin chào ${name},`,
+          heading: 'Đơn hàng đang chờ hoàn tiền',
+          greeting: `Chào ${name},`,
           bodyHtml: `
-            <p style="margin:0 0 12px;">Đơn hàng <strong>${title}</strong>${code ? ` (Mã đơn: <strong>${code}</strong>)` : ''} đã được hủy và đưa vào hàng đợi hoàn tiền.</p>
-            <div style="background-color:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:12px 14px;margin-bottom:14px;">
+            <p style="margin:0 0 12px;">Đơn <strong>${title}</strong>${code ? ` (Mã: <strong>${code}</strong>)` : ''} đã hủy và chuyển sang hàng đợi hoàn tiền.</p>
+            <div style="background-color:#fafafa;border:1px solid #e5e5e5;border-radius:8px;padding:12px 14px;margin-bottom:14px;">
               <div><strong>Lý do:</strong> ${escapeHtml(rawReason)}</div>
-              <div style="margin-top:4px;"><strong>Số tiền hoàn dự kiến:</strong> <span style="color:#1d4ed8;font-weight:700;">${formatVnd(payload.amount)}</span></div>
-              <div style="margin-top:4px;"><strong>Tài khoản nhận hoàn tiền:</strong> ${escapeHtml(rawBank)}${rawAccNo ? ` · <code>${escapeHtml(rawAccNo)}</code>` : ''}${rawAccName ? ` · ${escapeHtml(rawAccName)}` : ''}</div>
+              <div style="margin-top:4px;"><strong>Số tiền hoàn:</strong> <span style="color:#1d4ed8;font-weight:700;">${formatVnd(payload.amount)}</span></div>
+              <div style="margin-top:4px;"><strong>Tài khoản nhận:</strong> ${escapeHtml(rawBank)}${rawAccNo ? ` · <code>${escapeHtml(rawAccNo)}</code>` : ''}${rawAccName ? ` · ${escapeHtml(rawAccName)}` : ''}</div>
             </div>
-            <p style="margin:0;font-size:13px;color:#475569;">Admin VAHA Market sẽ kiểm tra và chuyển khoản hoàn tiền về tài khoản ngân hàng trên trong thời gian sớm nhất.</p>
+            <p style="margin:0;font-size:13px;color:#525252;">Sàn sẽ chuyển khoản hoàn tiền về tài khoản trên sớm nhất.</p>
           `,
           ctaLabel,
           ctaUrl: orderUrl,
         }),
         text: renderPlainText(
           [
-            `Xin chào ${name},`,
-            `Đơn hàng "${rawTitle}"${rawCode ? ` (Mã đơn: ${rawCode})` : ''} đã được hủy và đưa vào hàng đợi hoàn tiền.`,
+            `Chào ${name},`,
+            `Đơn "${rawTitle}"${rawCode ? ` (Mã: ${rawCode})` : ''} đã hủy và chờ hoàn tiền.`,
             `- Lý do: ${rawReason}`,
-            `- Số tiền hoàn dự kiến: ${formatVnd(payload.amount)}`,
-            `- Tài khoản nhận hoàn tiền: ${rawBank}${rawAccNo ? ` - ${rawAccNo}` : ''}${rawAccName ? ` - ${rawAccName}` : ''}`,
-            'Admin VAHA Market sẽ chuyển khoản hoàn tiền về tài khoản trên trong thời gian sớm nhất.',
+            `- Số tiền hoàn: ${formatVnd(payload.amount)}`,
+            `- Tài khoản nhận: ${rawBank}${rawAccNo ? ` - ${rawAccNo}` : ''}${rawAccName ? ` - ${rawAccName}` : ''}`,
+            'Sàn sẽ chuyển khoản hoàn tiền sớm nhất.',
           ],
           ctaLabel,
           orderUrl,
@@ -322,25 +349,25 @@ function buildEmail(payload: EmailPayload): { subject: string; html: string; tex
     }
 
     case 'ORDER_REFUND_COMPLETED': {
-      const ctaLabel = 'Xem chi tiết đơn hàng';
-      const rawBank = payload.bankName?.trim() || 'Ngân hàng đã đăng ký';
+      const ctaLabel = 'Xem đơn hàng';
+      const rawBank = payload.bankName?.trim() || 'Tài khoản đã lưu';
       const rawAccNo = payload.accountNumber?.trim() || '';
       const rawAccName = payload.accountName?.trim() || '';
       const rawRef = payload.reference?.trim() || '';
-      const refHtml = rawRef ? `<div style="margin-top:4px;"><strong>Mã tham chiếu giao dịch:</strong> ${escapeHtml(rawRef)}</div>` : '';
+      const refHtml = rawRef ? `<div style="margin-top:4px;"><strong>Mã giao dịch:</strong> ${escapeHtml(rawRef)}</div>` : '';
       return {
-        subject: `[VAHA Market] Đã hoàn tiền thành công ${formatVnd(payload.amount)} (${rawCode})`.trim(),
+        subject: cleanHeaderLine(`[VAHA Market] Đã hoàn tiền ${formatVnd(payload.amount)} (${rawCode})`),
         html: renderLayout({
-          badgeText: 'Đã hoàn tiền thành công',
+          badgeText: 'Đã hoàn tiền',
           badgeBg: '#ecfdf5',
           badgeColor: '#047857',
-          heading: 'VAHA Market đã hoàn tiền thành công!',
-          greeting: `Xin chào ${name},`,
+          heading: 'Đã chuyển khoản hoàn tiền',
+          greeting: `Chào ${name},`,
           bodyHtml: `
-            <p style="margin:0 0 12px;">Khoản hoàn tiền cho đơn hàng <strong>${title}</strong>${code ? ` (Mã đơn: <strong>${code}</strong>)` : ''} đã được Admin chuyển khoản thành công.</p>
-            <div style="background-color:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:12px 14px;">
-              <div><strong>Số tiền đã hoàn:</strong> <span style="color:#047857;font-weight:700;">${formatVnd(payload.amount)}</span></div>
-              <div style="margin-top:4px;"><strong>Ngân hàng nhận:</strong> ${escapeHtml(rawBank)}</div>
+            <p style="margin:0 0 12px;">Khoản hoàn tiền đơn <strong>${title}</strong>${code ? ` (Mã: <strong>${code}</strong>)` : ''} đã được chuyển.</p>
+            <div style="background-color:#fafafa;border:1px solid #e5e5e5;border-radius:8px;padding:12px 14px;">
+              <div><strong>Số tiền:</strong> <span style="color:#047857;font-weight:700;">${formatVnd(payload.amount)}</span></div>
+              <div style="margin-top:4px;"><strong>Ngân hàng:</strong> ${escapeHtml(rawBank)}</div>
               ${rawAccNo ? `<div style="margin-top:4px;"><strong>Số tài khoản:</strong> <code>${escapeHtml(rawAccNo)}</code></div>` : ''}
               ${rawAccName ? `<div style="margin-top:4px;"><strong>Chủ tài khoản:</strong> ${escapeHtml(rawAccName)}</div>` : ''}
               ${refHtml}
@@ -351,13 +378,13 @@ function buildEmail(payload: EmailPayload): { subject: string; html: string; tex
         }),
         text: renderPlainText(
           [
-            `Xin chào ${name},`,
-            `Khoản hoàn tiền cho đơn hàng "${rawTitle}"${rawCode ? ` (Mã đơn: ${rawCode})` : ''} đã được Admin VAHA Market chuyển khoản thành công.`,
-            `- Số tiền đã hoàn: ${formatVnd(payload.amount)}`,
-            `- Ngân hàng nhận: ${rawBank}`,
+            `Chào ${name},`,
+            `Khoản hoàn tiền đơn "${rawTitle}"${rawCode ? ` (Mã: ${rawCode})` : ''} đã được chuyển.`,
+            `- Số tiền: ${formatVnd(payload.amount)}`,
+            `- Ngân hàng: ${rawBank}`,
             ...(rawAccNo ? [`- Số tài khoản: ${rawAccNo}`] : []),
             ...(rawAccName ? [`- Chủ tài khoản: ${rawAccName}`] : []),
-            ...(rawRef ? [`- Mã tham chiếu: ${rawRef}`] : []),
+            ...(rawRef ? [`- Mã giao dịch: ${rawRef}`] : []),
           ],
           ctaLabel,
           orderUrl,
@@ -366,30 +393,27 @@ function buildEmail(payload: EmailPayload): { subject: string; html: string; tex
     }
 
     case 'PAYOUT_DONE': {
-      const rawBank = payload.bankName?.trim() || 'Ngân hàng đã đăng ký';
+      const rawBank = payload.bankName?.trim() || 'Tài khoản đã lưu';
       const rawAccNo = payload.accountNumber?.trim() || '';
       const rawAccName = payload.accountName?.trim() || '';
       const rawRef = payload.reference?.trim() || '';
-      const bank = escapeHtml(rawBank);
-      const accNo = escapeHtml(rawAccNo);
-      const accName = escapeHtml(rawAccName);
-      const refHtml = rawRef ? `<div style="margin-top:4px;"><strong>Mã tham chiếu:</strong> ${escapeHtml(rawRef)}</div>` : '';
-      const ctaLabel = 'Xem chi tiết đơn hàng';
+      const refHtml = rawRef ? `<div style="margin-top:4px;"><strong>Mã giao dịch:</strong> ${escapeHtml(rawRef)}</div>` : '';
+      const ctaLabel = 'Xem đơn hàng';
       return {
-        subject: `[VAHA Market] Đã giải ngân thành công ${formatVnd(payload.amount)}! (${rawCode})`.trim(),
+        subject: cleanHeaderLine(`[VAHA Market] Đã giải ngân ${formatVnd(payload.amount)} (${rawCode})`),
         html: renderLayout({
-          badgeText: 'Giải ngân thành công',
+          badgeText: 'Đã giải ngân',
           badgeBg: '#ecfdf5',
           badgeColor: '#047857',
-          heading: 'VAHA Market đã giải ngân thành công!',
-          greeting: `Xin chào ${name},`,
+          heading: 'Đã chuyển tiền bán hàng',
+          greeting: `Chào ${name},`,
           bodyHtml: `
-            <p style="margin:0 0 12px;">Khoản tiền bán sản phẩm <strong>${title}</strong>${code ? ` (Mã đơn: <strong>${code}</strong>)` : ''} đã được Admin chuyển khoản thành công.</p>
-            <div style="background-color:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:12px 14px;">
-              <div><strong>Số tiền đã chuyển:</strong> <span style="color:#047857;font-weight:700;">${formatVnd(payload.amount)}</span></div>
-              <div style="margin-top:4px;"><strong>Ngân hàng nhận:</strong> ${bank}</div>
-              ${accNo ? `<div style="margin-top:4px;"><strong>Số tài khoản:</strong> <code>${accNo}</code></div>` : ''}
-              ${accName ? `<div style="margin-top:4px;"><strong>Chủ tài khoản:</strong> ${accName}</div>` : ''}
+            <p style="margin:0 0 12px;">Tiền bán sản phẩm <strong>${title}</strong>${code ? ` (Mã: <strong>${code}</strong>)` : ''} đã được chuyển về tài khoản của bạn.</p>
+            <div style="background-color:#fafafa;border:1px solid #e5e5e5;border-radius:8px;padding:12px 14px;">
+              <div><strong>Số tiền:</strong> <span style="color:#047857;font-weight:700;">${formatVnd(payload.amount)}</span></div>
+              <div style="margin-top:4px;"><strong>Ngân hàng:</strong> ${escapeHtml(rawBank)}</div>
+              ${rawAccNo ? `<div style="margin-top:4px;"><strong>Số tài khoản:</strong> <code>${escapeHtml(rawAccNo)}</code></div>` : ''}
+              ${rawAccName ? `<div style="margin-top:4px;"><strong>Chủ tài khoản:</strong> ${escapeHtml(rawAccName)}</div>` : ''}
               ${refHtml}
             </div>
           `,
@@ -398,13 +422,13 @@ function buildEmail(payload: EmailPayload): { subject: string; html: string; tex
         }),
         text: renderPlainText(
           [
-            `Xin chào ${name},`,
-            `Khoản tiền bán sản phẩm "${rawTitle}"${rawCode ? ` (Mã đơn: ${rawCode})` : ''} đã được Admin VAHA Market chuyển khoản thành công.`,
-            `- Số tiền đã chuyển: ${formatVnd(payload.amount)}`,
-            `- Ngân hàng nhận: ${rawBank}`,
+            `Chào ${name},`,
+            `Tiền bán sản phẩm "${rawTitle}"${rawCode ? ` (Mã: ${rawCode})` : ''} đã được chuyển.`,
+            `- Số tiền: ${formatVnd(payload.amount)}`,
+            `- Ngân hàng: ${rawBank}`,
             ...(rawAccNo ? [`- Số tài khoản: ${rawAccNo}`] : []),
             ...(rawAccName ? [`- Chủ tài khoản: ${rawAccName}`] : []),
-            ...(rawRef ? [`- Mã tham chiếu: ${rawRef}`] : []),
+            ...(rawRef ? [`- Mã giao dịch: ${rawRef}`] : []),
           ],
           ctaLabel,
           orderUrl,
@@ -414,44 +438,37 @@ function buildEmail(payload: EmailPayload): { subject: string; html: string; tex
 
     case 'LISTING_REVIEWED': {
       const approved = payload.reviewStatus === 'active';
-      const listingUrl = approved && payload.listingId ? `${SITE_URL}/listing/${payload.listingId}` : `${SITE_URL}/my-listings`;
-      const rawReason = payload.rejectionReason?.trim() || 'Vui lòng kiểm tra lại ảnh xác thực chính chủ và nội dung tin đăng.';
-      const reason = escapeHtml(rawReason);
-      const ctaLabel = approved ? 'Xem tin đăng trên sàn' : 'Sửa & gửi duyệt lại';
+      const listingUrl = approved && payload.listingId
+        ? `${SITE_URL}/listing/${encodeURIComponent(payload.listingId)}`
+        : `${SITE_URL}/my-listings`;
+      const rawReason = payload.rejectionReason?.trim() || 'Vui lòng kiểm tra lại ảnh xác thực và nội dung tin.';
+      const ctaLabel = approved ? 'Xem tin đăng' : 'Sửa và gửi lại';
       return {
-        subject: approved
-          ? `[VAHA Market] Tin đăng "${rawTitle}" đã được duyệt lên sàn!`
-          : `[VAHA Market] Tin đăng "${rawTitle}" cần chỉnh sửa lại`,
+        subject: cleanHeaderLine(
+          approved ? `[VAHA Market] Tin "${rawTitle}" đã được duyệt` : `[VAHA Market] Tin "${rawTitle}" cần chỉnh sửa`,
+        ),
         html: renderLayout({
-          badgeText: approved ? 'Đã duyệt lên sàn' : 'Bị từ chối duyệt',
+          badgeText: approved ? 'Đã duyệt' : 'Cần chỉnh sửa',
           badgeBg: approved ? '#ecfdf5' : '#fef2f2',
           badgeColor: approved ? '#047857' : '#b91c1c',
-          heading: approved ? 'Tin đăng của bạn đã được duyệt!' : 'Tin đăng của bạn chưa được duyệt',
-          greeting: `Xin chào ${name},`,
+          heading: approved ? 'Tin đăng đã được duyệt' : 'Tin đăng chưa được duyệt',
+          greeting: `Chào ${name},`,
           bodyHtml: approved
-            ? `<p style="margin:0;">Tin đăng <strong>${title}</strong> đã vượt qua bước kiểm duyệt chính chủ và hiện đang hiển thị công khai trên VAHA Market.</p>`
+            ? `<p style="margin:0;">Tin <strong>${title}</strong> đã được duyệt và đang hiển thị trên VAHA Market.</p>`
             : `
-              <p style="margin:0 0 12px;">Tin đăng <strong>${title}</strong> chưa đạt yêu cầu kiểm duyệt.</p>
-              <div style="background-color:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:12px 14px;color:#991b1b;">
-                <strong>Lý do từ Admin:</strong> ${reason}
+              <p style="margin:0 0 12px;">Tin <strong>${title}</strong> chưa đạt yêu cầu duyệt.</p>
+              <div style="background-color:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:12px 14px;color:#991b1b;">
+                <strong>Lý do:</strong> ${escapeHtml(rawReason)}
               </div>
-              <p style="margin:12px 0 0;font-size:13px;">Bạn có thể bấm nút bên dưới để chỉnh sửa và gửi duyệt lại ngay.</p>
+              <p style="margin:12px 0 0;font-size:13px;">Hãy chỉnh sửa và gửi duyệt lại.</p>
             `,
           ctaLabel,
           ctaUrl: listingUrl,
         }),
         text: renderPlainText(
           approved
-            ? [
-                `Xin chào ${name},`,
-                `Tin đăng "${rawTitle}" đã vượt qua bước kiểm duyệt chính chủ và hiện đang hiển thị công khai trên VAHA Market.`,
-              ]
-            : [
-                `Xin chào ${name},`,
-                `Tin đăng "${rawTitle}" chưa đạt yêu cầu kiểm duyệt.`,
-                `- Lý do từ Admin: ${rawReason}`,
-                'Bạn có thể truy cập đường dẫn bên dưới để chỉnh sửa và gửi duyệt lại ngay.',
-              ],
+            ? [`Chào ${name},`, `Tin "${rawTitle}" đã được duyệt và hiển thị trên VAHA Market.`]
+            : [`Chào ${name},`, `Tin "${rawTitle}" chưa đạt yêu cầu duyệt.`, `- Lý do: ${rawReason}`, 'Hãy chỉnh sửa và gửi duyệt lại.'],
           ctaLabel,
           listingUrl,
         ),
@@ -463,10 +480,15 @@ function buildEmail(payload: EmailPayload): { subject: string; html: string; tex
 Deno.serve(async (req) => {
   if (req.method !== 'POST') return json({ success: false, message: 'Method not allowed' }, 405);
 
-  const auth = req.headers.get('authorization') ?? '';
-  const bearer = auth.replace(/^Bearer\s+/i, '').trim();
+  const auth = req.headers.get('authorization')?.trim() ?? '';
+  const bearerMatch = /^Bearer\s+(.+)$/i.exec(auth);
+  const bearer = bearerMatch?.[1]?.trim() ?? '';
   const headerSecret = req.headers.get('x-internal-secret')?.trim() ?? '';
-  if (!SECRET_KEY || (!safeEqual(bearer, SECRET_KEY) && !safeEqual(headerSecret, SECRET_KEY))) {
+  const authorized =
+    Boolean(SECRET_KEY) &&
+    ((await safeEqual(bearer, SECRET_KEY)) || (await safeEqual(headerSecret, SECRET_KEY)));
+
+  if (!authorized) {
     return json({ success: false, message: 'Unauthorized' }, 401);
   }
 
@@ -477,13 +499,21 @@ Deno.serve(async (req) => {
 
   let payload: EmailPayload;
   try {
-    payload = await req.json();
+    payload = (await req.json()) as EmailPayload;
   } catch {
     return json({ success: false, message: 'Invalid JSON' }, 400);
   }
 
-  if (!payload.event || !payload.to || !payload.to.includes('@')) {
-    return json({ success: false, message: 'Missing event or recipient email' }, 400);
+  const recipient = typeof payload?.to === 'string' ? payload.to.trim() : '';
+  if (
+    !payload ||
+    !VALID_EVENTS.has(payload.event) ||
+    !recipient ||
+    recipient.length > 254 ||
+    /[\r\n]/.test(recipient) ||
+    !EMAIL_RE.test(recipient)
+  ) {
+    return json({ success: false, message: 'Invalid event or recipient email' }, 400);
   }
 
   const { subject, html, text } = buildEmail(payload);
@@ -502,7 +532,7 @@ Deno.serve(async (req) => {
     const info = await transporter.sendMail({
       from: `VAHA Market <${GMAIL_USER}>`,
       replyTo: GMAIL_USER,
-      to: payload.to,
+      to: recipient,
       subject,
       text,
       html,
@@ -511,6 +541,6 @@ Deno.serve(async (req) => {
     return json({ success: true, messageId: info.messageId });
   } catch (err) {
     console.error('[send-order-email] SMTP error:', err);
-    return json({ success: false, message: err instanceof Error ? err.message : 'SMTP send failed' }, 500);
+    return json({ success: false, message: 'SMTP send failed' }, 500);
   }
 });

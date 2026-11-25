@@ -33,24 +33,24 @@ interface LedgerRow {
 const PAGE_SIZE = 30;
 
 const FILTERS: { id: FilterMode; label: string }[] = [
-  { id: 'ALL', label: 'Tất cả dòng tiền' },
-  { id: 'IN', label: 'Tiền vào trung gian' },
-  { id: 'OUT', label: 'Tiền ra (Giải ngân & Hoàn tiền)' },
+  { id: 'ALL', label: 'Tất cả' },
+  { id: 'IN', label: 'Tiền vào' },
+  { id: 'OUT', label: 'Tiền ra' },
 ];
 
 const DIRECTION_META: Record<LedgerRow['direction'], { label: string; sign: '+' | '−'; cls: string }> = {
   IN: {
-    label: 'Tiền vào trung gian',
+    label: 'Tiền vào',
     sign: '+',
     cls: 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/60 dark:text-emerald-300',
   },
   OUT_PAYOUT: {
-    label: 'Giải ngân người bán',
+    label: 'Giải ngân',
     sign: '−',
     cls: 'border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-900 dark:bg-blue-950/60 dark:text-blue-300',
   },
   OUT_REFUND: {
-    label: 'Hoàn tiền người mua',
+    label: 'Hoàn tiền',
     sign: '−',
     cls: 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900 dark:bg-amber-950/60 dark:text-amber-300',
   },
@@ -67,7 +67,7 @@ function formatTime(iso: string): string {
 }
 
 export default function Transparency() {
-  useDocumentTitle('Minh bạch dòng tiền trung gian');
+  useDocumentTitle('Minh bạch dòng tiền');
   const [filter, setFilter] = useState<FilterMode>('ALL');
   const [summary, setSummary] = useState<TransparencySummary | null>(null);
   const [rows, setRows] = useState<LedgerRow[]>([]);
@@ -129,15 +129,13 @@ export default function Transparency() {
       <header className="card flex flex-col gap-3 p-5 sm:flex-row sm:items-start sm:justify-between sm:p-6">
         <div className="min-w-0 space-y-1.5">
           <div className="inline-flex items-center gap-1.5 rounded border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/60 dark:text-emerald-300">
-            <ShieldCheck size={14} strokeWidth={1.75} /> Dữ liệu đối soát trực tiếp từ hệ thống · 0% phí
+            <ShieldCheck size={14} strokeWidth={1.75} /> Dữ liệu trực tiếp từ hệ thống · 0% phí
           </div>
           <h1 className="text-xl font-semibold tracking-tight text-neutral-950 dark:text-neutral-50 sm:text-2xl">
-            Minh bạch dòng tiền trung gian
+            Minh bạch dòng tiền
           </h1>
           <p className="max-w-2xl text-sm leading-relaxed text-neutral-600 dark:text-neutral-400">
-            Toàn bộ giao dịch tiền vào (khi đơn được xác nhận thanh toán) và tiền ra (giải ngân cho người bán hoặc hoàn
-            tiền cho người mua) được đồng bộ trực tiếp từ cơ sở dữ liệu đơn hàng của VAHA Market. Thông tin cá nhân và
-            số tài khoản ngân hàng được ẩn để bảo vệ quyền riêng tư.
+            Lịch sử tiền vào và tiền ra (giải ngân, hoàn tiền) được tổng hợp trực tiếp từ hệ thống đơn hàng. Thông tin cá nhân và số tài khoản được ẩn.
           </p>
         </div>
         <button
@@ -153,9 +151,9 @@ export default function Transparency() {
 
       {error && <Alert kind="error">{error}</Alert>}
 
-      <section className="grid grid-cols-2 gap-3 lg:grid-cols-4" aria-label="Tổng hợp dòng tiền trung gian">
+      <section className="grid grid-cols-2 gap-3 lg:grid-cols-4" aria-label="Tổng hợp dòng tiền">
         <div className="card space-y-1 p-4">
-          <p className="text-xs font-medium text-neutral-500 dark:text-neutral-400">Đang giữ bảo lãnh</p>
+          <p className="text-xs font-medium text-neutral-500 dark:text-neutral-400">Đang giữ trung gian</p>
           <p className="text-lg font-semibold tabular-nums text-blue-700 dark:text-blue-400 sm:text-xl">
             {summary ? formatVND(summary.currently_held_vnd) : '—'}
           </p>
@@ -170,12 +168,12 @@ export default function Transparency() {
             {summary ? formatVND(summary.total_inflow_vnd) : '—'}
           </p>
           <p className="text-[11px] tabular-nums text-neutral-500 dark:text-neutral-400">
-            {summary ? `${summary.completed_orders_count} giao dịch hoàn tất` : 'Đang tải...'}
+            {summary ? `${summary.completed_orders_count} đơn hoàn tất` : 'Đang tải...'}
           </p>
         </div>
 
         <div className="card space-y-1 p-4">
-          <p className="text-xs font-medium text-neutral-500 dark:text-neutral-400">Đã giải ngân người bán</p>
+          <p className="text-xs font-medium text-neutral-500 dark:text-neutral-400">Đã giải ngân</p>
           <p className="text-lg font-semibold tabular-nums text-neutral-950 dark:text-neutral-50 sm:text-xl">
             {summary ? formatVND(summary.total_paid_out_vnd) : '—'}
           </p>
@@ -183,7 +181,7 @@ export default function Transparency() {
         </div>
 
         <div className="card space-y-1 p-4">
-          <p className="text-xs font-medium text-neutral-500 dark:text-neutral-400">Đã hoàn tiền người mua</p>
+          <p className="text-xs font-medium text-neutral-500 dark:text-neutral-400">Đã hoàn tiền</p>
           <p className="text-lg font-semibold tabular-nums text-neutral-950 dark:text-neutral-50 sm:text-xl">
             {summary ? formatVND(summary.total_refunded_vnd) : '—'}
           </p>
@@ -218,11 +216,11 @@ export default function Transparency() {
 
         {loading ? (
           <div className="flex items-center justify-center gap-2 py-12 text-sm text-neutral-500 dark:text-neutral-400">
-            <Loader2 size={16} className="animate-spin" /> Đang tải sổ dòng tiền...
+            <Loader2 size={16} className="animate-spin" /> Đang tải...
           </div>
         ) : rows.length === 0 ? (
           <div className="px-4 py-12 text-center text-sm text-neutral-500 dark:text-neutral-400">
-            Chưa có bản ghi dòng tiền nào trong mục này.
+            Chưa có giao dịch nào.
           </div>
         ) : (
           <div className="divide-y divide-neutral-200 dark:divide-neutral-800">
@@ -245,7 +243,7 @@ export default function Transparency() {
                       </span>
                       {r.reference_masked && (
                         <span className="font-mono text-[11px] text-neutral-500 dark:text-neutral-400">
-                          Ref {r.reference_masked}
+                          Mã GD {r.reference_masked}
                         </span>
                       )}
                     </div>
@@ -276,21 +274,21 @@ export default function Transparency() {
           <div className="border-t border-neutral-200 px-4 py-3 text-center dark:border-neutral-800">
             <button type="button" onClick={() => void loadMore()} disabled={loadingMore} className="btn-secondary text-xs">
               {loadingMore && <Loader2 size={14} className="animate-spin" />}
-              Tải thêm giao dịch
+              Tải thêm
             </button>
           </div>
         )}
       </section>
 
       <div className="flex flex-wrap items-center justify-between gap-2 px-1 text-xs text-neutral-500 dark:text-neutral-400">
-        <p>Mọi giao dịch trung gian trên VAHA Market đều miễn phí 0%.</p>
+        <p>Mọi giao dịch trên VAHA Market đều miễn phí 0%.</p>
         <div className="flex items-center gap-3">
           <Link to="/support" className="font-medium text-blue-700 hover:underline dark:text-blue-400">
-            Ủng hộ duy trì sàn
+            Ủng hộ sàn
           </Link>
           <span>·</span>
           <Link to="/terms" className="hover:underline">
-            Điều khoản dịch vụ
+            Điều khoản
           </Link>
         </div>
       </div>

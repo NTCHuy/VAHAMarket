@@ -4,7 +4,7 @@ import { Check, Loader2, Search, SlidersHorizontal, X } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { cldUrl } from '@/lib/cloudinary';
 import { getErrorMessage } from '@/lib/errors';
-import { BOX_STATUS_OPTIONS, CATEGORIES, LISTING_CONDITIONS } from '@/constants/categories';
+import { BOX_STATUS_OPTIONS, CATEGORIES, CATEGORY_IDS, LISTING_CONDITIONS } from '@/constants/categories';
 import { PROVINCES } from '@/constants/provinces';
 import { Alert } from '@/components/ui';
 import { ListingGridSkeleton } from '@/components/Skeletons';
@@ -35,11 +35,11 @@ const SORTS: { id: SortKey; label: string }[] = [
 const QUICK_CATEGORIES: { id: string; label: string }[] = [
   { id: '', label: 'Tất cả' },
   { id: 'iem', label: 'IEM' },
-  { id: 'over-ear', label: 'Over-ear' },
+  { id: 'over-ear', label: 'Chụp tai' },
   { id: 'dac-amp', label: 'DAC/Amp' },
-  { id: 'cable-accessory', label: 'Dây dẫn & Phụ kiện' },
-  { id: 'tws', label: 'TWS' },
-  { id: 'dap', label: 'DAP' },
+  { id: 'cable-accessory', label: 'Dây & Phụ kiện' },
+  { id: 'tws', label: 'Không dây' },
+  { id: 'dap', label: 'Máy nghe nhạc' },
 ];
 
 const QUICK_PRICE_RANGES: { id: string; label: string; min: string; max: string }[] = [
@@ -52,27 +52,41 @@ const QUICK_PRICE_RANGES: { id: string; label: string; min: string; max: string 
 const POPULAR_KEYWORDS = ['Moondrop', 'Sennheiser', 'FiiO', 'Sony', 'Truthear', '7Hz'] as const;
 
 const SHORT_CONDITION: Record<string, string> = {
-  like_new: 'Like new 99%',
+  like_new: 'Như mới 99%',
   good: 'Tốt 90–98%',
   fair: 'Khá',
   for_parts: 'Xác / Linh kiện',
 };
 
+const VALID_CONDITIONS = new Set<string>(LISTING_CONDITIONS.map((c) => c.id));
+const VALID_BOXES = new Set<string>(BOX_STATUS_OPTIONS.map((b) => b.id));
+const VALID_CATEGORIES = new Set<string>(CATEGORY_IDS);
+const VALID_SORTS = new Set<string>(SORTS.map((s) => s.id));
+
 const escapeLike = (s: string) => s.replace(/[\\%_]/g, (c) => `\\${c}`);
 const digitsOnly = (s: string) => s.replace(/\D/g, '').slice(0, 10);
+const parsePositiveInt = (s: string): number | null => {
+  if (!/^\d{1,10}$/.test(s)) return null;
+  const n = parseInt(s, 10);
+  return Number.isSafeInteger(n) && n >= 0 ? n : null;
+};
 
 export default function Home() {
   useDocumentTitle();
   const { feeBp, feeCapVnd } = usePlatformSettings();
   const [params, setParams] = useSearchParams();
   const q = params.get('q') ?? '';
-  const category = params.get('category') ?? '';
+  const rawCategory = params.get('category') ?? '';
+  const category = VALID_CATEGORIES.has(rawCategory) ? rawCategory : '';
   const province = params.get('province') ?? '';
-  const condition = params.get('condition') ?? '';
-  const box = params.get('box') ?? '';
-  const min = params.get('min') ?? '';
-  const max = params.get('max') ?? '';
-  const sort = (params.get('sort') as SortKey | null) ?? 'new';
+  const rawCondition = params.get('condition') ?? '';
+  const condition = VALID_CONDITIONS.has(rawCondition) ? rawCondition : '';
+  const rawBox = params.get('box') ?? '';
+  const box = VALID_BOXES.has(rawBox) ? rawBox : '';
+  const min = digitsOnly(params.get('min') ?? '');
+  const max = digitsOnly(params.get('max') ?? '');
+  const rawSort = params.get('sort') ?? 'new';
+  const sort: SortKey = VALID_SORTS.has(rawSort) ? (rawSort as SortKey) : 'new';
 
   const [searchText, setSearchText] = useState(q);
   const [minText, setMinText] = useState(min);
@@ -128,8 +142,10 @@ export default function Home() {
       if (province) query = query.eq('province', province);
       if (condition) query = query.eq('condition', condition);
       if (box) query = query.eq('box_status', box);
-      if (min) query = query.gte('price', parseInt(min, 10));
-      if (max) query = query.lte('price', parseInt(max, 10));
+      const minVal = parsePositiveInt(min);
+      const maxVal = parsePositiveInt(max);
+      if (minVal !== null) query = query.gte('price', minVal);
+      if (maxVal !== null) query = query.lte('price', maxVal);
 
       if (sort === 'price_asc') query = query.order('price', { ascending: true });
       else if (sort === 'price_desc') query = query.order('price', { ascending: false });
@@ -200,7 +216,7 @@ export default function Home() {
     );
   };
 
-  const feeSummary = '0% phí · Miễn phí trung gian';
+  const feeSummary = 'Miễn phí 0%';
 
   return (
     <div className="space-y-4">
@@ -208,7 +224,7 @@ export default function Home() {
       <div className="-mx-4 -mt-5 border-b border-neutral-200 bg-neutral-100 px-4 py-2.5 text-xs text-neutral-700 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-300 sm:-mx-6 sm:-mt-6 sm:px-6">
         <div className="mx-auto flex flex-col gap-1.5 lg:flex-row lg:items-center lg:justify-between">
           <p className="leading-snug">
-            <strong className="font-semibold text-neutral-900 dark:text-neutral-100">VAHA Market</strong> — Sàn trung gian <strong>0% phí</strong> của cộng đồng Hội người Việt nghiện tai nghe · Phi lợi nhuận, vì cộng đồng.
+            <strong className="font-semibold text-neutral-900 dark:text-neutral-100">VAHA Market</strong> — Sàn trung gian <strong>0% phí</strong> · Hội người Việt nghiện tai nghe.
           </p>
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 tabular-nums text-neutral-600 dark:text-neutral-400">
             <span className="font-medium text-neutral-900 dark:text-neutral-100">{total} tin đang bán</span>
@@ -216,15 +232,15 @@ export default function Home() {
             <span className={feeBp < 500 ? 'font-medium text-emerald-700 dark:text-emerald-400' : ''}>{feeSummary}</span>
             <span aria-hidden="true">·</span>
             <Link to="/transparency" className="font-medium text-blue-700 hover:underline dark:text-blue-400">
-              Sổ minh bạch dòng tiền
+              Minh bạch
             </Link>
             <span aria-hidden="true">·</span>
             <Link to="/support" className="font-medium text-rose-600 hover:underline dark:text-rose-400">
-              Ủng hộ duy trì sàn
+              Ủng hộ
             </Link>
             <span aria-hidden="true">·</span>
             <Link to="/terms" className="font-medium text-blue-700 hover:underline dark:text-blue-400">
-              Quy trình &amp; Điều khoản
+              Điều khoản
             </Link>
           </div>
         </div>
@@ -238,7 +254,7 @@ export default function Home() {
             <input
               type="search"
               className="input h-9 pl-9"
-              placeholder="Tìm IEM, Over-ear, DAC/Amp, thương hiệu..."
+              placeholder="Tìm tai nghe, DAC/Amp, thương hiệu..."
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
               aria-label="Tìm kiếm sản phẩm"
@@ -403,7 +419,7 @@ export default function Home() {
           <Alert kind="error">{error}</Alert>
         ) : items.length === 0 ? (
           <div className="card px-4 py-12 text-center text-sm text-neutral-600 dark:text-neutral-400">
-            {q || activeFilters ? 'Không tìm thấy sản phẩm phù hợp với bộ lọc hiện tại.' : 'Chưa có sản phẩm nào đang mở bán.'}
+            {q || activeFilters ? 'Không tìm thấy sản phẩm phù hợp.' : 'Chưa có sản phẩm nào đang bán.'}
           </div>
         ) : (
           <>
@@ -431,8 +447,8 @@ export default function Home() {
 function ListingCard({ listing: l, feeBp, feeCapVnd }: { listing: ListingCardItem; feeBp: number; feeCapVnd: number }) {
   const isMod = l.profiles?.is_mod ?? false;
   const dp = getDisplayPrice(l, { isMod, globalBp: feeBp, feeCapVnd });
-  const condTag = l.box_status === 'full' ? `${SHORT_CONDITION[l.condition] ?? l.condition} · Fullbox` : (SHORT_CONDITION[l.condition] ?? l.condition);
-  const feeSubline = 'Miễn phí trung gian (0%)';
+  const condTag = l.box_status === 'full' ? `${SHORT_CONDITION[l.condition] ?? l.condition} · Đủ hộp` : (SHORT_CONDITION[l.condition] ?? l.condition);
+  const feeSubline = 'Miễn phí 0%';
 
   return (
     <li className="min-w-0">

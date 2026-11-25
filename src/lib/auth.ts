@@ -1,5 +1,6 @@
 import type { Session, User } from '@supabase/supabase-js';
 import { supabase } from './supabase';
+import { sanitizeRedirectPath } from './url';
 
 /**
  * Đăng nhập Google. Hồ sơ `profiles` / `profile_contacts` được TRIGGER trong Postgres tự tạo,
@@ -9,10 +10,11 @@ import { supabase } from './supabase';
  * và Authentication → URL Configuration → thêm http://localhost:5173 vào Redirect URLs.
  */
 export async function signInWithGoogle(redirectPath: string = window.location.pathname): Promise<void> {
+  const safePath = sanitizeRedirectPath(redirectPath);
   const { error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
-      redirectTo: `${window.location.origin}${redirectPath}`,
+      redirectTo: `${window.location.origin}${safePath}`,
       queryParams: { prompt: 'select_account' },
     },
   });

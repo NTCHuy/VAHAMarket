@@ -189,16 +189,16 @@ export default function BansTab({ onChanged }: { onChanged: () => void }) {
     <div className="space-y-6">
       {notice && <Alert kind={notice.kind}>{notice.text}</Alert>}
 
-      {/* 1. Form Thêm Ban mới / Thêm vào Danh sách đen */}
+      {/* 1. Form Khóa tài khoản / Danh sách đen */}
       <form onSubmit={onDirectSubmit} className="card space-y-4 border-red-200 dark:border-red-900/70 p-4 sm:p-5">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
             <h2 className="flex items-center gap-2 text-base font-semibold text-neutral-900 dark:text-neutral-100">
               <ShieldBan className="h-5 w-5 text-red-600 dark:text-red-400" />
-              Thêm Ban mới / Đưa vào Danh sách đen
+              Khóa tài khoản / Danh sách đen
             </h2>
             <p className="mt-0.5 text-xs text-neutral-600 dark:text-neutral-400">
-              Khóa thẳng tài khoản scam nghiêm trọng (không cần đợi đủ 3 cảnh báo) hoặc chặn trước Email / Facebook / STK / SĐT / Thiết bị.
+              Khóa thẳng tài khoản vi phạm nặng hoặc chặn trước Email / Facebook / STK / SĐT / Thiết bị.
             </p>
           </div>
           <div className="inline-flex rounded-lg border border-neutral-200 bg-neutral-50 p-0.5 text-xs dark:border-neutral-700 dark:bg-neutral-800">
@@ -211,7 +211,7 @@ export default function BansTab({ onChanged }: { onChanged: () => void }) {
                   : 'text-neutral-600 dark:text-neutral-400'
               }`}
             >
-              Ban tài khoản
+              Khóa tài khoản
             </button>
             <button
               type="button"
@@ -222,7 +222,7 @@ export default function BansTab({ onChanged }: { onChanged: () => void }) {
                   : 'text-neutral-600 dark:text-neutral-400'
               }`}
             >
-              Thêm Blacklist rời
+              Thêm danh sách đen
             </button>
           </div>
         </div>
@@ -299,15 +299,15 @@ export default function BansTab({ onChanged }: { onChanged: () => void }) {
         <div className="flex justify-end">
           <button type="submit" disabled={submitting} className="btn bg-red-600 text-white hover:bg-red-700">
             {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-            {formMode === 'user' ? 'Ban vĩnh viễn ngay' : 'Thêm vào Danh sách đen'}
+            {formMode === 'user' ? 'Khóa vĩnh viễn' : 'Thêm vào danh sách đen'}
           </button>
         </div>
       </form>
 
-      {/* 2. Danh sách tài khoản bị Ban & Đang có cảnh báo */}
+      {/* 2. Danh sách tài khoản bị khóa & cảnh báo */}
       <section className="space-y-3">
         <h2 className="text-base font-semibold text-neutral-900 dark:text-neutral-100">
-          Tài khoản đang có cảnh báo / Đã bị Ban ({flaggedUsers.length})
+          Tài khoản cảnh báo / Đã khóa ({flaggedUsers.length})
         </h2>
 
         {flaggedUsers.length === 0 ? (
@@ -487,7 +487,7 @@ function FlaggedUserCard({
               <p className="font-semibold text-neutral-900 dark:text-neutral-100">{profile.display_name}</p>
               {profile.is_banned ? (
                 <span className="badge bg-red-600 text-white dark:bg-red-600 dark:text-white">
-                  <Ban className="mr-1 h-3 w-3" /> Đã bị Ban
+                  <Ban className="mr-1 h-3 w-3" /> Đã khóa
                 </span>
               ) : (
                 <span className="badge bg-amber-100 text-amber-800 dark:bg-amber-950/70 dark:text-amber-300">
@@ -511,7 +511,7 @@ function FlaggedUserCard({
                 onClick={() => { setActionMode('warn'); setReason(''); }}
                 className="btn-secondary px-3 py-1.5 text-xs text-amber-800 dark:text-amber-300"
               >
-                <AlertTriangle className="h-3.5 w-3.5" /> Gửi cảnh báo (+1 gậy)
+                <AlertTriangle className="h-3.5 w-3.5" /> Cảnh báo (+1)
               </button>
               <button
                 type="button"
@@ -519,7 +519,7 @@ function FlaggedUserCard({
                 onClick={() => { setActionMode('ban'); setReason(''); }}
                 className="btn bg-red-600 px-3 py-1.5 text-xs text-white hover:bg-red-700"
               >
-                <ShieldBan className="h-3.5 w-3.5" /> Ban vĩnh viễn
+                <ShieldBan className="h-3.5 w-3.5" /> Khóa vĩnh viễn
               </button>
             </>
           )}
@@ -530,7 +530,7 @@ function FlaggedUserCard({
               onClick={() => void runUnban()}
               className="btn-secondary px-3 py-1.5 text-xs text-emerald-700 dark:text-emerald-400"
             >
-              {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Unlock className="h-3.5 w-3.5" />} Gỡ Ban
+              {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Unlock className="h-3.5 w-3.5" />} Gỡ khóa
             </button>
           )}
         </div>

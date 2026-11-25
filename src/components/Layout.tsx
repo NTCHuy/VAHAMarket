@@ -28,24 +28,24 @@ export default function Layout() {
                 <p className="font-semibold tracking-tight text-neutral-950 dark:text-neutral-50">{BRAND_NAME}</p>
               </div>
               <p className="text-xs leading-relaxed text-neutral-600 dark:text-neutral-400">
-                Nền tảng giao dịch trung gian thiết bị âm thanh <strong>0% phí</strong> của cộng đồng{' '}
-                <em>Hội người Việt nghiện tai nghe</em> — phi lợi nhuận, minh bạch và bảo vệ người chơi.
+                Sàn trung gian đồ âm thanh <strong>0% phí</strong> của{' '}
+                <em>Hội người Việt nghiện tai nghe</em>. Phi lợi nhuận, minh bạch.
               </p>
             </div>
 
             <div className="min-w-0 space-y-1.5">
               <p className="text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
-                Quy định &amp; Đóng góp
+                Thông tin
               </p>
               <ul className="space-y-1 text-xs text-neutral-600 dark:text-neutral-400">
                 <li>
                   <Link to="/transparency" className="hover:text-neutral-950 hover:underline dark:hover:text-neutral-100">
-                    Minh bạch dòng tiền trung gian
+                    Minh bạch dòng tiền
                   </Link>
                 </li>
                 <li>
                   <Link to="/terms" className="hover:text-neutral-950 hover:underline dark:hover:text-neutral-100">
-                    Điều khoản dịch vụ
+                    Điều khoản sử dụng
                   </Link>
                 </li>
                 <li>
@@ -53,7 +53,7 @@ export default function Layout() {
                     to="/support"
                     className="inline-flex items-center gap-1 font-medium text-blue-700 hover:underline dark:text-blue-400"
                   >
-                    <Heart size={12} strokeWidth={2} className="shrink-0" /> Ủng hộ duy trì sàn
+                    <Heart size={12} strokeWidth={2} className="shrink-0" /> Ủng hộ sàn
                   </Link>
                 </li>
               </ul>
@@ -71,7 +71,7 @@ export default function Layout() {
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-1 hover:text-neutral-950 hover:underline dark:hover:text-neutral-100"
                   >
-                    Group Hội người Việt nghiện tai nghe <ExternalLink size={12} strokeWidth={1.75} className="shrink-0" />
+                    Nhóm Facebook cộng đồng <ExternalLink size={12} strokeWidth={1.75} className="shrink-0" />
                   </a>
                 </li>
                 <li>
@@ -81,7 +81,7 @@ export default function Layout() {
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-1 hover:text-neutral-950 hover:underline dark:hover:text-neutral-100"
                   >
-                    Server Discord hỗ trợ trực tiếp <ExternalLink size={12} strokeWidth={1.75} className="shrink-0" />
+                    Discord hỗ trợ <ExternalLink size={12} strokeWidth={1.75} className="shrink-0" />
                   </a>
                 </li>
               </ul>

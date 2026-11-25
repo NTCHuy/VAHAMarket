@@ -3,7 +3,7 @@ export const config = {
 };
 
 const SITE_URL = 'https://vahamarket.vercel.app';
-const FALLBACK_IMAGE = `${SITE_URL}/og-preview.png`;
+const FALLBACK_IMAGE = `${SITE_URL}/og-preview.png?v=2`;
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function escapeHtml(str: string): string {
@@ -24,28 +24,40 @@ function formatVnd(value: number): string {
 }
 
 function toOgImageUrl(rawUrl: string): string {
-  const marker = '/upload/';
-  const idx = rawUrl.indexOf(marker);
-  if (idx === -1 || !rawUrl.includes('res.cloudinary.com')) return rawUrl;
-  return `${rawUrl.slice(0, idx + marker.length)}f_jpg,q_auto,w_1200,h_630,c_fill,g_auto/${rawUrl.slice(idx + marker.length)}`;
+  try {
+    const parsed = new URL(rawUrl);
+    if (parsed.protocol !== 'https:' || parsed.hostname !== 'res.cloudinary.com') {
+      return FALLBACK_IMAGE;
+    }
+    const marker = '/image/upload/';
+    const idx = parsed.pathname.indexOf(marker);
+    if (idx === -1) return FALLBACK_IMAGE;
+    const prefix = parsed.pathname.slice(0, idx + marker.length);
+    const suffix = parsed.pathname.slice(idx + marker.length);
+    if (!suffix) return FALLBACK_IMAGE;
+    return `https://res.cloudinary.com${prefix}f_jpg,q_auto,w_1200,h_630,c_fill,g_auto/${suffix}`;
+  } catch {
+    return FALLBACK_IMAGE;
+  }
 }
 
 export default async function handler(req: Request): Promise<Response> {
   const url = new URL(req.url);
   const id = url.searchParams.get('id')?.trim() ?? '';
-  const targetUrl = id ? `${SITE_URL}/listing/${encodeURIComponent(id)}` : SITE_URL;
+  const validId = UUID_RE.test(id);
+  const targetUrl = validId ? `${SITE_URL}/listing/${encodeURIComponent(id)}` : SITE_URL;
 
   const supabaseUrl = process.env.VITE_SUPABASE_URL;
   const supabaseKey = process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
   let title = 'VAHA Market — Sàn Trung Gian Âm Thanh 0% Phí';
   let description =
-    'Sàn giao dịch trung gian bảo lãnh 0% phí của cộng đồng Hội người Việt nghiện tai nghe. Thanh toán VietQR tự động.';
+    'Sàn trung gian đồ âm thanh 0% phí của Hội người Việt nghiện tai nghe. Thanh toán VietQR tự động.';
   let image = FALLBACK_IMAGE;
 
-  if (UUID_RE.test(id) && supabaseUrl && supabaseKey) {
+  if (validId && supabaseUrl && supabaseKey) {
     try {
-      const apiUrl = `${supabaseUrl.replace(/\/+$/, '')}/rest/v1/listings?id=eq.${encodeURIComponent(id)}&select=title,price,province,images&limit=1`;
+      const apiUrl = `${supabaseUrl.replace(/\/+$/, '')}/rest/v1/listings?id=eq.${encodeURIComponent(id)}&status=eq.active&select=title,price,province,images&limit=1`;
       const res = await fetch(apiUrl, {
         headers: {
           apikey: supabaseKey,
@@ -61,11 +73,11 @@ export default async function handler(req: Request): Promise<Response> {
         }>;
         const item = rows[0];
         if (item?.title) {
-          const priceStr = typeof item.price === 'number' ? formatVnd(item.price) : '';
+          const priceStr = typeof item.price === 'number' && Number.isFinite(item.price) ? formatVnd(item.price) : '';
           title = priceStr ? `${item.title} — ${priceStr} | VAHA Market` : `${item.title} | VAHA Market`;
-          description = `${priceStr ? `Giá ${priceStr} · ` : ''}${item.province ? `${item.province} · ` : ''}Giao dịch bảo lãnh 0% phí tại VAHA Market.`;
+          description = `${priceStr ? `Giá ${priceStr} · ` : ''}${item.province ? `${item.province} · ` : ''}Trung gian 0% phí tại VAHA Market.`;
           const firstImg = item.images?.[0]?.url;
-          if (firstImg) image = toOgImageUrl(firstImg);
+          if (typeof firstImg === 'string' && firstImg) image = toOgImageUrl(firstImg);
         }
       }
     } catch {
@@ -105,6 +117,10 @@ export default async function handler(req: Request): Promise<Response> {
     headers: {
       'Content-Type': 'text/html; charset=utf-8',
       'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600',
+      'X-Content-Type-Options': 'nosniff',
+      'X-Frame-Options': 'DENY',
+      'Referrer-Policy': 'strict-origin-when-cross-origin',
+      'Content-Security-Policy': "default-src 'none'",
     },
   });
 }

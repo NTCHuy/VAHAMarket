@@ -14,7 +14,7 @@ export default function RequireAuth({ requireAdmin = false }: { requireAdmin?: b
     return (
       <div className="card mx-auto mt-8 max-w-md p-6 text-center">
         <h1 className="text-lg font-semibold">Đăng nhập để tiếp tục</h1>
-        <p className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">Bạn cần đăng nhập bằng tài khoản Google để sử dụng chức năng này.</p>
+        <p className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">Vui lòng đăng nhập Google để dùng tính năng này.</p>
         <button
           type="button"
           disabled={busy}
@@ -28,7 +28,7 @@ export default function RequireAuth({ requireAdmin = false }: { requireAdmin?: b
           }}
           className="btn-primary mt-4 w-full"
         >
-          <LogIn className="h-4 w-4" /> Đăng nhập với Google
+          <LogIn className="h-4 w-4" /> Đăng nhập Google
         </button>
       </div>
     );
@@ -37,7 +37,7 @@ export default function RequireAuth({ requireAdmin = false }: { requireAdmin?: b
   if (error) {
     return (
       <div className="mx-auto mt-8 max-w-md">
-        <Alert kind="error">Không tải được hồ sơ của bạn: {error}</Alert>
+        <Alert kind="error">Không tải được hồ sơ: {error}</Alert>
       </div>
     );
   }
@@ -46,8 +46,8 @@ export default function RequireAuth({ requireAdmin = false }: { requireAdmin?: b
     return (
       <div className="card mx-auto mt-8 max-w-md p-6 text-center">
         <ShieldAlert className="mx-auto h-8 w-8 text-neutral-400" />
-        <h1 className="mt-2 text-lg font-semibold">Không đủ quyền truy cập</h1>
-        <p className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">Khu vực này chỉ dành cho quản trị viên.</p>
+        <h1 className="mt-2 text-lg font-semibold">Không có quyền truy cập</h1>
+        <p className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">Trang này chỉ dành cho quản trị viên.</p>
       </div>
     );
   }

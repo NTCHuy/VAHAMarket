@@ -117,7 +117,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     if (!browserSupported) {
       pushToast({
         title: 'Trình duyệt không hỗ trợ',
-        body: 'Trình duyệt hiện tại không hỗ trợ thông báo đẩy hệ thống (Web Notification API).',
+        body: 'Trình duyệt này không hỗ trợ thông báo.',
         kind: 'warning',
       });
       return 'unsupported';
@@ -141,8 +141,8 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         // ignore
       }
       pushToast({
-        title: 'Đã bật thông báo đẩy trình duyệt',
-        body: 'Bạn sẽ nhận pop-up ngay khi có cập nhật đơn hàng hoặc duyệt tin.',
+        title: 'Đã bật thông báo',
+        body: 'Bạn sẽ nhận thông báo ngay khi đơn hàng hoặc tin đăng thay đổi.',
         kind: 'success',
       });
     } else {
@@ -154,7 +154,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       }
       pushToast({
         title: 'Trình duyệt đang chặn thông báo',
-        body: 'Hãy bấm vào biểu tượng ổ khóa trên thanh địa chỉ và cho phép Thông báo cho VAHA Market.',
+        body: 'Bấm biểu tượng ổ khóa trên thanh địa chỉ và bật quyền Thông báo.',
         kind: 'warning',
       });
     }
@@ -170,8 +170,8 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         // ignore
       }
       pushToast({
-        title: 'Đã tắt thông báo đẩy trình duyệt',
-        body: 'Bạn vẫn sẽ nhận pop-up trong web khi đang mở VAHA Market.',
+        title: 'Đã tắt thông báo trình duyệt',
+        body: 'Bạn vẫn nhận thông báo khi đang mở trang.',
         kind: 'info',
       });
       return;
@@ -199,15 +199,13 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       const itemTitle = next.listing_snapshot?.title ?? next.payment_code ?? 'Đơn hàng';
       const href = `/orders/${next.id}`;
 
-      const capNote = '';
-
       if (next.status === 'PAID_HELD') {
         pushToast(
           {
-            title: 'Bạn có đơn hàng mới đã thanh toán!',
-            body: `Đơn "${itemTitle}" đã được sàn giữ tiền. Hãy quay video test & đóng gói 6 mặt rồi gửi hàng.${capNote}`,
+            title: 'Đơn hàng mới đã thanh toán',
+            body: `Đơn "${itemTitle}" đã được sàn giữ tiền. Hãy quay video đóng gói 6 mặt và gửi hàng.`,
             href,
-            actionLabel: 'Mở đơn hàng',
+            actionLabel: 'Mở đơn',
             kind: 'success',
           },
           `order-paid-${next.id}`,
@@ -216,10 +214,10 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         const payoutText = typeof next.seller_payout === 'number' ? ` (${formatVND(next.seller_payout)})` : '';
         pushToast(
           {
-            title: 'Người mua đã xác nhận nhận hàng!',
-            body: `Đơn "${itemTitle}" đã hoàn tất. Tiền thực nhận${payoutText} đang chờ Admin giải ngân.${capNote}`,
+            title: 'Người mua đã nhận hàng',
+            body: `Đơn "${itemTitle}" hoàn tất. Sàn đang chờ giải ngân${payoutText}.`,
             href,
-            actionLabel: 'Xem đơn hàng',
+            actionLabel: 'Xem đơn',
             kind: 'success',
           },
           `order-completed-${next.id}`,
@@ -228,8 +226,8 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         const payoutText = typeof next.seller_payout === 'number' ? ` ${formatVND(next.seller_payout)}` : '';
         pushToast(
           {
-            title: 'VAHA Market đã giải ngân thành công!',
-            body: `Khoản tiền${payoutText} của đơn "${itemTitle}" đã được chuyển vào tài khoản ngân hàng của bạn.`,
+            title: 'Đã giải ngân thành công',
+            body: `Đã chuyển${payoutText} cho đơn "${itemTitle}" về tài khoản của bạn.`,
             href,
             actionLabel: 'Xem chi tiết',
             kind: 'success',
@@ -250,8 +248,8 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         const carrierInfo = next.carrier && next.tracking_code ? ` (${next.carrier}: ${next.tracking_code})` : '';
         pushToast(
           {
-            title: 'Đơn hàng của bạn đang được giao!',
-            body: `"${itemTitle}" đã được người bán gửi đi${carrierInfo}. Nhớ quay video mở hộp liền mạch 6 mặt khi nhận.`,
+            title: 'Đơn hàng đang giao',
+            body: `"${itemTitle}" đã được gửi đi${carrierInfo}. Nhớ quay video mở hộp đủ 6 mặt.`,
             href,
             actionLabel: 'Theo dõi đơn',
             kind: 'info',
@@ -267,14 +265,14 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       if (!next.id || !next.status || next.status === prev.status) return;
       if (prev.status && prev.status !== 'pending_review') return;
 
-      const title = next.title ?? 'Tin đăng của bạn';
+      const title = next.title ?? 'Tin đăng';
       if (next.status === 'active') {
         pushToast(
           {
-            title: 'Tin đăng đã được duyệt lên sàn!',
-            body: `"${title}" đã hiển thị công khai trên VAHA Market.`,
+            title: 'Tin đăng đã được duyệt',
+            body: `"${title}" đã hiển thị trên sàn.`,
             href: `/listing/${next.id}`,
-            actionLabel: 'Xem tin đăng',
+            actionLabel: 'Xem tin',
             kind: 'success',
           },
           `listing-approved-${next.id}`,
@@ -283,10 +281,10 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         const reason = next.rejection_reason ? ` Lý do: ${next.rejection_reason}` : '';
         pushToast(
           {
-            title: 'Tin đăng bị từ chối duyệt',
-            body: `"${title}" chưa đạt yêu cầu.${reason}`,
+            title: 'Tin đăng cần chỉnh sửa',
+            body: `"${title}" chưa được duyệt.${reason}`,
             href: '/my-listings',
-            actionLabel: 'Sửa & gửi lại',
+            actionLabel: 'Sửa tin',
             kind: 'warning',
           },
           `listing-rejected-${next.id}`,
@@ -341,7 +339,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
 
 function ToastIcon({ kind, title }: { kind: ToastKind; title: string }) {
   if (title.includes('giải ngân')) return <Wallet className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />;
-  if (title.includes('đang được giao')) return <Truck className="h-5 w-5 text-sky-600 dark:text-sky-400" />;
+  if (title.includes('đang giao')) return <Truck className="h-5 w-5 text-sky-600 dark:text-sky-400" />;
   if (title.includes('thanh toán')) return <Package className="h-5 w-5 text-brand-700 dark:text-brand-400" />;
   if (kind === 'success') return <CheckCircle2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />;
   if (kind === 'warning') return <ShieldAlert className="h-5 w-5 text-amber-600 dark:text-amber-400" />;
