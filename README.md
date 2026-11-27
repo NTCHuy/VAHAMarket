@@ -30,6 +30,9 @@
   - Tra cứu hồ sơ chi tiết từng thành viên (SĐT, Facebook, ngân hàng, thiết bị trùng, lịch sử tin/đơn, ghi chú nội bộ, sửa định danh khi bị khóa).
   - Gỡ, khôi phục hoặc xóa vĩnh viễn bài viết đã duyệt kèm nhật ký quản trị (`admin_audit_log`).
 - **Trải nghiệm sử dụng**:
+  - Trang hồ sơ công khai người bán (`/u/:id`) hiển thị sản phẩm đang bán, lịch sử đã bán và trạng thái đối chiếu.
+  - Lưu tin yêu thích (`/saved`) kèm cảnh báo Realtime khi người bán hạ giá.
+  - Nút báo cáo tin vi phạm từ cộng đồng giúp kiểm duyệt viên xử lý sớm.
   - Tìm kiếm tiếng Việt không dấu (`unaccent`).
   - Hỗ trợ Dark Mode (Light / Dark / System), luôn giữ nền trắng quanh mã VietQR để quét ổn định.
   - Thông báo thời gian thực (Toast + Web Notification) và 7 loại email thông báo tự động qua Gmail SMTP.
@@ -62,7 +65,7 @@ vaha-market/
 │   └── pages/                   # Các trang người dùng và bảng điều khiển Admin
 └── supabase/
     ├── schema.sql               # Lược đồ cơ sở dữ liệu gốc
-    ├── migrations/              # Các bản vá từ 002 đến 015 (idempotent)
+    ├── migrations/              # Các bản vá từ 002 đến 016 (idempotent)
     └── functions/               # Edge Functions: sepay-webhook, send-order-email
 ```
 
@@ -120,7 +123,7 @@ Mở `http://localhost:5173`. Sau khi sửa `.env`, cần dừng và chạy lạ
 
 ### Bước 2 — Thiết lập Supabase
 
-1. Vào **Supabase Dashboard → SQL Editor** và chạy lần lượt toàn bộ 15 file SQL theo đúng thứ tự:
+1. Vào **Supabase Dashboard → SQL Editor** và chạy lần lượt toàn bộ 16 file SQL theo đúng thứ tự:
    1. `supabase/schema.sql`
    2. `supabase/migrations/002_ui_fields.sql`
    3. `supabase/migrations/003_order_dispute_fields.sql`
@@ -136,6 +139,7 @@ Mở `http://localhost:5173`. Sau khi sửa `.env`, cần dừng và chạy lạ
    13. `supabase/migrations/013_v203_public_transparency_ledger.sql`
    14. `supabase/migrations/014_security_hardening.sql`
    15. `supabase/migrations/015_admin_member_inspector_and_listing_moderation.sql`
+   16. `supabase/migrations/016_v206_seller_profile_saved_and_reports.sql`
 
    *Lưu ý: nếu SQL Editor báo lỗi liên quan đến giá trị enum mới ở file `007`, hãy chạy riêng 2 câu lệnh `alter type public.listing_status add value ...` trước rồi chạy phần còn lại.*
 

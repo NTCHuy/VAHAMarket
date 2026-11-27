@@ -2,6 +2,7 @@ import { supabase } from './supabase';
 import type {
   AdminAuditCategory,
   AdminAuditLogEntry,
+  AdminListingReport,
   AdminMemberDetail,
   AdminMemberFilter,
   AdminMemberNote,
@@ -9,6 +10,7 @@ import type {
   BannedEntity,
   BannedEntityType,
   Listing,
+  ListingReportStatus,
   Order,
   Profile,
   Transaction,
@@ -32,6 +34,7 @@ export interface AdminStats {
   overdue_shipped_count: number; // số đơn SHIPPED quá 14 ngày cần rà soát vận đơn
   total_members?: number;
   active_listings_count?: number;
+  open_reports_count?: number;
 }
 
 export type DisputeDecision = 'RELEASE_TO_SELLER' | 'REFUND_TO_BUYER';
@@ -340,4 +343,40 @@ export async function listAuditLogs(opts?: {
   });
   if (error) throw new Error(error.message);
   return (data ?? { total: 0, items: [] }) as AuditLogListResult;
+}
+
+export interface ListingReportListResult {
+  total: number;
+  items: AdminListingReport[];
+}
+
+/** Lấy danh sách báo cáo tin đăng vi phạm (chỉ Admin). */
+export async function listListingReports(opts?: {
+  status?: ListingReportStatus | 'all';
+  limit?: number;
+  offset?: number;
+}): Promise<ListingReportListResult> {
+  const { data, error } = await supabase.rpc('admin_list_listing_reports', {
+    p_status: opts?.status ?? 'open',
+    p_limit: opts?.limit ?? 30,
+    p_offset: opts?.offset ?? 0,
+  });
+  if (error) throw new Error(error.message);
+  return (data ?? { total: 0, items: [] }) as ListingReportListResult;
+}
+
+/** Đánh dấu báo cáo tin đã xử lý hoặc bỏ qua (chỉ Admin). */
+export async function resolveListingReport(
+  reportId: string,
+  status: 'resolved' | 'dismissed',
+  opts?: { note?: string; resolveAllForListing?: boolean },
+): Promise<{ updated_count: number; listing_id: string; status: string }> {
+  const { data, error } = await supabase.rpc('admin_resolve_listing_report', {
+    p_report_id: reportId,
+    p_status: status,
+    p_note: opts?.note?.trim() || null,
+    p_resolve_all_for_listing: opts?.resolveAllForListing ?? false,
+  });
+  if (error) throw new Error(error.message);
+  return data as { updated_count: number; listing_id: string; status: string };
 }

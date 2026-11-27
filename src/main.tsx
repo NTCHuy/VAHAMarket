@@ -20,12 +20,14 @@ async function start() {
       { PlatformSettingsProvider },
       { OrderAlertsProvider },
       { NotificationProvider },
+      { SavedListingsProvider },
     ] = await Promise.all([
       import('./App'),
       import('./context/AuthContext'),
       import('./context/PlatformSettingsContext'),
       import('./context/OrderAlertsContext'),
       import('./context/NotificationContext'),
+      import('./context/SavedListingsContext'),
     ]);
     root.render(
       <StrictMode>
@@ -36,7 +38,9 @@ async function start() {
                 <PlatformSettingsProvider>
                   <OrderAlertsProvider>
                     <NotificationProvider>
-                      <App />
+                      <SavedListingsProvider>
+                        <App />
+                      </SavedListingsProvider>
                     </NotificationProvider>
                   </OrderAlertsProvider>
                 </PlatformSettingsProvider>

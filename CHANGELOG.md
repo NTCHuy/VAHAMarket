@@ -2,6 +2,20 @@
 
 Tài liệu ghi nhận các thay đổi chính của dự án **VAHA Market**.
 
+## [2.0.6]
+
+### Tính năng cộng đồng & Tối ưu hiệu năng
+- **Trang hồ sơ công khai người bán (`/u/:id`)** (`supabase/migrations/016_v206_seller_profile_saved_and_reports.sql`, `SellerProfile.tsx`):
+  - Hiển thị thông tin công khai của người bán (huy hiệu Mod, trạng thái đối chiếu FB & NH, số đơn đã bán, liên kết Facebook), danh sách sản phẩm đang mở bán và các sản phẩm đã bán gần đây mà không lộ dữ liệu nhạy cảm.
+  - Gắn liên kết trực tiếp từ trang chi tiết sản phẩm (`ListingDetail.tsx`) và menu tài khoản (`Navbar.tsx`).
+- **Lưu tin yêu thích (`/saved`) & cảnh báo giảm giá Realtime** (`SavedListingsContext.tsx`, `SavedListings.tsx`):
+  - Cho phép lưu nhanh tin đăng ngay trên trang chủ (`Home.tsx`), trang người bán (`SellerProfile.tsx`) và trang chi tiết sản phẩm.
+  - Tự động phát hiện giảm giá khi người bán cập nhật giá tin đang lưu và gửi thông báo Toast theo thời gian thực.
+- **Báo cáo tin đăng vi phạm & Tab Báo cáo quản trị** (`ReportListingModal.tsx`, `ReportsTab.tsx`):
+  - Cho phép thành viên báo cáo tin có dấu hiệu giả mạo, lừa đảo, dẫn dụ ngoài sàn hoặc đã bán nhưng quên gỡ (giới hạn tần suất và chống báo cáo trùng).
+  - Thêm tab **Báo cáo** trong trang quản trị (`AdminDashboard.tsx`) cho phép Admin mở hồ sơ người bán, gỡ/xóa tin hoặc đánh dấu xử lý kèm ghi chú nhật ký.
+- **Tách mã nguồn theo route (`React.lazy`)**: Tách `AdminDashboard` và các trang ít dùng ra khỏi bundle chính (`App.tsx`, `ListingDetail.tsx`) để người dùng phổ thông tải trang chủ và trang sản phẩm nhanh hơn.
+
 ## [2.0.5]
 
 ### Quản trị & Kiểm duyệt

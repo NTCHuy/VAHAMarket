@@ -1,11 +1,13 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { lazy, Suspense, useEffect, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import {
   BadgeCheck,
   Ban,
+  Bookmark,
   Check,
   Copy,
   Eye,
+  Flag,
   Share2,
   ChevronLeft,
   ChevronRight,
@@ -13,11 +15,13 @@ import {
   Loader2,
   MapPin,
   ShieldCheck,
+  Store,
   Trash2,
   Truck,
   X,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import { useSavedListings } from '@/context/SavedListingsContext';
 import { supabase } from '@/lib/supabase';
 import { cldUrl } from '@/lib/cloudinary';
 import { calcFees, formatVND, getDisplayPrice } from '@/lib/money';
@@ -32,10 +36,12 @@ import BuyerProtectionSteps from '@/components/BuyerProtectionSteps';
 import ModBadge from '@/components/ModBadge';
 import PriceBreakdown from '@/components/PriceBreakdown';
 import PriceTag from '@/components/PriceTag';
+import ReportListingModal from '@/components/ReportListingModal';
 import { usePlatformSettings } from '@/context/PlatformSettingsContext';
-import ListingModerationModal from './admin/ListingModerationModal';
-import MemberDetailModal from './admin/MemberDetailModal';
 import type { BankAccount, Listing, Profile } from '@/types';
+
+const ListingModerationModal = lazy(() => import('./admin/ListingModerationModal'));
+const MemberDetailModal = lazy(() => import('./admin/MemberDetailModal'));
 
 const STATUS_TEXT: Partial<Record<Listing['status'], string>> = {
   pending_review: 'Tin đang chờ duyệt, chưa hiển thị công khai.',
@@ -50,6 +56,7 @@ export default function ListingDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user, isAdmin, signIn } = useAuth();
+  const { isSaved, toggleSave } = useSavedListings();
   const { feeBp, feeCapVnd } = usePlatformSettings();
   const [listing, setListing] = useState<Listing | null>(null);
   const [seller, setSeller] = useState<Profile | null>(null);
@@ -60,6 +67,7 @@ export default function ListingDetail() {
   const [active, setActive] = useState(0);
   const [lightbox, setLightbox] = useState<number | null>(null);
   const [buyOpen, setBuyOpen] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
   const [copiedMode, setCopiedMode] = useState<'link' | 'snippet' | null>(null);
   const [adminModMode, setAdminModMode] = useState<'remove' | 'delete' | null>(null);
   const [inspectSellerId, setInspectSellerId] = useState<string | null>(null);
@@ -411,10 +419,14 @@ export default function ListingDetail() {
           {seller && (
             <div className="card space-y-3 p-4">
               <div className="flex items-center gap-3">
-                <Avatar name={seller.display_name} url={seller.avatar_url} size={40} />
+                <Link to={`/u/${listing.seller_id}`} className="shrink-0">
+                  <Avatar name={seller.display_name} url={seller.avatar_url} size={40} />
+                </Link>
                 <div className="min-w-0 flex-1">
                   <p className="flex flex-wrap items-center gap-1.5 text-sm font-semibold text-neutral-950 dark:text-neutral-50">
-                    <span className="truncate">{seller.display_name}</span>
+                    <Link to={`/u/${listing.seller_id}`} className="truncate hover:underline">
+                      {seller.display_name}
+                    </Link>
                     {seller.is_mod && <ModBadge />}
                   </p>
                   <p className="text-xs tabular-nums text-neutral-500 dark:text-neutral-400">
@@ -422,26 +434,33 @@ export default function ListingDetail() {
                   </p>
                 </div>
               </div>
-              {safeFacebookUrl ? (
-                <a
-                  href={safeFacebookUrl}
-                  target="_blank"
-                  rel="noopener noreferrer nofollow"
-                  className="btn-secondary w-full text-xs"
-                >
-                  Xem Facebook người bán <ExternalLink size={13} strokeWidth={1.75} />
-                </a>
-              ) : (
-                <p className="text-xs text-neutral-500 dark:text-neutral-400">Chưa có Facebook công khai.</p>
-              )}
+              <div className="grid gap-2 sm:grid-cols-2">
+                <Link to={`/u/${listing.seller_id}`} className="btn-secondary w-full text-xs">
+                  <Store size={13} strokeWidth={1.75} /> Xem gian hàng
+                </Link>
+                {safeFacebookUrl ? (
+                  <a
+                    href={safeFacebookUrl}
+                    target="_blank"
+                    rel="noopener noreferrer nofollow"
+                    className="btn-secondary w-full text-xs"
+                  >
+                    Facebook <ExternalLink size={13} strokeWidth={1.75} />
+                  </a>
+                ) : (
+                  <span className="flex items-center justify-center rounded-md border border-neutral-200 px-2 py-1.5 text-xs text-neutral-400 dark:border-neutral-800">
+                    Chưa có Facebook
+                  </span>
+                )}
+              </div>
             </div>
           )}
 
-          {/* Chia sẻ nhanh */}
+          {/* Chia sẻ, lưu tin & báo cáo */}
           <div className="card space-y-2 p-4">
             <p className="flex items-center gap-1.5 text-xs font-semibold text-neutral-900 dark:text-neutral-100">
               <Share2 size={14} strokeWidth={1.75} className="text-blue-700 dark:text-blue-400" />
-              Chia sẻ tin đăng
+              Chia sẻ &amp; Tương tác
             </p>
             <div className="grid grid-cols-2 gap-2">
               <button
@@ -460,6 +479,29 @@ export default function ListingDetail() {
                 {copiedMode === 'snippet' ? <Check size={14} strokeWidth={2} className="text-emerald-600" /> : <Share2 size={14} strokeWidth={1.75} />}
                 {copiedMode === 'snippet' ? 'Đã chép' : 'Mẫu chia sẻ'}
               </button>
+              {listing.status === 'active' && (
+                <button
+                  type="button"
+                  onClick={() => void toggleSave(listing.id)}
+                  className={`h-8 px-2.5 text-xs ${
+                    isSaved(listing.id)
+                      ? 'btn border border-blue-600 bg-blue-50 text-blue-700 hover:bg-blue-100 dark:border-blue-500 dark:bg-blue-950/60 dark:text-blue-300'
+                      : 'btn-secondary'
+                  }`}
+                >
+                  <Bookmark size={14} strokeWidth={1.75} className={isSaved(listing.id) ? 'fill-current' : ''} />
+                  {isSaved(listing.id) ? 'Đã lưu tin' : 'Lưu tin'}
+                </button>
+              )}
+              {listing.status === 'active' && !isOwner && (
+                <button
+                  type="button"
+                  onClick={() => (user ? setReportOpen(true) : void signIn())}
+                  className="btn-secondary h-8 px-2.5 text-xs text-red-700 dark:text-red-400"
+                >
+                  <Flag size={13} strokeWidth={1.75} /> Báo cáo tin
+                </button>
+              )}
             </div>
           </div>
 
@@ -640,33 +682,45 @@ export default function ListingDetail() {
 
       {buyOpen && <BuyDialog listing={listing} buyerPays={fees.buyerPays} onClose={() => setBuyOpen(false)} />}
 
-      {isAdmin && adminModMode && (
-        <ListingModerationModal
-          mode={adminModMode}
-          listing={listing}
-          sellerName={seller?.display_name}
-          sellerIsBanned={seller?.is_banned}
-          sellerWarningCount={seller?.warning_count}
-          onClose={() => setAdminModMode(null)}
-          onDone={(res) => {
-            const wasDelete = adminModMode === 'delete';
-            setAdminModMode(null);
-            if (wasDelete) {
-              navigate('/admin?tab=listings');
-              return;
-            }
-            if (res.listing) setListing(res.listing);
-            setAdminNotice('Đã gỡ tin đăng khỏi sàn.');
-          }}
+      {reportOpen && (
+        <ReportListingModal
+          listingId={listing.id}
+          listingTitle={listing.title}
+          onClose={() => setReportOpen(false)}
         />
       )}
 
+      {isAdmin && adminModMode && (
+        <Suspense fallback={null}>
+          <ListingModerationModal
+            mode={adminModMode}
+            listing={listing}
+            sellerName={seller?.display_name}
+            sellerIsBanned={seller?.is_banned}
+            sellerWarningCount={seller?.warning_count}
+            onClose={() => setAdminModMode(null)}
+            onDone={(res) => {
+              const wasDelete = adminModMode === 'delete';
+              setAdminModMode(null);
+              if (wasDelete) {
+                navigate('/admin?tab=listings');
+                return;
+              }
+              if (res.listing) setListing(res.listing);
+              setAdminNotice('Đã gỡ tin đăng khỏi sàn.');
+            }}
+          />
+        </Suspense>
+      )}
+
       {isAdmin && inspectSellerId && (
-        <MemberDetailModal
-          userId={inspectSellerId}
-          onClose={() => setInspectSellerId(null)}
-          onSelectUser={(uid) => setInspectSellerId(uid)}
-        />
+        <Suspense fallback={null}>
+          <MemberDetailModal
+            userId={inspectSellerId}
+            onClose={() => setInspectSellerId(null)}
+            onSelectUser={(uid) => setInspectSellerId(uid)}
+          />
+        </Suspense>
       )}
     </div>
   );

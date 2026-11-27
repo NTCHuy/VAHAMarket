@@ -3,6 +3,7 @@ import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import {
   Bell,
   BellOff,
+  Bookmark,
   ChevronDown,
   Heart,
   LogIn,
@@ -13,6 +14,7 @@ import {
   Plus,
   Settings,
   Shield,
+  Store,
   Sun,
   Tag,
   X,
@@ -21,6 +23,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useOrderAlerts } from '@/context/OrderAlertsContext';
 import { useTheme, type ThemeMode } from '@/context/ThemeContext';
 import { useNotifications } from '@/context/NotificationContext';
+import { useSavedListings } from '@/context/SavedListingsContext';
 import CountBadge from './CountBadge';
 import SellerTermsModal, { hasAcceptedSellerTerms } from './SellerTermsModal';
 import { Avatar } from './ui';
@@ -84,6 +87,7 @@ export default function Navbar() {
   const { user, profile, isAdmin, isBanned, deviceBanned, loading, signIn, signOut } = useAuth();
   const blocked = (isBanned || deviceBanned) && !isAdmin;
   const alerts = useOrderAlerts();
+  const { savedCount, priceDropCount } = useSavedListings();
   const [menuOpen, setMenuOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [signingIn, setSigningIn] = useState(false);
@@ -180,6 +184,19 @@ export default function Navbar() {
           </nav>
 
           <div className="ml-auto flex items-center gap-2">
+            {user && (
+              <Link
+                to="/saved"
+                title={priceDropCount > 0 ? `Tin đã lưu (${priceDropCount} tin giảm giá)` : `Tin đã lưu (${savedCount})`}
+                aria-label="Tin đã lưu"
+                className="relative inline-flex h-8 w-8 items-center justify-center rounded-md border border-neutral-200 bg-white text-neutral-600 transition-colors hover:bg-neutral-50 hover:text-neutral-950 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-neutral-100"
+              >
+                <Bookmark size={16} strokeWidth={1.75} className={savedCount > 0 ? 'text-blue-600 dark:text-blue-400' : ''} />
+                {priceDropCount > 0 && (
+                  <span className="absolute right-1 top-1 h-1.5 w-1.5 rounded-full bg-emerald-500" aria-hidden="true" />
+                )}
+              </Link>
+            )}
             {user && <NotificationToggleButton />}
             <ThemeToggleButton />
 
@@ -216,6 +233,27 @@ export default function Navbar() {
                       <p className="truncate text-sm font-medium text-neutral-900 dark:text-neutral-100">{displayName}</p>
                       <p className="truncate text-xs text-neutral-500 dark:text-neutral-400">{user.email}</p>
                     </div>
+                    <Link
+                      role="menuitem"
+                      to={`/u/${user.id}`}
+                      className="flex items-center gap-2 px-3 py-2 text-sm text-neutral-700 hover:bg-neutral-50 dark:text-neutral-200 dark:hover:bg-neutral-800"
+                    >
+                      <Store size={15} strokeWidth={1.75} className="text-neutral-400" /> Trang cá nhân
+                    </Link>
+                    <Link
+                      role="menuitem"
+                      to="/saved"
+                      className="flex items-center justify-between gap-2 px-3 py-2 text-sm text-neutral-700 hover:bg-neutral-50 dark:text-neutral-200 dark:hover:bg-neutral-800"
+                    >
+                      <span className="flex items-center gap-2">
+                        <Bookmark size={15} strokeWidth={1.75} className="text-neutral-400" /> Tin đã lưu
+                      </span>
+                      {savedCount > 0 && (
+                        <span className="rounded bg-neutral-100 px-1.5 py-0.5 text-[11px] font-medium tabular-nums text-neutral-600 dark:bg-neutral-800 dark:text-neutral-300">
+                          {savedCount}
+                        </span>
+                      )}
+                    </Link>
                     <Link
                       role="menuitem"
                       to="/my-listings"
@@ -285,7 +323,11 @@ export default function Navbar() {
                     </div>
                   </div>
                   <NavLink to="/orders" className={navLinkClass}>Đơn hàng <CountBadge count={alerts.total} /></NavLink>
+                  <NavLink to="/saved" className={navLinkClass}>
+                    Tin đã lưu{savedCount > 0 ? ` (${savedCount})` : ''}
+                  </NavLink>
                   <NavLink to="/my-listings" className={navLinkClass}>Tin của tôi</NavLink>
+                  <NavLink to={`/u/${user.id}`} className={navLinkClass}>Trang cá nhân</NavLink>
                   {isAdmin && <NavLink to="/admin" className={navLinkClass}><Shield size={15} strokeWidth={1.75} /> Quản trị</NavLink>}
                   <NavLink to="/settings" className={navLinkClass}>Cài đặt</NavLink>
                   <button

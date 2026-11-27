@@ -1,17 +1,22 @@
+import { lazy, Suspense } from 'react';
 import { Link, Route, Routes } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import RequireAuth from '@/components/RequireAuth';
+import { PageLoader } from '@/components/ui';
 import Home from '@/pages/Home';
-import AccountSettings from '@/pages/AccountSettings';
-import CreateListing from '@/pages/CreateListing';
-import MyListings from '@/pages/MyListings';
-import AdminDashboard from '@/pages/AdminDashboard';
 import ListingDetail from '@/pages/ListingDetail';
-import Orders from '@/pages/Orders';
-import OrderDetail from '@/pages/OrderDetail';
-import Support from '@/pages/Support';
-import Transparency from '@/pages/Transparency';
-import Terms from '@/pages/Terms';
+
+const SellerProfile = lazy(() => import('@/pages/SellerProfile'));
+const SavedListings = lazy(() => import('@/pages/SavedListings'));
+const AccountSettings = lazy(() => import('@/pages/AccountSettings'));
+const CreateListing = lazy(() => import('@/pages/CreateListing'));
+const MyListings = lazy(() => import('@/pages/MyListings'));
+const Orders = lazy(() => import('@/pages/Orders'));
+const OrderDetail = lazy(() => import('@/pages/OrderDetail'));
+const AdminDashboard = lazy(() => import('@/pages/AdminDashboard'));
+const Transparency = lazy(() => import('@/pages/Transparency'));
+const Support = lazy(() => import('@/pages/Support'));
+const Terms = lazy(() => import('@/pages/Terms'));
 
 function NotFound() {
   return (
@@ -24,30 +29,34 @@ function NotFound() {
 
 export default function App() {
   return (
-    <Routes>
-      <Route element={<Layout />}>
-        <Route index element={<Home />} />
-        <Route path="listing/:id" element={<ListingDetail />} />
-        <Route path="transparency" element={<Transparency />} />
-        <Route path="support" element={<Support />} />
-        <Route path="terms" element={<Terms />} />
+    <Suspense fallback={<PageLoader />}>
+      <Routes>
+        <Route element={<Layout />}>
+          <Route index element={<Home />} />
+          <Route path="listing/:id" element={<ListingDetail />} />
+          <Route path="u/:id" element={<SellerProfile />} />
+          <Route path="transparency" element={<Transparency />} />
+          <Route path="support" element={<Support />} />
+          <Route path="terms" element={<Terms />} />
 
-        <Route element={<RequireAuth />}>
-          <Route path="settings" element={<AccountSettings />} />
-          <Route path="sell" element={<CreateListing />} />
-          <Route path="create-listing" element={<CreateListing />} />
-          <Route path="sell/:id/edit" element={<CreateListing />} />
-          <Route path="my-listings" element={<MyListings />} />
-          <Route path="orders" element={<Orders />} />
-          <Route path="orders/:id" element={<OrderDetail />} />
+          <Route element={<RequireAuth />}>
+            <Route path="saved" element={<SavedListings />} />
+            <Route path="settings" element={<AccountSettings />} />
+            <Route path="sell" element={<CreateListing />} />
+            <Route path="create-listing" element={<CreateListing />} />
+            <Route path="sell/:id/edit" element={<CreateListing />} />
+            <Route path="my-listings" element={<MyListings />} />
+            <Route path="orders" element={<Orders />} />
+            <Route path="orders/:id" element={<OrderDetail />} />
+          </Route>
+
+          <Route element={<RequireAuth requireAdmin />}>
+            <Route path="admin" element={<AdminDashboard />} />
+          </Route>
+
+          <Route path="*" element={<NotFound />} />
         </Route>
-
-        <Route element={<RequireAuth requireAdmin />}>
-          <Route path="admin" element={<AdminDashboard />} />
-        </Route>
-
-        <Route path="*" element={<NotFound />} />
-      </Route>
-    </Routes>
+      </Routes>
+    </Suspense>
   );
 }

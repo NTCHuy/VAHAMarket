@@ -332,3 +332,114 @@ export interface AdminMemberDetail {
     dispute_as_buyer: number;
   };
 }
+
+export interface PublicSellerListingItem {
+  id: string;
+  seller_id: string;
+  title: string;
+  price: number;
+  original_price: number | null;
+  fee_payer: FeePayer;
+  condition: ListingCondition;
+  category: string;
+  province: string | null;
+  ship_cod: boolean;
+  box_status: BoxStatus;
+  images: ListingImage[];
+  verification_image_url: string;
+  created_at: string;
+}
+
+export interface PublicSellerSoldItem {
+  id: string;
+  title: string;
+  price: number;
+  condition: ListingCondition;
+  category: string;
+  province: string | null;
+  box_status: BoxStatus;
+  images: ListingImage[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PublicSellerProfile {
+  profile: {
+    id: string;
+    display_name: string;
+    avatar_url: string | null;
+    bio: string | null;
+    is_mod: boolean;
+    is_banned: boolean;
+    sold_count: number;
+    bought_count: number;
+    facebook_url: string | null;
+    created_at: string;
+  };
+  is_verified_seller: boolean;
+  active_listings: PublicSellerListingItem[];
+  sold_listings: PublicSellerSoldItem[];
+}
+
+export interface SavedListingItem {
+  listing_id: string;
+  saved_price: number;
+  latest_price: number;
+  price_dropped_at: string | null;
+  saved_at: string;
+  price_drop: number;
+  listing: PublicSellerListingItem & { status: ListingStatus };
+  seller: {
+    id: string;
+    display_name: string;
+    is_mod: boolean;
+  } | null;
+}
+
+export type ListingReportReason =
+  | 'counterfeit'
+  | 'scam_suspected'
+  | 'off_platform'
+  | 'wrong_description'
+  | 'already_sold'
+  | 'spam'
+  | 'other';
+
+export type ListingReportStatus = 'open' | 'resolved' | 'dismissed';
+
+export interface AdminListingReport {
+  id: string;
+  listing_id: string;
+  reporter_id: string;
+  reason_category: ListingReportReason;
+  details: string | null;
+  status: ListingReportStatus;
+  resolved_by: string | null;
+  resolved_at: string | null;
+  resolution_note: string | null;
+  created_at: string;
+  listing: {
+    id: string;
+    title: string;
+    price: number;
+    status: ListingStatus;
+    images: ListingImage[];
+    seller_id: string;
+    moderation_note: string | null;
+  };
+  seller: {
+    id: string;
+    display_name: string;
+    avatar_url: string | null;
+    is_mod: boolean;
+    is_banned: boolean;
+    warning_count: number;
+  } | null;
+  reporter: {
+    id: string;
+    display_name: string;
+    avatar_url: string | null;
+  } | null;
+  resolver_name: string | null;
+  open_reports_count: number;
+}

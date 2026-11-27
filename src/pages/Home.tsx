@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Check, Loader2, Search, SlidersHorizontal, X } from 'lucide-react';
+import { Bookmark, Check, Loader2, Search, SlidersHorizontal, X } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { cldUrl } from '@/lib/cloudinary';
 import { getErrorMessage } from '@/lib/errors';
@@ -10,6 +10,7 @@ import { Alert } from '@/components/ui';
 import { ListingGridSkeleton } from '@/components/Skeletons';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { usePlatformSettings } from '@/context/PlatformSettingsContext';
+import { useSavedListings } from '@/context/SavedListingsContext';
 import { formatVND, getDisplayPrice } from '@/lib/money';
 import { removeVietnameseTones } from '@/lib/vietqr';
 import type { Listing } from '@/types';
@@ -446,6 +447,8 @@ export default function Home() {
 
 function ListingCard({ listing: l, feeBp, feeCapVnd }: { listing: ListingCardItem; feeBp: number; feeCapVnd: number }) {
   const isMod = l.profiles?.is_mod ?? false;
+  const { isSaved, toggleSave } = useSavedListings();
+  const saved = isSaved(l.id);
   const dp = getDisplayPrice(l, { isMod, globalBp: feeBp, feeCapVnd });
   const condTag = l.box_status === 'full' ? `${SHORT_CONDITION[l.condition] ?? l.condition} · Đủ hộp` : (SHORT_CONDITION[l.condition] ?? l.condition);
   const feeSubline = 'Miễn phí 0%';
@@ -466,9 +469,25 @@ function ListingCard({ listing: l, feeBp, feeCapVnd }: { listing: ListingCardIte
               className="h-full w-full object-cover"
             />
           )}
-          <span className="absolute left-2 top-2 max-w-[calc(100%-1rem)] truncate rounded bg-neutral-950/75 px-1.5 py-0.5 text-[11px] font-medium text-white backdrop-blur-[2px]">
+          <span className="absolute left-2 top-2 max-w-[calc(100%-3rem)] truncate rounded bg-neutral-950/75 px-1.5 py-0.5 text-[11px] font-medium text-white backdrop-blur-[2px]">
             {condTag}
           </span>
+          <button
+            type="button"
+            aria-label={saved ? 'Bỏ lưu tin' : 'Lưu tin'}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              void toggleSave(l.id);
+            }}
+            className={`absolute right-2 top-2 inline-flex h-7 w-7 items-center justify-center rounded-md border transition-colors ${
+              saved
+                ? 'border-blue-600 bg-blue-600 text-white'
+                : 'border-white/30 bg-neutral-950/65 text-white hover:bg-neutral-950/85'
+            }`}
+          >
+            <Bookmark size={14} strokeWidth={1.9} className={saved ? 'fill-current' : ''} />
+          </button>
         </div>
 
         {/* Thân thẻ 4 tầng thông tin: luôn căn thẳng hàng ngang nhau */}

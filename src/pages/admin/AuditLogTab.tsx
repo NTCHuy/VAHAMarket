@@ -24,6 +24,7 @@ const ACTION_LABELS: Record<string, string> = {
   REMOVE_LISTING: 'Gỡ tin đăng',
   DELETE_LISTING: 'Xóa vĩnh viễn tin đăng',
   RESTORE_LISTING: 'Khôi phục tin đăng',
+  RESOLVE_LISTING_REPORT: 'Xử lý báo cáo tin',
   BAN_USER: 'Khóa tài khoản',
   UNBAN_USER: 'Gỡ khóa tài khoản',
   ISSUE_WARNING: 'Cảnh báo thành viên',
