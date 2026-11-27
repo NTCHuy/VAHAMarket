@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { AlertTriangle, ExternalLink, Facebook, Loader2, Phone, ShieldBan, ShieldCheck, Undo2, Video } from 'lucide-react';
+import { AlertTriangle, ExternalLink, Eye, Facebook, Loader2, Phone, ShieldBan, ShieldCheck, Undo2, Video } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { issueWarning, resolveDispute, type DisputeDecision } from '@/lib/admin';
 import { cldUrl } from '@/lib/cloudinary';
@@ -10,7 +10,13 @@ import CopyButton from '@/components/CopyButton';
 import { Alert, Avatar, Field, PageLoader } from '@/components/ui';
 import type { Order, Profile, ProfileContact } from '@/types';
 
-export default function DisputesTab({ onChanged }: { onChanged: () => void }) {
+export default function DisputesTab({
+  onChanged,
+  onInspectMember,
+}: {
+  onChanged: () => void;
+  onInspectMember?: (userId: string) => void;
+}) {
   const [orders, setOrders] = useState<Order[]>([]);
   const [profiles, setProfiles] = useState<Record<string, Profile>>({});
   const [contacts, setContacts] = useState<Record<string, ProfileContact>>({});
@@ -62,16 +68,31 @@ export default function DisputesTab({ onChanged }: { onChanged: () => void }) {
       {orders.map((o) => (
         <DisputeCard key={o.id} order={o} buyer={profiles[o.buyer_id]} seller={profiles[o.seller_id]}
           buyerContact={contacts[o.buyer_id]} sellerContact={contacts[o.seller_id]}
+          onInspectMember={onInspectMember}
           onDone={async () => { await load(); onChanged(); }} />
       ))}
     </ul>
   );
 }
 
-function Party({ title, profile, contact, extraPhone }: { title: string; profile?: Profile; contact?: ProfileContact; extraPhone?: string }) {
+function Party({ title, userId, profile, contact, extraPhone, onInspectMember }: {
+  title: string; userId: string; profile?: Profile; contact?: ProfileContact; extraPhone?: string;
+  onInspectMember?: (userId: string) => void;
+}) {
   return (
     <div className="rounded-lg border border-neutral-200 dark:border-neutral-800 p-3">
-      <p className="mb-2 text-xs font-medium uppercase tracking-wide text-neutral-500 dark:text-neutral-400">{title}</p>
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <p className="text-xs font-medium uppercase tracking-wide text-neutral-500 dark:text-neutral-400">{title}</p>
+        {onInspectMember && (
+          <button
+            type="button"
+            onClick={() => onInspectMember(userId)}
+            className="inline-flex items-center gap-1 rounded border border-neutral-200 px-2 py-0.5 text-[11px] font-medium text-neutral-700 hover:border-brand-500 dark:border-neutral-700 dark:text-neutral-300"
+          >
+            <Eye className="h-3 w-3" /> Hồ sơ
+          </button>
+        )}
+      </div>
       <div className="flex items-center gap-2">
         <Avatar name={profile?.display_name ?? '?'} url={profile?.avatar_url ?? null} size={32} />
         <div className="min-w-0">
@@ -113,8 +134,9 @@ function VideoLink({ href, label }: { href: string | null; label: string }) {
   );
 }
 
-function DisputeCard({ order, buyer, seller, buyerContact, sellerContact, onDone }: {
+function DisputeCard({ order, buyer, seller, buyerContact, sellerContact, onInspectMember, onDone }: {
   order: Order; buyer?: Profile; seller?: Profile; buyerContact?: ProfileContact; sellerContact?: ProfileContact;
+  onInspectMember?: (userId: string) => void;
   onDone: () => Promise<void>;
 }) {
   const [note, setNote] = useState('');
@@ -187,8 +209,8 @@ function DisputeCard({ order, buyer, seller, buyerContact, sellerContact, onDone
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2">
-        <Party title="Người mua" profile={buyer} contact={buyerContact} extraPhone={order.phone} />
-        <Party title="Người bán" profile={seller} contact={sellerContact} />
+        <Party title="Người mua" userId={order.buyer_id} profile={buyer} contact={buyerContact} extraPhone={order.phone} onInspectMember={onInspectMember} />
+        <Party title="Người bán" userId={order.seller_id} profile={seller} contact={sellerContact} onInspectMember={onInspectMember} />
       </div>
 
       <Field label="Ghi chú phán quyết của Admin" htmlFor={`note-${order.id}`} required

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { AlertTriangle, BadgeCheck, CheckCircle2, ExternalLink, Facebook, Landmark, Loader2, Phone, ShieldBan, ShieldCheck, XCircle } from 'lucide-react';
+import { AlertTriangle, BadgeCheck, CheckCircle2, ExternalLink, Eye, Facebook, Landmark, Loader2, Phone, ShieldBan, ShieldCheck, XCircle } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { issueWarning, reviewListing } from '@/lib/admin';
 import { cldUrl } from '@/lib/cloudinary';
@@ -21,7 +21,13 @@ const REJECT_PRESETS = [
 ];
 
 /** Hàng đợi tiền kiểm: Admin xem ảnh xác thực + hồ sơ người bán rồi duyệt hoặc từ chối kèm lý do. */
-export default function ReviewTab({ onChanged }: { onChanged: () => void }) {
+export default function ReviewTab({
+  onChanged,
+  onInspectMember,
+}: {
+  onChanged: () => void;
+  onInspectMember?: (userId: string) => void;
+}) {
   const [items, setItems] = useState<Listing[]>([]);
   const [sellers, setSellers] = useState<Record<string, Profile>>({});
   const [contacts, setContacts] = useState<Record<string, ProfileContact>>({});
@@ -77,14 +83,16 @@ export default function ReviewTab({ onChanged }: { onChanged: () => void }) {
     <ul className="space-y-5">
       {items.map((l) => (
         <ReviewCard key={l.id} listing={l} seller={sellers[l.seller_id]} contact={contacts[l.seller_id]} bank={l.bank_account_id ? banks[l.bank_account_id] : undefined}
+          onInspectMember={onInspectMember}
           onDone={async () => { await load(); onChanged(); }} />
       ))}
     </ul>
   );
 }
 
-function ReviewCard({ listing, seller, contact, bank, onDone }: {
-  listing: Listing; seller?: Profile; contact?: ProfileContact; bank?: BankAccount; onDone: () => Promise<void>;
+function ReviewCard({ listing, seller, contact, bank, onInspectMember, onDone }: {
+  listing: Listing; seller?: Profile; contact?: ProfileContact; bank?: BankAccount;
+  onInspectMember?: (userId: string) => void; onDone: () => Promise<void>;
 }) {
   const [rejecting, setRejecting] = useState(false);
   const [warningOpen, setWarningOpen] = useState(false);
@@ -174,6 +182,15 @@ function ReviewCard({ listing, seller, contact, bank, onDone }: {
               </p>
               <p className="text-xs text-neutral-500 dark:text-neutral-400">{seller?.sold_count ?? 0} đơn bán · tham gia {seller ? new Date(seller.created_at).toLocaleDateString('vi-VN') : '—'}</p>
             </div>
+            {onInspectMember && (
+              <button
+                type="button"
+                onClick={() => onInspectMember(listing.seller_id)}
+                className="btn-secondary ml-auto px-2.5 py-1 text-xs"
+              >
+                <Eye className="h-3.5 w-3.5" /> Hồ sơ đầy đủ
+              </button>
+            )}
           </div>
 
           {safeSellerFb ? (

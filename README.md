@@ -26,6 +26,9 @@
   - Hạn gửi hàng 48 giờ tính từ khi đơn chuyển sang trạng thái đã giữ tiền; người mua có thể hủy hoàn tiền nếu quá hạn.
   - Hàng đợi hoàn tiền tạo sẵn mã VietQR cho người mua; hỗ trợ rà soát các đơn quá hạn 14 ngày chưa xác nhận nhận hàng.
   - Yêu cầu người bán nhập đơn vị vận chuyển, mã vận đơn, link video đóng gói và nhắc người mua quay video mở hộp 6 mặt.
+- **Quản trị và kiểm duyệt nâng cao**:
+  - Tra cứu hồ sơ chi tiết từng thành viên (SĐT, Facebook, ngân hàng, thiết bị trùng, lịch sử tin/đơn, ghi chú nội bộ, sửa định danh khi bị khóa).
+  - Gỡ, khôi phục hoặc xóa vĩnh viễn bài viết đã duyệt kèm nhật ký quản trị (`admin_audit_log`).
 - **Trải nghiệm sử dụng**:
   - Tìm kiếm tiếng Việt không dấu (`unaccent`).
   - Hỗ trợ Dark Mode (Light / Dark / System), luôn giữ nền trắng quanh mã VietQR để quét ổn định.
@@ -59,7 +62,7 @@ vaha-market/
 │   └── pages/                   # Các trang người dùng và bảng điều khiển Admin
 └── supabase/
     ├── schema.sql               # Lược đồ cơ sở dữ liệu gốc
-    ├── migrations/              # Các bản vá từ 002 đến 014 (idempotent)
+    ├── migrations/              # Các bản vá từ 002 đến 015 (idempotent)
     └── functions/               # Edge Functions: sepay-webhook, send-order-email
 ```
 
@@ -117,7 +120,7 @@ Mở `http://localhost:5173`. Sau khi sửa `.env`, cần dừng và chạy lạ
 
 ### Bước 2 — Thiết lập Supabase
 
-1. Vào **Supabase Dashboard → SQL Editor** và chạy lần lượt toàn bộ 14 file SQL theo đúng thứ tự:
+1. Vào **Supabase Dashboard → SQL Editor** và chạy lần lượt toàn bộ 15 file SQL theo đúng thứ tự:
    1. `supabase/schema.sql`
    2. `supabase/migrations/002_ui_fields.sql`
    3. `supabase/migrations/003_order_dispute_fields.sql`
@@ -132,6 +135,7 @@ Mở `http://localhost:5173`. Sau khi sửa `.env`, cần dừng và chạy lạ
    12. `supabase/migrations/012_v2_community_zero_fee_and_search.sql`
    13. `supabase/migrations/013_v203_public_transparency_ledger.sql`
    14. `supabase/migrations/014_security_hardening.sql`
+   15. `supabase/migrations/015_admin_member_inspector_and_listing_moderation.sql`
 
    *Lưu ý: nếu SQL Editor báo lỗi liên quan đến giá trị enum mới ở file `007`, hãy chạy riêng 2 câu lệnh `alter type public.listing_status add value ...` trước rồi chạy phần còn lại.*
 

@@ -1,140 +1,276 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
-import { Loader2, Search, ShieldCheck, ShieldOff } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
-import { setMod } from '@/lib/admin';
+import {
+  Ban,
+  ExternalLink,
+  Eye,
+  Landmark,
+  Loader2,
+  Phone,
+  Search,
+  ShieldCheck,
+  ShieldOff,
+  Users,
+} from 'lucide-react';
+import { searchMembers, setMod } from '@/lib/admin';
 import { getErrorMessage } from '@/lib/errors';
+import { safeHttpUrl } from '@/lib/url';
 import ModBadge from '@/components/ModBadge';
 import { Alert, Avatar, PageLoader } from '@/components/ui';
-import type { Profile, ProfileContact } from '@/types';
+import type { AdminMemberFilter, AdminMemberSummary } from '@/types';
 
-interface Member {
-  profile: Profile;
-  email: string | null;
-}
+const PAGE = 30;
 
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const esc = (s: string) => s.replace(/[\\%_]/g, (c) => `\\${c}`);
+const FILTERS: { id: AdminMemberFilter; label: string }[] = [
+  { id: 'all', label: 'Tất cả' },
+  { id: 'mod', label: 'Mod' },
+  { id: 'warned', label: 'Có cảnh báo' },
+  { id: 'banned', label: 'Đã khóa' },
+  { id: 'incomplete', label: 'Thiếu hồ sơ bán' },
+  { id: 'sellers', label: 'Có tin bán' },
+];
 
-async function withEmails(profiles: Profile[]): Promise<Member[]> {
-  if (profiles.length === 0) return [];
-  const { data } = await supabase.from('profile_contacts').select('user_id,email').in('user_id', profiles.map((p) => p.id));
-  const map = new Map(((data ?? []) as Pick<ProfileContact, 'user_id' | 'email'>[]).map((c) => [c.user_id, c.email]));
-  return profiles.map((profile) => ({ profile, email: map.get(profile.id) ?? null }));
-}
-
-export default function MembersTab() {
-  const [mods, setMods] = useState<Member[]>([]);
-  const [results, setResults] = useState<Member[] | null>(null);
+export default function MembersTab({
+  onChanged,
+  onInspectMember,
+  refreshSignal = 0,
+}: {
+  onChanged?: () => void;
+  onInspectMember?: (userId: string) => void;
+  refreshSignal?: number;
+}) {
   const [query, setQuery] = useState('');
+  const [debounced, setDebounced] = useState('');
+  const [filter, setFilter] = useState<AdminMemberFilter>('all');
+  const [items, setItems] = useState<AdminMemberSummary[]>([]);
+  const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [searching, setSearching] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const loadMods = useCallback(async () => {
-    const { data, error: err } = await supabase.from('profiles').select('*').eq('is_mod', true).order('display_name');
-    if (err) setError(getErrorMessage(err));
-    else setMods(await withEmails((data ?? []) as Profile[]));
-    setLoading(false);
-  }, []);
+  useEffect(() => {
+    const t = setTimeout(() => setDebounced(query.trim()), 350);
+    return () => clearTimeout(t);
+  }, [query]);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await searchMembers({ query: debounced, filter, limit: PAGE, offset: 0 });
+      setItems(res.items);
+      setTotal(res.total);
+      setError(null);
+    } catch (e) {
+      setError(getErrorMessage(e));
+    } finally {
+      setLoading(false);
+    }
+  }, [debounced, filter, refreshSignal]);
 
   useEffect(() => {
-    void loadMods();
-  }, [loadMods]);
+    void load();
+  }, [load]);
 
-  const search = async (e: FormEvent) => {
+  const onSearchSubmit = (e: FormEvent) => {
     e.preventDefault();
-    const q = query.trim();
-    if (!q) return;
-    setSearching(true);
-    setError(null);
+    setDebounced(query.trim());
+  };
+
+  const loadMore = async () => {
+    setLoadingMore(true);
     try {
-      let profiles: Profile[] = [];
-      if (UUID_RE.test(q)) {
-        const { data, error: err } = await supabase.from('profiles').select('*').eq('id', q);
-        if (err) throw err;
-        profiles = (data ?? []) as Profile[];
-      } else {
-        // Tìm theo email (profile_contacts) và theo tên hiển thị
-        const [byEmail, byName] = await Promise.all([
-          supabase.from('profile_contacts').select('user_id').ilike('email', `%${esc(q)}%`).limit(10),
-          supabase.from('profiles').select('*').ilike('display_name', `%${esc(q)}%`).limit(10),
-        ]);
-        if (byEmail.error) throw byEmail.error;
-        if (byName.error) throw byName.error;
-        const ids = ((byEmail.data ?? []) as { user_id: string }[]).map((r) => r.user_id);
-        const fromEmail = ids.length ? await supabase.from('profiles').select('*').in('id', ids) : { data: [], error: null };
-        if (fromEmail.error) throw fromEmail.error;
-        const merged = new Map<string, Profile>();
-        [...((fromEmail.data ?? []) as Profile[]), ...((byName.data ?? []) as Profile[])].forEach((p) => merged.set(p.id, p));
-        profiles = Array.from(merged.values());
-      }
-      setResults(await withEmails(profiles));
-    } catch (err) {
-      setError(getErrorMessage(err));
+      const res = await searchMembers({ query: debounced, filter, limit: PAGE, offset: items.length });
+      setItems((prev) => [...prev, ...res.items]);
+      setTotal(res.total);
+    } catch (e) {
+      setError(getErrorMessage(e));
     } finally {
-      setSearching(false);
+      setLoadingMore(false);
     }
   };
 
-  const toggle = async (m: Member) => {
+  const toggleMod = async (m: AdminMemberSummary) => {
     setBusyId(m.profile.id);
     setError(null);
     try {
       const updated = await setMod(m.profile.id, !m.profile.is_mod);
-      setResults((prev) => prev?.map((r) => (r.profile.id === updated.id ? { ...r, profile: updated } : r)) ?? null);
-      await loadMods();
-    } catch (err) {
-      setError(getErrorMessage(err));
+      setItems((prev) =>
+        prev.map((row) => (row.profile.id === updated.id ? { ...row, profile: updated } : row)),
+      );
+      onChanged?.();
+    } catch (e) {
+      setError(getErrorMessage(e));
     } finally {
       setBusyId(null);
     }
   };
 
-  const Row = ({ m }: { m: Member }) => (
-    <li className="card flex flex-wrap items-center justify-between gap-3 p-3">
-      <div className="flex min-w-0 items-center gap-3">
-        <Avatar name={m.profile.display_name} url={m.profile.avatar_url} size={40} />
-        <div className="min-w-0">
-          <p className="flex flex-wrap items-center gap-2 text-sm font-medium text-neutral-900 dark:text-neutral-100"><span className="truncate">{m.profile.display_name}</span>{m.profile.is_mod && <ModBadge full />}</p>
-          <p className="truncate text-xs text-neutral-500 dark:text-neutral-400">{m.email ?? 'Không có email'} · {m.profile.sold_count} đơn bán</p>
-          <p className="truncate font-mono text-[11px] text-neutral-400 dark:text-neutral-500">{m.profile.id}</p>
-        </div>
-      </div>
-      <button type="button" className={m.profile.is_mod ? 'btn-secondary text-red-700 dark:text-red-400' : 'btn-primary'} disabled={busyId === m.profile.id} onClick={() => void toggle(m)}>
-        {busyId === m.profile.id ? <Loader2 className="h-4 w-4 animate-spin" /> : m.profile.is_mod ? <ShieldOff className="h-4 w-4" /> : <ShieldCheck className="h-4 w-4" />}
-        {m.profile.is_mod ? 'Gỡ huy hiệu Mod' : 'Gắn huy hiệu Mod'}
-      </button>
-    </li>
-  );
-
   return (
-    <div className="space-y-6">
-      <p className="text-sm text-neutral-600 dark:text-neutral-400">Người bán có huy hiệu <strong>Mod</strong> được miễn phí trung gian (0%) cho các đơn mới. Đơn đã tạo trước đó giữ nguyên mức phí cũ.</p>
+    <div className="space-y-4">
+      <p className="text-sm text-neutral-600 dark:text-neutral-400">
+        Tra cứu hồ sơ đầy đủ của thành viên (SĐT, Facebook, ngân hàng, thiết bị, tin đăng, đơn hàng) để phục vụ kiểm duyệt và quản lý huy hiệu Mod.
+      </p>
 
-      <form onSubmit={search} className="flex gap-2">
+      <form onSubmit={onSearchSubmit} className="flex gap-2">
         <div className="relative flex-1">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400 dark:text-neutral-500" />
-          <input className="input pl-9" placeholder="Email, UUID hoặc tên thành viên" value={query} onChange={(e) => setQuery(e.target.value)} aria-label="Tìm thành viên" />
+          <input
+            className="input pl-9"
+            placeholder="Tìm theo tên, email, SĐT, link Facebook, số TK ngân hàng hoặc UUID..."
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            aria-label="Tìm thành viên"
+          />
         </div>
-        <button type="submit" className="btn-primary" disabled={searching || !query.trim()}>
-          {searching && <Loader2 className="h-4 w-4 animate-spin" />} Tìm
+        <button type="submit" className="btn-primary">
+          Tìm
         </button>
       </form>
 
+      <div className="flex max-w-full gap-2 overflow-x-auto pb-1">
+        {FILTERS.map((f) => (
+          <button
+            key={f.id}
+            type="button"
+            onClick={() => setFilter(f.id)}
+            className={`shrink-0 rounded-full border px-3 py-1 text-xs font-medium ${
+              filter === f.id
+                ? 'border-brand-600 bg-brand-50 text-brand-800 dark:border-brand-500 dark:bg-brand-900/40 dark:text-brand-300'
+                : 'border-neutral-200 bg-white text-neutral-600 hover:bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-400 dark:hover:bg-neutral-800'
+            }`}
+          >
+            {f.label}
+          </button>
+        ))}
+      </div>
+
       {error && <Alert kind="error">{error}</Alert>}
 
-      {results && (
-        <section className="space-y-2">
-          <h2 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">Kết quả tìm kiếm</h2>
-          {results.length === 0 ? <p className="text-sm text-neutral-500 dark:text-neutral-400">Không tìm thấy thành viên nào.</p> : <ul className="space-y-2">{results.map((m) => <Row key={m.profile.id} m={m} />)}</ul>}
-        </section>
-      )}
+      {loading ? (
+        <PageLoader />
+      ) : items.length === 0 ? (
+        <div className="card flex flex-col items-center px-4 py-12 text-center">
+          <Users className="h-8 w-8 text-neutral-300 dark:text-neutral-600" />
+          <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-400">Không tìm thấy thành viên nào phù hợp.</p>
+        </div>
+      ) : (
+        <>
+          <p className="text-sm text-neutral-500 dark:text-neutral-400">{total} thành viên</p>
+          <ul className="space-y-3">
+            {items.map((m) => {
+              const p = m.profile;
+              const safeFb = safeHttpUrl(p.facebook_url);
+              return (
+                <li
+                  key={p.id}
+                  className={`card flex flex-wrap items-start justify-between gap-3 p-3.5 ${
+                    p.is_banned ? 'border-red-200 dark:border-red-900/70' : ''
+                  }`}
+                >
+                  <div className="flex min-w-0 flex-1 items-start gap-3">
+                    <Avatar name={p.display_name} url={p.avatar_url} size={40} />
+                    <div className="min-w-0 flex-1 space-y-1">
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <span className="truncate text-sm font-semibold text-neutral-900 dark:text-neutral-100">
+                          {p.display_name}
+                        </span>
+                        {m.is_admin && (
+                          <span className="badge border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-900 dark:bg-blue-950/60 dark:text-blue-300">
+                            Admin
+                          </span>
+                        )}
+                        {p.is_mod && <ModBadge full />}
+                        {p.is_banned ? (
+                          <span className="badge bg-red-600 text-white dark:bg-red-600 dark:text-white">
+                            <Ban className="mr-1 h-3 w-3" /> Đã khóa
+                          </span>
+                        ) : p.warning_count > 0 ? (
+                          <span className="badge bg-amber-100 text-amber-800 dark:bg-amber-950/70 dark:text-amber-300">
+                            Cảnh báo {p.warning_count}/3
+                          </span>
+                        ) : null}
+                        {m.shared_device_count > 0 && (
+                          <span className="badge border-red-200 bg-red-50 text-red-700 dark:border-red-900 dark:bg-red-950/60 dark:text-red-300">
+                            Trùng thiết bị ({m.shared_device_count})
+                          </span>
+                        )}
+                      </div>
 
-      <section className="space-y-2">
-        <h2 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">Danh sách Mod hiện tại ({mods.length})</h2>
-        {loading ? <PageLoader /> : mods.length === 0 ? <p className="text-sm text-neutral-500 dark:text-neutral-400">Chưa có Mod nào.</p> : <ul className="space-y-2">{mods.map((m) => <Row key={m.profile.id} m={m} />)}</ul>}
-      </section>
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-neutral-600 dark:text-neutral-400">
+                        <span>{m.email ?? 'Chưa có email'}</span>
+                        {m.phone ? (
+                          <span className="inline-flex items-center gap-1 font-mono">
+                            <Phone className="h-3 w-3" /> {m.phone}
+                          </span>
+                        ) : (
+                          <span className="text-neutral-400">Chưa có SĐT</span>
+                        )}
+                        {safeFb && (
+                          <a
+                            href={safeFb}
+                            target="_blank"
+                            rel="noopener noreferrer nofollow"
+                            className="inline-flex items-center gap-1 text-brand-700 hover:underline dark:text-brand-400"
+                          >
+                            Facebook <ExternalLink className="h-3 w-3" />
+                          </a>
+                        )}
+                        <span className="inline-flex items-center gap-1">
+                          <Landmark className="h-3 w-3" /> {m.bank_count} TK
+                        </span>
+                      </div>
+
+                      <p className="text-[11px] text-neutral-500 dark:text-neutral-400">
+                        {m.active_listings_count}/{m.total_listings_count} tin · {p.sold_count} đơn bán · {p.bought_count} đơn mua ·{' '}
+                        {m.device_count} thiết bị · tham gia {new Date(p.created_at).toLocaleDateString('vi-VN')}
+                        {m.missing_seller_fields.length > 0 && (
+                          <span className="text-amber-700 dark:text-amber-400">
+                            {' '}· Thiếu: {m.missing_seller_fields.join(', ')}
+                          </span>
+                        )}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-2">
+                    {onInspectMember && (
+                      <button
+                        type="button"
+                        onClick={() => onInspectMember(p.id)}
+                        className="btn-primary px-3 py-1.5 text-xs"
+                      >
+                        <Eye className="h-3.5 w-3.5" /> Xem hồ sơ
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      className={p.is_mod ? 'btn-secondary px-3 py-1.5 text-xs text-red-700 dark:text-red-400' : 'btn-secondary px-3 py-1.5 text-xs'}
+                      disabled={busyId === p.id}
+                      onClick={() => void toggleMod(m)}
+                    >
+                      {busyId === p.id ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : p.is_mod ? (
+                        <ShieldOff className="h-3.5 w-3.5" />
+                      ) : (
+                        <ShieldCheck className="h-3.5 w-3.5" />
+                      )}
+                      {p.is_mod ? 'Gỡ Mod' : 'Gắn Mod'}
+                    </button>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+          {items.length < total && (
+            <div className="flex justify-center">
+              <button type="button" className="btn-secondary" onClick={loadMore} disabled={loadingMore}>
+                {loadingMore && <Loader2 className="h-4 w-4 animate-spin" />} Xem thêm
+              </button>
+            </div>
+          )}
+        </>
+      )}
     </div>
   );
 }

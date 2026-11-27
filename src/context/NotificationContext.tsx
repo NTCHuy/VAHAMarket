@@ -263,9 +263,25 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       const next = payload.new;
       const prev = payload.old;
       if (!next.id || !next.status || next.status === prev.status) return;
-      if (prev.status && prev.status !== 'pending_review') return;
 
       const title = next.title ?? 'Tin đăng';
+      if (next.status === 'removed') {
+        const reason = next.moderation_note ? ` Lý do: ${next.moderation_note}` : '';
+        pushToast(
+          {
+            title: 'Tin đăng đã bị gỡ',
+            body: `"${title}" đã bị gỡ khỏi sàn.${reason}`,
+            href: '/my-listings',
+            actionLabel: 'Xem tin của tôi',
+            kind: 'warning',
+          },
+          `listing-removed-${next.id}`,
+        );
+        return;
+      }
+
+      if (prev.status && prev.status !== 'pending_review') return;
+
       if (next.status === 'active') {
         pushToast(
           {

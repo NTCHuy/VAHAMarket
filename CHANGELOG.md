@@ -2,6 +2,20 @@
 
 Tài liệu ghi nhận các thay đổi chính của dự án **VAHA Market**.
 
+## [2.0.5]
+
+### Quản trị & Kiểm duyệt
+- **Xem hồ sơ chi tiết thành viên** (`supabase/migrations/015_admin_member_inspector_and_listing_moderation.sql`, `MemberDetailModal.tsx`):
+  - Tìm kiếm & lọc thành viên theo tên (có/không dấu), email, SĐT, Facebook, số tài khoản ngân hàng, UUID hoặc theo nhóm (`Mod`, `Có cảnh báo`, `Đã khóa`, `Thiếu hồ sơ bán`, `Có tin bán`).
+  - Xem đầy đủ hồ sơ kiểm duyệt: thông tin liên hệ, danh sách tài khoản ngân hàng, thiết bị đã ghi nhận, **cảnh báo các tài khoản khác dùng chung thiết bị**, lịch sử tin đăng, lịch sử đơn hàng, lịch sử cảnh báo và nhật ký quản trị.
+  - Ghi chú nội bộ riêng cho từng thành viên (`admin_member_notes`) và hỗ trợ cập nhật Facebook/SĐT khi hồ sơ đang bị khóa định danh (`admin_update_member_identity`).
+  - Tích hợp nút mở nhanh hồ sơ ngay tại các tab **Duyệt tin**, **Khiếu nại**, **Quản lý tin**, **Thành viên**, **Cảnh báo & Khóa**, **Nhật ký** và trang chi tiết sản phẩm.
+- **Gỡ, khôi phục và xóa vĩnh viễn bài viết đã duyệt** (`ListingModerationModal.tsx`, `ListingsTab.tsx`, `ListingDetail.tsx`):
+  - Cho phép Admin gỡ tin sang trạng thái `removed` (hoặc khôi phục về `hidden`), hoặc xóa vĩnh viễn cả các tin đã duyệt (chưa giữ chỗ/chưa bán), bắt buộc nhập lý do và lưu vết vào nhật ký.
+  - Tùy chọn gửi kèm +1 cảnh báo vi phạm cho người bán khi gỡ/xóa tin; hiển thị lý do gỡ tin cho người bán ở `/my-listings` và thông báo Realtime.
+- **Tab Nhật ký quản trị (`AuditLogTab.tsx`)**: Tra cứu toàn bộ lịch sử thao tác quản trị theo nhóm hành động và từ khóa.
+- **Tối ưu `.github/dependabot.yml`**: Bỏ qua nâng cấp major gây xung đột cho các gói nền tảng (`react`, `react-dom`, `vite`, `@vitejs/plugin-react`, `tailwindcss`) và gộp bản vá nhỏ theo tuần.
+
 ## [2.0.4]
 
 ### Mã nguồn mở & Tài liệu

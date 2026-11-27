@@ -97,6 +97,9 @@ export default function MyListings() {
                   {l.status === 'rejected' && l.rejection_reason && (
                     <p className="mt-1.5 rounded-lg bg-red-50 dark:bg-red-950/50 px-2.5 py-1.5 text-xs text-red-800 dark:text-red-300"><strong>Lý do:</strong> {l.rejection_reason}</p>
                   )}
+                  {l.status === 'removed' && l.moderation_note && (
+                    <p className="mt-1.5 rounded-lg bg-red-50 dark:bg-red-950/50 px-2.5 py-1.5 text-xs text-red-800 dark:text-red-300"><strong>Tin đã bị gỡ — Lý do:</strong> {l.moderation_note}</p>
+                  )}
                   {editable && (
                     <div className="mt-2 flex flex-wrap items-center gap-2">
                       <Link to={`/sell/${l.id}/edit`} className="btn-secondary px-3 py-1.5"><Pencil className="h-3.5 w-3.5" /> {l.status === 'rejected' ? 'Sửa & gửi lại' : 'Sửa'}</Link>

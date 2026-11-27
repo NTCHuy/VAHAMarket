@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { AlertTriangle, Banknote, Landmark, Lock, Percent, RotateCcw, ShieldBan, type LucideIcon } from 'lucide-react';
+import { AlertTriangle, Banknote, History, Landmark, Lock, Percent, RotateCcw, ShieldBan, Users, type LucideIcon } from 'lucide-react';
 import { getAdminStats, type AdminStats } from '@/lib/admin';
 import { formatVND } from '@/lib/money';
 import { getErrorMessage } from '@/lib/errors';
@@ -15,10 +15,12 @@ import OrdersTab from './admin/OrdersTab';
 import ListingsTab from './admin/ListingsTab';
 import MembersTab from './admin/MembersTab';
 import BansTab from './admin/BansTab';
+import AuditLogTab from './admin/AuditLogTab';
+import MemberDetailModal from './admin/MemberDetailModal';
 import FeeSettingsCard from './admin/FeeSettingsCard';
 
-type TabId = 'review' | 'payouts' | 'refunds' | 'disputes' | 'transactions' | 'orders' | 'listings' | 'members' | 'bans';
-const TAB_IDS: TabId[] = ['review', 'payouts', 'refunds', 'disputes', 'transactions', 'orders', 'listings', 'members', 'bans'];
+type TabId = 'review' | 'payouts' | 'refunds' | 'disputes' | 'transactions' | 'orders' | 'listings' | 'members' | 'bans' | 'audit';
+const TAB_IDS: TabId[] = ['review', 'payouts', 'refunds', 'disputes', 'transactions', 'orders', 'listings', 'members', 'bans', 'audit'];
 
 export default function AdminDashboard() {
   useDocumentTitle('Quản trị hệ thống');
@@ -27,6 +29,8 @@ export default function AdminDashboard() {
 
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [inspectUserId, setInspectUserId] = useState<string | null>(null);
+  const [refreshTick, setRefreshTick] = useState(0);
 
   const refreshStats = useCallback(async () => {
     try {
@@ -36,6 +40,11 @@ export default function AdminDashboard() {
       setError(getErrorMessage(e));
     }
   }, []);
+
+  const handleGlobalMutated = useCallback(() => {
+    void refreshStats();
+    setRefreshTick((n) => n + 1);
+  }, [refreshStats]);
 
   useEffect(() => {
     void refreshStats();
@@ -48,16 +57,24 @@ export default function AdminDashboard() {
     { id: 'disputes', label: 'Khiếu nại', badge: stats?.dispute_count },
     { id: 'transactions', label: 'Giao dịch lệch', badge: stats?.flagged_tx_count },
     { id: 'orders', label: 'Đơn hàng', badge: stats?.overdue_shipped_count },
-    { id: 'listings', label: 'Tin & giá' },
-    { id: 'members', label: 'Điều hành' },
+    { id: 'listings', label: 'Quản lý tin' },
+    { id: 'members', label: 'Thành viên', badge: stats?.total_members },
     { id: 'bans', label: 'Cảnh báo & Khóa', badge: stats?.banned_count },
+    { id: 'audit', label: 'Nhật ký' },
   ];
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Quản trị</h1>
-        <p className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">Duyệt tin, giải ngân, hoàn tiền và xử lý khiếu nại.</p>
+        <p className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
+          Duyệt tin, giải ngân, hoàn tiền, kiểm duyệt thành viên và nhật ký hệ thống.
+          {stats?.total_members !== undefined && stats?.active_listings_count !== undefined && (
+            <span className="ml-1 text-neutral-500 dark:text-neutral-400">
+              ({stats.total_members} thành viên · {stats.active_listings_count} tin đang bán)
+            </span>
+          )}
+        </p>
       </div>
 
       {error && <Alert kind="error">{error}</Alert>}
@@ -78,22 +95,42 @@ export default function AdminDashboard() {
             className={`-mb-px flex shrink-0 items-center gap-2 border-b-2 px-3 py-2.5 text-sm font-medium transition-colors ${tab === t.id ? 'border-brand-700 dark:border-brand-500 text-brand-800 dark:text-brand-300' : 'border-transparent text-neutral-500 dark:text-neutral-400 hover:text-neutral-800 dark:hover:text-neutral-200'}`}>
             {t.id === 'refunds' && <RotateCcw className="h-4 w-4" />}
             {t.id === 'transactions' && <Landmark className="h-4 w-4" />}
+            {t.id === 'members' && <Users className="h-4 w-4" />}
             {t.id === 'bans' && <ShieldBan className="h-4 w-4" />}
+            {t.id === 'audit' && <History className="h-4 w-4" />}
             {t.label}
-            {t.badge !== undefined && t.badge > 0 && <span className="rounded-full bg-red-600 px-1.5 text-[11px] font-semibold leading-5 text-white">{t.badge}</span>}
+            {t.badge !== undefined && t.badge > 0 && (
+              <span className={`rounded-full px-1.5 text-[11px] font-semibold leading-5 ${
+                t.id === 'members'
+                  ? 'bg-neutral-200 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300'
+                  : 'bg-red-600 text-white'
+              }`}>
+                {t.badge}
+              </span>
+            )}
           </button>
         ))}
       </div>
 
-      {tab === 'review' && <ReviewTab onChanged={refreshStats} />}
+      {tab === 'review' && <ReviewTab onChanged={refreshStats} onInspectMember={setInspectUserId} />}
       {tab === 'payouts' && <PayoutsTab onChanged={refreshStats} />}
       {tab === 'refunds' && <RefundsTab onChanged={refreshStats} />}
-      {tab === 'disputes' && <DisputesTab onChanged={refreshStats} />}
+      {tab === 'disputes' && <DisputesTab onChanged={refreshStats} onInspectMember={setInspectUserId} />}
       {tab === 'transactions' && <TransactionsTab onChanged={refreshStats} />}
       {tab === 'orders' && <OrdersTab onChanged={refreshStats} overdueCount={stats?.overdue_shipped_count ?? 0} />}
-      {tab === 'listings' && <ListingsTab />}
-      {tab === 'members' && <MembersTab />}
-      {tab === 'bans' && <BansTab onChanged={refreshStats} />}
+      {tab === 'listings' && <ListingsTab onChanged={refreshStats} onInspectMember={setInspectUserId} refreshSignal={refreshTick} />}
+      {tab === 'members' && <MembersTab onChanged={refreshStats} onInspectMember={setInspectUserId} refreshSignal={refreshTick} />}
+      {tab === 'bans' && <BansTab onChanged={refreshStats} onInspectMember={setInspectUserId} refreshSignal={refreshTick} />}
+      {tab === 'audit' && <AuditLogTab onInspectMember={setInspectUserId} />}
+
+      {inspectUserId && (
+        <MemberDetailModal
+          userId={inspectUserId}
+          onClose={() => setInspectUserId(null)}
+          onSelectUser={(uid) => setInspectUserId(uid)}
+          onMutated={handleGlobalMutated}
+        />
+      )}
     </div>
   );
 }

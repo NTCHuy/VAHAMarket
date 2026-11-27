@@ -1,5 +1,18 @@
 import { supabase } from './supabase';
-import type { BannedEntity, BannedEntityType, Listing, Order, Profile, Transaction } from '@/types';
+import type {
+  AdminAuditCategory,
+  AdminAuditLogEntry,
+  AdminMemberDetail,
+  AdminMemberFilter,
+  AdminMemberNote,
+  AdminMemberSummary,
+  BannedEntity,
+  BannedEntityType,
+  Listing,
+  Order,
+  Profile,
+  Transaction,
+} from '@/types';
 
 /** Các hàm RPC dành cho admin. Mỗi hàm tự kiểm tra is_admin() ở tầng DB. */
 
@@ -17,6 +30,8 @@ export interface AdminStats {
   refund_pending_count: number; // số đơn chờ Admin chuyển khoản hoàn tiền
   refund_pending_amount: number;
   overdue_shipped_count: number; // số đơn SHIPPED quá 14 ngày cần rà soát vận đơn
+  total_members?: number;
+  active_listings_count?: number;
 }
 
 export type DisputeDecision = 'RELEASE_TO_SELLER' | 'REFUND_TO_BUYER';
@@ -196,4 +211,133 @@ export async function listBannedEntities(): Promise<BannedEntity[]> {
   const { data, error } = await supabase.rpc('admin_list_banned_entities');
   if (error) throw new Error(error.message);
   return (data ?? []) as BannedEntity[];
+}
+
+export interface SearchMembersResult {
+  total: number;
+  items: AdminMemberSummary[];
+}
+
+/** Tìm kiếm & lọc danh sách thành viên (chỉ Admin). */
+export async function searchMembers(opts?: {
+  query?: string;
+  filter?: AdminMemberFilter;
+  limit?: number;
+  offset?: number;
+}): Promise<SearchMembersResult> {
+  const { data, error } = await supabase.rpc('admin_search_members', {
+    p_query: opts?.query?.trim() || null,
+    p_filter: opts?.filter ?? 'all',
+    p_limit: opts?.limit ?? 30,
+    p_offset: opts?.offset ?? 0,
+  });
+  if (error) throw new Error(error.message);
+  return (data ?? { total: 0, items: [] }) as SearchMembersResult;
+}
+
+/** Lấy toàn bộ hồ sơ chi tiết thành viên để kiểm duyệt (chỉ Admin). */
+export async function getMemberDetail(userId: string): Promise<AdminMemberDetail> {
+  const { data, error } = await supabase.rpc('admin_get_member_detail', { p_user_id: userId });
+  if (error) throw new Error(error.message);
+  return data as AdminMemberDetail;
+}
+
+export interface ModerateListingResult {
+  listing?: Listing;
+  deleted_id?: string;
+  seller_id?: string;
+  warning: IssueWarningResult | null;
+}
+
+/** Gỡ tin đăng sang trạng thái `removed` kèm lý do và tùy chọn cảnh báo người bán. */
+export async function removeListing(
+  listingId: string,
+  reason: string,
+  issueWarning = false,
+): Promise<ModerateListingResult> {
+  const { data, error } = await supabase.rpc('admin_remove_listing', {
+    p_listing_id: listingId,
+    p_reason: reason.trim(),
+    p_issue_warning: issueWarning,
+  });
+  if (error) throw new Error(error.message);
+  return data as ModerateListingResult;
+}
+
+/** Xóa vĩnh viễn tin đăng (kể cả tin đã duyệt) kèm lưu vết Audit Log. */
+export async function deleteListing(
+  listingId: string,
+  reason: string,
+  issueWarning = false,
+): Promise<ModerateListingResult> {
+  const { data, error } = await supabase.rpc('admin_delete_listing', {
+    p_listing_id: listingId,
+    p_reason: reason.trim(),
+    p_issue_warning: issueWarning,
+  });
+  if (error) throw new Error(error.message);
+  return data as ModerateListingResult;
+}
+
+/** Khôi phục tin đã bị gỡ về trạng thái Ẩn để người bán kiểm tra lại. */
+export async function restoreListing(listingId: string, note?: string): Promise<Listing> {
+  const { data, error } = await supabase.rpc('admin_restore_listing', {
+    p_listing_id: listingId,
+    p_note: note?.trim() || null,
+  });
+  if (error) throw new Error(error.message);
+  return data as Listing;
+}
+
+/** Thêm ghi chú nội bộ cho hồ sơ thành viên. */
+export async function addMemberNote(userId: string, note: string): Promise<AdminMemberNote> {
+  const { data, error } = await supabase.rpc('admin_add_member_note', {
+    p_user_id: userId,
+    p_note: note.trim(),
+  });
+  if (error) throw new Error(error.message);
+  return data as AdminMemberNote;
+}
+
+/** Xóa ghi chú nội bộ thành viên. */
+export async function deleteMemberNote(noteId: string): Promise<void> {
+  const { error } = await supabase.rpc('admin_delete_member_note', { p_note_id: noteId });
+  if (error) throw new Error(error.message);
+}
+
+/** Admin hỗ trợ cập nhật SĐT và link Facebook đã bị khóa định danh cho thành viên. */
+export async function updateMemberIdentity(
+  userId: string,
+  payload: { facebookUrl: string | null; phone: string | null; reason: string },
+): Promise<{ facebook_url: string | null; phone: string | null }> {
+  const { data, error } = await supabase.rpc('admin_update_member_identity', {
+    p_user_id: userId,
+    p_facebook_url: payload.facebookUrl?.trim() || null,
+    p_phone: payload.phone?.trim() || null,
+    p_reason: payload.reason.trim(),
+  });
+  if (error) throw new Error(error.message);
+  return data as { facebook_url: string | null; phone: string | null };
+}
+
+export interface AuditLogListResult {
+  total: number;
+  items: AdminAuditLogEntry[];
+}
+
+/** Lấy danh sách nhật ký quản trị toàn hệ thống (chỉ Admin). */
+export async function listAuditLogs(opts?: {
+  action?: AdminAuditCategory;
+  query?: string;
+  limit?: number;
+  offset?: number;
+}): Promise<AuditLogListResult> {
+  const { data, error } = await supabase.rpc('admin_list_audit_logs', {
+    p_action: opts?.action ?? 'all',
+    p_query: opts?.query?.trim() || null,
+    p_limit: opts?.limit ?? 50,
+    p_offset: opts?.offset ?? 0,
+  });
+  if (error) throw new Error(error.message);
+  return (data ?? { total: 0, items: [] }) as AuditLogListResult;
 }

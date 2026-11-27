@@ -2,8 +2,10 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import {
   BadgeCheck,
+  Ban,
   Check,
   Copy,
+  Eye,
   Share2,
   ChevronLeft,
   ChevronRight,
@@ -11,6 +13,7 @@ import {
   Loader2,
   MapPin,
   ShieldCheck,
+  Trash2,
   Truck,
   X,
 } from 'lucide-react';
@@ -30,6 +33,8 @@ import ModBadge from '@/components/ModBadge';
 import PriceBreakdown from '@/components/PriceBreakdown';
 import PriceTag from '@/components/PriceTag';
 import { usePlatformSettings } from '@/context/PlatformSettingsContext';
+import ListingModerationModal from './admin/ListingModerationModal';
+import MemberDetailModal from './admin/MemberDetailModal';
 import type { BankAccount, Listing, Profile } from '@/types';
 
 const STATUS_TEXT: Partial<Record<Listing['status'], string>> = {
@@ -43,7 +48,8 @@ const PHONE_RE = /^[0-9+ ]{8,15}$/;
 
 export default function ListingDetail() {
   const { id } = useParams<{ id: string }>();
-  const { user, signIn } = useAuth();
+  const navigate = useNavigate();
+  const { user, isAdmin, signIn } = useAuth();
   const { feeBp, feeCapVnd } = usePlatformSettings();
   const [listing, setListing] = useState<Listing | null>(null);
   const [seller, setSeller] = useState<Profile | null>(null);
@@ -55,6 +61,9 @@ export default function ListingDetail() {
   const [lightbox, setLightbox] = useState<number | null>(null);
   const [buyOpen, setBuyOpen] = useState(false);
   const [copiedMode, setCopiedMode] = useState<'link' | 'snippet' | null>(null);
+  const [adminModMode, setAdminModMode] = useState<'remove' | 'delete' | null>(null);
+  const [inspectSellerId, setInspectSellerId] = useState<string | null>(null);
+  const [adminNotice, setAdminNotice] = useState<string | null>(null);
   const [related, setRelated] = useState<Pick<Listing, 'id' | 'title' | 'price' | 'province' | 'condition' | 'images'>[]>([]);
 
   useEffect(() => {
@@ -454,6 +463,49 @@ export default function ListingDetail() {
             </div>
           </div>
 
+          {/* Công cụ quản trị nhanh dành cho Admin */}
+          {isAdmin && (
+            <div className="card space-y-2.5 border-blue-200 p-4 dark:border-blue-900/70">
+              <div className="flex items-center justify-between gap-2">
+                <p className="flex items-center gap-1.5 text-xs font-semibold text-neutral-900 dark:text-neutral-100">
+                  <ShieldCheck size={14} strokeWidth={1.75} className="text-blue-700 dark:text-blue-400" />
+                  Quản trị tin đăng
+                </p>
+                <Link to="/admin?tab=listings" className="text-xs font-medium text-blue-700 hover:underline dark:text-blue-400">
+                  Mở quản trị
+                </Link>
+              </div>
+              {adminNotice && <Alert kind="success">{adminNotice}</Alert>}
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setInspectSellerId(listing.seller_id)}
+                  className="btn-secondary h-8 px-2.5 text-xs"
+                >
+                  <Eye size={13} strokeWidth={1.75} /> Hồ sơ người bán
+                </button>
+                {listing.status !== 'reserved' && listing.status !== 'sold' && listing.status !== 'removed' && (
+                  <button
+                    type="button"
+                    onClick={() => setAdminModMode('remove')}
+                    className="btn-secondary h-8 px-2.5 text-xs text-amber-800 dark:text-amber-300"
+                  >
+                    <Ban size={13} strokeWidth={1.75} /> Gỡ tin
+                  </button>
+                )}
+                {listing.status !== 'reserved' && listing.status !== 'sold' && (
+                  <button
+                    type="button"
+                    onClick={() => setAdminModMode('delete')}
+                    className="btn-ghost col-span-2 h-8 border border-red-200 px-2.5 text-xs text-red-700 hover:bg-red-50 dark:border-red-900/70 dark:text-red-400 dark:hover:bg-red-950/50"
+                  >
+                    <Trash2 size={13} strokeWidth={1.75} /> Xóa vĩnh viễn tin này
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+
           <p className="px-1 text-xs leading-relaxed text-neutral-500 dark:text-neutral-400">
             Quay video mở hộp đủ 6 mặt khi nhận hàng. Chỉ chuyển khoản qua mã QR trên đơn.
           </p>
@@ -587,6 +639,35 @@ export default function ListingDetail() {
       )}
 
       {buyOpen && <BuyDialog listing={listing} buyerPays={fees.buyerPays} onClose={() => setBuyOpen(false)} />}
+
+      {isAdmin && adminModMode && (
+        <ListingModerationModal
+          mode={adminModMode}
+          listing={listing}
+          sellerName={seller?.display_name}
+          sellerIsBanned={seller?.is_banned}
+          sellerWarningCount={seller?.warning_count}
+          onClose={() => setAdminModMode(null)}
+          onDone={(res) => {
+            const wasDelete = adminModMode === 'delete';
+            setAdminModMode(null);
+            if (wasDelete) {
+              navigate('/admin?tab=listings');
+              return;
+            }
+            if (res.listing) setListing(res.listing);
+            setAdminNotice('Đã gỡ tin đăng khỏi sàn.');
+          }}
+        />
+      )}
+
+      {isAdmin && inspectSellerId && (
+        <MemberDetailModal
+          userId={inspectSellerId}
+          onClose={() => setInspectSellerId(null)}
+          onSelectUser={(uid) => setInspectSellerId(uid)}
+        />
+      )}
     </div>
   );
 }

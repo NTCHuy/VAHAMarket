@@ -3,6 +3,7 @@ import {
   AlertTriangle,
   Ban,
   CheckCircle2,
+  Eye,
   Fingerprint,
   Loader2,
   Plus,
@@ -33,7 +34,15 @@ const ENTITY_TYPE_LABELS: Record<BannedEntityType, { label: string; placeholder:
   fingerprint: { label: 'Mã thiết bị (Visitor ID)', placeholder: 'abc123xyz...' },
 };
 
-export default function BansTab({ onChanged }: { onChanged: () => void }) {
+export default function BansTab({
+  onChanged,
+  onInspectMember,
+  refreshSignal = 0,
+}: {
+  onChanged: () => void;
+  onInspectMember?: (userId: string) => void;
+  refreshSignal?: number;
+}) {
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [warnings, setWarnings] = useState<UserWarning[]>([]);
   const [devices, setDevices] = useState<UserDevice[]>([]);
@@ -82,7 +91,7 @@ export default function BansTab({ onChanged }: { onChanged: () => void }) {
 
   useEffect(() => {
     void load();
-  }, [load]);
+  }, [load, refreshSignal]);
 
   const flaggedUsers = useMemo(
     () => profiles.filter((p) => p.is_banned || p.warning_count > 0),
@@ -324,6 +333,7 @@ export default function BansTab({ onChanged }: { onChanged: () => void }) {
                 warnings={warningsByUser[u.id] ?? []}
                 devices={devicesByUser[u.id] ?? []}
                 entities={entitiesByUser[u.id] ?? []}
+                onInspectMember={onInspectMember}
                 onUpdated={async (msg) => {
                   setNotice({ kind: 'success', text: msg });
                   await load();
@@ -411,6 +421,7 @@ function FlaggedUserCard({
   warnings,
   devices,
   entities,
+  onInspectMember,
   onUpdated,
   onError,
 }: {
@@ -418,6 +429,7 @@ function FlaggedUserCard({
   warnings: UserWarning[];
   devices: UserDevice[];
   entities: BannedEntity[];
+  onInspectMember?: (userId: string) => void;
   onUpdated: (msg: string) => Promise<void>;
   onError: (msg: string) => void;
 }) {
@@ -503,6 +515,16 @@ function FlaggedUserCard({
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
+          {onInspectMember && (
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => onInspectMember(profile.id)}
+              className="btn-secondary px-3 py-1.5 text-xs"
+            >
+              <Eye className="h-3.5 w-3.5" /> Hồ sơ
+            </button>
+          )}
           {!profile.is_banned && (
             <>
               <button

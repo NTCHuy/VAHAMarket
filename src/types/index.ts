@@ -224,3 +224,111 @@ export interface Transaction {
   resolved_note: string | null;
   created_at: string;
 }
+
+export type AdminMemberFilter = 'all' | 'mod' | 'warned' | 'banned' | 'incomplete' | 'sellers';
+
+export interface AdminMemberSummary {
+  profile: Profile;
+  email: string | null;
+  phone: string | null;
+  province: string | null;
+  is_admin: boolean;
+  last_sign_in_at: string | null;
+  bank_count: number;
+  active_listings_count: number;
+  total_listings_count: number;
+  device_count: number;
+  shared_device_count: number;
+  missing_seller_fields: string[];
+}
+
+export interface AdminMemberNote {
+  id: string;
+  user_id: string;
+  admin_id: string | null;
+  admin_name: string;
+  note: string;
+  created_at: string;
+}
+
+export interface SharedDeviceUser {
+  user_id: string;
+  display_name: string;
+  avatar_url: string | null;
+  is_banned: boolean;
+  warning_count: number;
+  shared_visitor_ids: string[];
+}
+
+export type AdminAuditCategory = 'all' | 'listings' | 'bans' | 'orders' | 'members' | 'settings';
+
+export interface AdminAuditLogEntry {
+  id: string;
+  admin_id: string | null;
+  admin_name: string;
+  action: string;
+  order_id: string | null;
+  payment_code?: string | null;
+  listing_id: string | null;
+  transaction_id: string | null;
+  target_user_id: string | null;
+  target_user_name?: string | null;
+  note: string | null;
+  created_at: string;
+}
+
+export interface AdminMemberOrderSummary {
+  id: string;
+  payment_code: string;
+  listing_id: string | null;
+  listing_snapshot: { title: string; image: string | null; price: number };
+  buyer_id: string;
+  seller_id: string;
+  amount: number;
+  seller_payout: number;
+  list_price: number;
+  status: OrderStatus;
+  created_at: string;
+  paid_at: string | null;
+  shipped_at: string | null;
+  completed_at: string | null;
+  disputed_at: string | null;
+}
+
+export interface AdminMemberDetail {
+  profile: Profile;
+  is_admin: boolean;
+  auth: {
+    email: string | null;
+    created_at: string | null;
+    last_sign_in_at: string | null;
+    email_confirmed_at: string | null;
+  };
+  contact: ProfileContact | null;
+  bank_accounts: BankAccount[];
+  missing_seller_fields: string[];
+  identity_lock: {
+    locked: boolean;
+    listings: number;
+    orders: number;
+  };
+  devices: UserDevice[];
+  shared_device_users: SharedDeviceUser[];
+  warnings: UserWarning[];
+  banned_entities: BannedEntity[];
+  listings: Listing[];
+  orders: AdminMemberOrderSummary[];
+  notes: AdminMemberNote[];
+  audit_logs: AdminAuditLogEntry[];
+  stats: {
+    total_listings: number;
+    active_listings: number;
+    pending_listings: number;
+    rejected_listings: number;
+    removed_listings: number;
+    total_sold_gmv: number;
+    total_bought_gmv: number;
+    dispute_as_seller: number;
+    dispute_as_buyer: number;
+  };
+}
