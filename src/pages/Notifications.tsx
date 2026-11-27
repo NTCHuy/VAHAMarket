@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Bell, CheckCheck, Loader2, Search } from 'lucide-react';
 import { useNotifications } from '@/context/NotificationContext';
-import { listMyNotifications, NOTIFICATION_KIND_LABEL } from '@/lib/notifications';
+import { formatRelativeTime, listMyNotifications, NOTIFICATION_KIND_LABEL } from '@/lib/notifications';
 import { getErrorMessage } from '@/lib/errors';
 import { Alert, PageLoader } from '@/components/ui';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
@@ -182,8 +182,11 @@ export default function Notifications() {
                       <span className="rounded border border-neutral-200 bg-neutral-50 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-neutral-700 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300">
                         {NOTIFICATION_KIND_LABEL[n.kind]}
                       </span>
-                      <span className="text-[11px] tabular-nums text-neutral-400">
-                        {new Date(n.created_at).toLocaleString('vi-VN')}
+                      <span
+                        title={new Date(n.created_at).toLocaleString('vi-VN')}
+                        className="text-[11px] tabular-nums text-neutral-400"
+                      >
+                        {formatRelativeTime(n.created_at)}
                       </span>
                     </div>
                     <p className="mt-1 text-sm font-semibold text-neutral-950 dark:text-neutral-50">

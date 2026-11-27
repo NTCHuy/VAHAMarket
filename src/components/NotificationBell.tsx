@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Bell, BellOff, CheckCheck, Loader2, Search } from 'lucide-react';
 import { useNotifications } from '@/context/NotificationContext';
-import { NOTIFICATION_KIND_LABEL } from '@/lib/notifications';
+import { formatRelativeTime, NOTIFICATION_KIND_LABEL } from '@/lib/notifications';
 import CountBadge from './CountBadge';
 
 export default function NotificationBell() {
@@ -130,7 +130,7 @@ export default function NotificationBell() {
                         {NOTIFICATION_KIND_LABEL[n.kind]}
                       </span>
                       <span className="text-[10px] tabular-nums text-neutral-400">
-                        {new Date(n.created_at).toLocaleDateString('vi-VN')}
+                        {formatRelativeTime(n.created_at)}
                       </span>
                     </div>
                     <p className="mt-0.5 line-clamp-1 text-xs font-semibold text-neutral-900 dark:text-neutral-100">

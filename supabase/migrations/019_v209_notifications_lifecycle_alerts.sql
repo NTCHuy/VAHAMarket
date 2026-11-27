@@ -286,7 +286,20 @@ security definer
 set search_path = ''
 as $$
 declare
-  v_search_text text := coalesce(new.search_text, '');
+  v_search_text text := coalesce(
+    nullif(new.search_text, ''),
+    lower(
+      extensions.unaccent(
+        concat_ws(
+          ' ',
+          coalesce(new.title, ''),
+          coalesce(new.brand, ''),
+          coalesce(new.description, ''),
+          coalesce(new.province, '')
+        )
+      )
+    )
+  );
   v_matched_rec record;
 begin
   if new.status::text is not distinct from old.status::text then

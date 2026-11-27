@@ -1019,6 +1019,17 @@ export default function Messages() {
                               className="input h-9 text-xs tabular-nums"
                               required
                             />
+                            {(() => {
+                              const n = Number(offerPriceText.replace(/[^0-9]/g, ''));
+                              if (!Number.isFinite(n) || n <= 0) return null;
+                              const diffPct = Math.round(((detail.listing.price - n) / detail.listing.price) * 100);
+                              return (
+                                <p className="mt-1 text-[11px] font-medium tabular-nums text-blue-700 dark:text-blue-400">
+                                  = {formatVND(n)}
+                                  {diffPct > 0 && n < detail.listing.price ? ` (-${diffPct}% so với giá niêm yết)` : ''}
+                                </p>
+                              );
+                            })()}
                           </div>
                           <div>
                             <label className="mb-1 block text-[11px] font-medium text-neutral-600 dark:text-neutral-400">

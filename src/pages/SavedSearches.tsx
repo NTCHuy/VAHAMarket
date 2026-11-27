@@ -209,6 +209,11 @@ export default function SavedSearches() {
               placeholder="Ví dụ: 5000000"
               className="input h-9 text-xs tabular-nums"
             />
+            {Number(maxPriceText.replace(/[^0-9]/g, '')) > 0 && (
+              <p className="mt-1 text-[11px] font-medium tabular-nums text-blue-700 dark:text-blue-400">
+                = {formatVND(Number(maxPriceText.replace(/[^0-9]/g, '')))}
+              </p>
+            )}
           </div>
 
           <div className="flex items-end">

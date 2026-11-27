@@ -110,7 +110,7 @@ export default function ListingDetail() {
               .eq('status', 'active')
               .eq('category', l.category)
               .neq('id', l.id)
-              .order('created_at', { ascending: false })
+              .order('bumped_at', { ascending: false })
               .limit(4),
           ]);
           if (!alive) return;
@@ -792,9 +792,15 @@ export default function ListingDetail() {
         <div className="fixed inset-x-0 bottom-0 z-30 border-t border-neutral-200 bg-white/95 px-4 py-2.5 backdrop-blur dark:border-neutral-800 dark:bg-neutral-950/95 lg:hidden">
           <div className="mx-auto flex max-w-6xl items-center justify-between gap-3">
             <div className="min-w-0 tabular-nums">
-              <p className="text-[11px] text-neutral-500 dark:text-neutral-400">Tổng thanh toán</p>
+              <p className="text-[11px] text-neutral-500 dark:text-neutral-400">
+                {acceptedOffer ? 'Giá đã chốt riêng' : 'Tổng thanh toán'}
+              </p>
               <p className="truncate text-base font-semibold text-neutral-950 dark:text-neutral-50">
-                {formatVND(fees.buyerPays)}
+                {formatVND(
+                  acceptedOffer
+                    ? calcFees(acceptedOffer.offered_price, listing.fee_payer, sellerIsMod, feeBp, feeCapVnd).buyerPays
+                    : fees.buyerPays,
+                )}
               </p>
             </div>
             <div className="flex shrink-0 items-center gap-2">

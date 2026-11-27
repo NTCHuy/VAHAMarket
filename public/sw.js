@@ -1,4 +1,4 @@
-const CACHE_NAME = 'vaha-market-shell-v209';
+const CACHE_NAME = 'vaha-market-shell-v210';
 const SHELL_ASSETS = ['/logo.png', '/favicon.svg', '/manifest.webmanifest', '/theme-init.js'];
 
 const OFFLINE_HTML = `<!doctype html>
@@ -12,14 +12,14 @@ const OFFLINE_HTML = `<!doctype html>
     .card { max-width: 380px; border: 1px solid #262626; border-radius: 10px; background: #171717; padding: 24px; text-align: center; }
     h1 { margin: 0 0 8px; font-size: 18px; }
     p { margin: 0 0 16px; font-size: 14px; color: #a3a3a3; line-height: 1.5; }
-    button { border: 0; border-radius: 8px; background: #1d4ed8; color: #fff; font-size: 14px; font-weight: 600; padding: 10px 18px; cursor: pointer; }
+    button, .btn { display: inline-block; border: 0; border-radius: 8px; background: #1d4ed8; color: #fff; font-size: 14px; font-weight: 600; padding: 10px 18px; cursor: pointer; text-decoration: none; }
   </style>
 </head>
 <body>
   <div class="card">
     <h1>Không có kết nối mạng</h1>
     <p>VAHA Market cần kết nối Internet để tải giá, tin đăng và trạng thái giao dịch mới nhất.</p>
-    <button type="button" onclick="window.location.reload()">Thử tải lại</button>
+    <a class="btn" href="/">Thử tải lại</a>
   </div>
 </body>
 </html>`;

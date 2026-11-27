@@ -2,6 +2,15 @@
 
 Tài liệu ghi nhận các thay đổi chính của dự án **VAHA Market**.
 
+## [2.1.0]
+
+### Hoàn thiện trải nghiệm & Tối ưu chi tiết (Polish)
+- **Điều hướng responsive** (`Navbar.tsx`): bổ sung `whitespace-nowrap`, tối ưu breakpoint thanh điều hướng (`lg`) tránh tràn chữ trên tablet và đặt nút **Hộp thư** truy cập nhanh ngay trên thanh công cụ cho mobile/tablet.
+- **Tránh nhập nhầm giá tiền** (`Messages.tsx`, `SavedSearches.tsx`): hiển thị xem trước số tiền VNĐ đã định dạng (và % giảm so với giá niêm yết khi trả giá) trực tiếp dưới ô nhập.
+- **Đồng bộ giá chốt trên Mobile** (`ListingDetail.tsx`): thanh đặt mua cố định phía dưới tự hiển thị đúng mức giá đã thỏa thuận khi người mua có đề nghị giá được chấp nhận; danh sách sản phẩm tương tự ưu tiên sắp theo `bumped_at`.
+- **Thông báo & Quản lý tin trực quan hơn** (`notifications.ts`, `NotificationBell.tsx`, `Notifications.tsx`, `MyListings.tsx`): hiển thị thời gian tương đối (*Vừa xong*, *X phút trước*, *X giờ trước*), gắn liên kết trực tiếp từ tiêu đề tin và hiển thị số lần đã làm mới.
+- **An toàn CSP & Độ bền khớp từ khóa** (`public/sw.js`, `019_v209_notifications_lifecycle_alerts.sql`): loại bỏ hoàn toàn inline JS trong trang offline dự phòng (nâng cache SW lên `v210`) và bổ sung fallback `unaccent` trong trigger khớp từ khóa săn kèo.
+
 ## [2.0.9]
 
 ### Hộp chuông thông báo DB, Vòng đời tin đăng, Săn kèo & PWA cơ bản

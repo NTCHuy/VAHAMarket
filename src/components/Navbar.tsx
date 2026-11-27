@@ -34,7 +34,7 @@ import SellerTermsModal, { hasAcceptedSellerTerms } from './SellerTermsModal';
 import { Avatar } from './ui';
 
 const navLinkClass = ({ isActive }: { isActive: boolean }) =>
-  `inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm font-medium transition-colors ${
+  `inline-flex items-center gap-1.5 whitespace-nowrap rounded-md px-2.5 py-1.5 text-sm font-medium transition-colors ${
     isActive
       ? 'bg-neutral-100 text-neutral-950 dark:bg-neutral-800 dark:text-neutral-50'
       : 'text-neutral-600 hover:bg-neutral-100/70 hover:text-neutral-950 dark:text-neutral-400 dark:hover:bg-neutral-800/70 dark:hover:text-neutral-50'
@@ -138,7 +138,7 @@ export default function Navbar() {
             </span>
           </Link>
 
-          <nav className="ml-3 hidden items-center gap-0.5 md:flex">
+          <nav className="ml-2 hidden items-center gap-0.5 lg:flex">
             <NavLink to="/" end className={navLinkClass}>
               Khám phá
             </NavLink>
@@ -168,7 +168,18 @@ export default function Navbar() {
             )}
           </nav>
 
-          <div className="ml-auto flex items-center gap-2">
+          <div className="ml-auto flex items-center gap-1.5 sm:gap-2">
+            {user && (
+              <Link
+                to="/messages"
+                title={chatUnread > 0 ? `Hộp thư (${chatUnread} chưa đọc)` : 'Hộp thư'}
+                aria-label="Hộp thư"
+                className="relative inline-flex h-8 items-center justify-center gap-1 rounded-md border border-neutral-200 bg-white px-2 text-neutral-600 transition-colors hover:bg-neutral-50 hover:text-neutral-950 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-800 dark:hover:text-neutral-100 lg:hidden"
+              >
+                <MessageSquare size={16} strokeWidth={1.75} />
+                <CountBadge count={chatUnread} />
+              </Link>
+            )}
             {user && (
               <Link
                 to="/saved"
@@ -198,7 +209,7 @@ export default function Navbar() {
             {loading ? (
               <span className="h-8 w-8 animate-pulse rounded-full bg-neutral-100 dark:bg-neutral-800" />
             ) : user ? (
-              <div ref={menuRef} className="relative hidden md:block">
+              <div ref={menuRef} className="relative hidden lg:block">
                 <button
                   type="button"
                   onClick={() => setMenuOpen((v) => !v)}
@@ -299,7 +310,7 @@ export default function Navbar() {
                 )}
               </div>
             ) : (
-              <button type="button" onClick={handleSignIn} disabled={signingIn} className="btn-secondary hidden h-8 px-3 text-xs md:inline-flex">
+              <button type="button" onClick={handleSignIn} disabled={signingIn} className="btn-secondary hidden h-8 px-3 text-xs lg:inline-flex">
                 <LogIn size={15} strokeWidth={1.75} /> Đăng nhập
               </button>
             )}
@@ -309,7 +320,7 @@ export default function Navbar() {
               onClick={() => setMobileOpen((v) => !v)}
               aria-label={mobileOpen ? 'Đóng danh mục' : 'Mở danh mục'}
               aria-expanded={mobileOpen}
-              className="btn-ghost relative h-8 w-8 px-0 md:hidden"
+              className="btn-ghost relative h-8 w-8 px-0 lg:hidden"
             >
               {mobileOpen ? <X size={18} strokeWidth={1.75} /> : <Menu size={18} strokeWidth={1.75} />}
               {!mobileOpen && alerts.total + chatUnread + dbUnreadCount > 0 && (
@@ -320,7 +331,7 @@ export default function Navbar() {
         </div>
 
         {mobileOpen && (
-          <div className="border-b border-neutral-200 bg-white px-4 pb-4 pt-2 dark:border-neutral-800 dark:bg-neutral-950 md:hidden">
+          <div className="border-b border-neutral-200 bg-white px-4 pb-4 pt-2 dark:border-neutral-800 dark:bg-neutral-950 lg:hidden">
             {!blocked && (
               <button type="button" onClick={handleSellClick} className="btn-primary mb-2 w-full">
                 <Plus size={16} strokeWidth={1.75} /> Đăng bán

@@ -17,6 +17,18 @@ export interface NotificationsListResult {
   items: UserNotification[];
 }
 
+export function formatRelativeTime(iso: string): string {
+  const diffSec = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
+  if (diffSec < 60) return 'Vừa xong';
+  const diffMin = Math.floor(diffSec / 60);
+  if (diffMin < 60) return `${diffMin} phút trước`;
+  const diffHour = Math.floor(diffMin / 60);
+  if (diffHour < 24) return `${diffHour} giờ trước`;
+  const diffDay = Math.floor(diffHour / 24);
+  if (diffDay < 7) return `${diffDay} ngày trước`;
+  return new Date(iso).toLocaleDateString('vi-VN');
+}
+
 export async function listMyNotifications(opts?: {
   limit?: number;
   offset?: number;

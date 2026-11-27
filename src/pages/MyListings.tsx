@@ -134,7 +134,12 @@ export default function MyListings() {
                   {l.images[0] && <img src={cldUrl(l.images[0].url, { width: 200, height: 200, crop: 'fill' })} alt="" className="h-full w-full object-cover" />}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="line-clamp-2 text-sm font-medium text-neutral-900 dark:text-neutral-100">{l.title}</p>
+                  <Link
+                    to={`/listing/${l.id}`}
+                    className="line-clamp-2 text-sm font-medium text-neutral-900 hover:underline dark:text-neutral-100"
+                  >
+                    {l.title}
+                  </Link>
                   <div className="mt-0.5"><PriceTag display={l.price} strike={l.original_price} percent={discountPercent(l.price, l.original_price)} /></div>
                   <div className="mt-1 flex flex-wrap items-center gap-1.5">
                     <span className={`badge ${badge.cls}`}>{badge.label}</span>
@@ -148,6 +153,11 @@ export default function MyListings() {
                       >
                         <Clock className="h-3 w-3" />
                         {daysLeft > 0 ? `Còn ${daysLeft} ngày` : 'Sắp hết hạn'}
+                      </span>
+                    )}
+                    {(l.bump_count ?? 0) > 0 && (
+                      <span className="text-[11px] tabular-nums text-neutral-500 dark:text-neutral-400">
+                        · Đã làm mới {l.bump_count} lần
                       </span>
                     )}
                     {isExpiredHidden && (
