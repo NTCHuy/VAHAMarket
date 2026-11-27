@@ -21,6 +21,8 @@ import ErrorBoundary from '@/components/ErrorBoundary';
 
 import PriceBreakdown from '@/components/PriceBreakdown';
 import OrderStatusBadge from '@/components/OrderStatusBadge';
+import OrderReviewSection from '@/components/OrderReviewSection';
+import { RatingSummaryBadge } from '@/components/StarRating';
 import NotificationHint from '@/components/NotificationHint';
 import { Alert, Avatar, Field, PageLoader } from '@/components/ui';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
@@ -354,10 +356,24 @@ function OrderDetailContent() {
           <h2 className="text-base font-semibold">{isBuyer ? 'Người bán' : 'Người mua'}</h2>
           {counterpart ? (
             <div className="flex items-center gap-3">
-              <Avatar name={counterpart.display_name} url={counterpart.avatar_url} size={40} />
+              <Link to={`/u/${counterpart.id}`} className="shrink-0">
+                <Avatar name={counterpart.display_name} url={counterpart.avatar_url} size={40} />
+              </Link>
               <div className="min-w-0">
-                <p className="truncate font-medium text-neutral-900 dark:text-neutral-100">{counterpart.display_name}</p>
-                <p className="text-xs text-neutral-500 dark:text-neutral-400">{counterpart.sold_count} đơn bán · {counterpart.bought_count} đơn mua</p>
+                <Link
+                  to={`/u/${counterpart.id}`}
+                  className="block truncate font-medium text-neutral-900 hover:underline dark:text-neutral-100"
+                >
+                  {counterpart.display_name}
+                </Link>
+                <div className="flex flex-wrap items-center gap-2 text-xs text-neutral-500 dark:text-neutral-400">
+                  <span>{counterpart.sold_count} đơn bán · {counterpart.bought_count} đơn mua</span>
+                  <RatingSummaryBadge
+                    avg={counterpart.seller_rating_avg}
+                    count={counterpart.seller_rating_count}
+                    compact
+                  />
+                </div>
               </div>
             </div>
           ) : (
@@ -383,6 +399,15 @@ function OrderDetailContent() {
             {order.tracking_code && <Row label="Mã vận đơn" value={order.tracking_code} />}
           </dl>
         </section>
+      )}
+
+      {(isBuyer || isSeller) && (
+        <OrderReviewSection
+          orderId={order.id}
+          orderStatus={order.status}
+          isBuyer={isBuyer}
+          counterpartName={counterpart?.display_name ?? (isBuyer ? 'Người bán' : 'Người mua')}
+        />
       )}
     </div>
   );

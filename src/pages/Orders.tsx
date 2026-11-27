@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Package } from 'lucide-react';
+import { Package, Star } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useOrderAlerts } from '@/context/OrderAlertsContext';
 import CountBadge from '@/components/CountBadge';
+import { getMyPendingReviewOrderIds } from '@/lib/reviews';
 import { supabase } from '@/lib/supabase';
 import { cldUrl } from '@/lib/cloudinary';
 import { formatVND } from '@/lib/money';
@@ -28,6 +29,7 @@ export default function Orders() {
   const filter = ORDER_FILTERS.find((f) => f.id === filterId) ?? ORDER_FILTERS[0];
 
   const [orders, setOrders] = useState<Order[]>([]);
+  const [pendingReviewIds, setPendingReviewIds] = useState<Set<string>>(() => new Set());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -49,6 +51,13 @@ export default function Orders() {
       else setOrders((data ?? []) as Order[]);
       setLoading(false);
     });
+    getMyPendingReviewOrderIds()
+      .then((ids) => {
+        if (alive) setPendingReviewIds(ids);
+      })
+      .catch(() => {
+        // Không làm gián đoạn danh sách đơn nếu RPC chưa sẵn sàng
+      });
     return () => {
       alive = false;
     };
@@ -115,6 +124,12 @@ export default function Orders() {
                   </p>
                   <div className="mt-1.5 flex flex-wrap items-center gap-2">
                     <OrderStatusBadge status={o.status} />
+                    {(o.status === 'COMPLETED' || o.status === 'PAID_OUT') && pendingReviewIds.has(o.id) && (
+                      <span className="inline-flex items-center gap-1 rounded-md border border-amber-200 bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/50 dark:text-amber-300">
+                        <Star size={11} strokeWidth={1.75} className="fill-amber-500 text-amber-500" />
+                        Chờ đánh giá
+                      </span>
+                    )}
                     <span className="text-xs text-neutral-500 dark:text-neutral-400">{new Date(o.created_at).toLocaleString('vi-VN')}</span>
                   </div>
                   <p className="mt-1 font-mono text-xs text-neutral-400 dark:text-neutral-500">{o.payment_code}</p>

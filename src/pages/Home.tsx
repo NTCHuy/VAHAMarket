@@ -13,18 +13,25 @@ import { usePlatformSettings } from '@/context/PlatformSettingsContext';
 import { useSavedListings } from '@/context/SavedListingsContext';
 import { formatVND, getDisplayPrice } from '@/lib/money';
 import { removeVietnameseTones } from '@/lib/vietqr';
+import { RatingSummaryBadge } from '@/components/StarRating';
 import type { Listing } from '@/types';
 
 type ListingCardItem = Pick<
   Listing,
   'id' | 'title' | 'price' | 'original_price' | 'fee_payer' | 'condition' | 'category' | 'province' | 'ship_cod' | 'box_status' | 'images' | 'verification_image_url'
 > & {
-  profiles: { display_name: string; is_mod: boolean; facebook_url: string | null } | null;
+  profiles: {
+    display_name: string;
+    is_mod: boolean;
+    facebook_url: string | null;
+    seller_rating_avg: number;
+    seller_rating_count: number;
+  } | null;
 };
 
 const PAGE_SIZE = 24;
 const COLUMNS =
-  'id,title,price,original_price,fee_payer,condition,category,province,ship_cod,box_status,images,verification_image_url,profiles:profiles!listings_seller_id_fkey(display_name,is_mod,facebook_url)';
+  'id,title,price,original_price,fee_payer,condition,category,province,ship_cod,box_status,images,verification_image_url,profiles:profiles!listings_seller_id_fkey(display_name,is_mod,facebook_url,seller_rating_avg,seller_rating_count)';
 
 type SortKey = 'new' | 'price_asc' | 'price_desc';
 const SORTS: { id: SortKey; label: string }[] = [
@@ -533,10 +540,17 @@ function ListingCard({ listing: l, feeBp, feeCapVnd }: { listing: ListingCardIte
 
           {/* Tầng 4: Chân thẻ đẩy sát đáy bằng mt-auto */}
           <div className="mt-auto flex items-center justify-between gap-2 border-t border-neutral-100 pt-2 text-[11px] text-neutral-500 dark:border-neutral-800 dark:text-neutral-400 sm:text-xs">
-            <span className="min-w-0 truncate font-medium text-neutral-700 dark:text-neutral-300">
-              {l.profiles?.display_name ?? 'Thành viên VAHA'}
-            </span>
-            <span className="max-w-[45%] shrink-0 truncate text-right">{l.province ?? 'Toàn quốc'}</span>
+            <div className="flex min-w-0 items-center gap-1.5">
+              <span className="min-w-0 truncate font-medium text-neutral-700 dark:text-neutral-300">
+                {l.profiles?.display_name ?? 'Thành viên VAHA'}
+              </span>
+              <RatingSummaryBadge
+                avg={l.profiles?.seller_rating_avg}
+                count={l.profiles?.seller_rating_count}
+                compact
+              />
+            </div>
+            <span className="max-w-[40%] shrink-0 truncate text-right">{l.province ?? 'Toàn quốc'}</span>
           </div>
         </div>
       </Link>

@@ -37,6 +37,7 @@ import ModBadge from '@/components/ModBadge';
 import PriceBreakdown from '@/components/PriceBreakdown';
 import PriceTag from '@/components/PriceTag';
 import ReportListingModal from '@/components/ReportListingModal';
+import { RatingSummaryBadge } from '@/components/StarRating';
 import { usePlatformSettings } from '@/context/PlatformSettingsContext';
 import type { BankAccount, Listing, Profile } from '@/types';
 
@@ -432,6 +433,17 @@ export default function ListingDetail() {
                   <p className="text-xs tabular-nums text-neutral-500 dark:text-neutral-400">
                     Đã bán <strong className="text-neutral-800 dark:text-neutral-200">{seller.sold_count}</strong> đơn · Đã đối chiếu FB &amp; NH
                   </p>
+                  <div className="mt-0.5">
+                    <Link
+                      to={`/u/${listing.seller_id}?tab=reviews`}
+                      className="inline-flex items-center hover:underline"
+                    >
+                      <RatingSummaryBadge
+                        avg={seller.seller_rating_avg}
+                        count={seller.seller_rating_count}
+                      />
+                    </Link>
+                  </div>
                 </div>
               </div>
               <div className="grid gap-2 sm:grid-cols-2">

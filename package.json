@@ -1,7 +1,7 @@
 {
   "name": "vaha-market",
   "private": true,
-  "version": "2.0.6",
+  "version": "2.0.7",
   "description": "VAHA Market — Sàn trung gian đồ âm thanh 0% phí, phi lợi nhuận của cộng đồng Hội người Việt nghiện tai nghe.",
   "license": "AGPL-3.0-only",
   "homepage": "https://vahamarket.vercel.app",

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { AlertTriangle, Banknote, Flag, History, Landmark, Lock, Percent, RotateCcw, ShieldBan, Users, type LucideIcon } from 'lucide-react';
+import { AlertTriangle, Banknote, Flag, History, Landmark, Lock, Percent, RotateCcw, ShieldBan, Star, Users, type LucideIcon } from 'lucide-react';
 import { getAdminStats, type AdminStats } from '@/lib/admin';
 import { formatVND } from '@/lib/money';
 import { getErrorMessage } from '@/lib/errors';
@@ -16,12 +16,13 @@ import ListingsTab from './admin/ListingsTab';
 import MembersTab from './admin/MembersTab';
 import BansTab from './admin/BansTab';
 import ReportsTab from './admin/ReportsTab';
+import ReviewsTab from './admin/ReviewsTab';
 import AuditLogTab from './admin/AuditLogTab';
 import MemberDetailModal from './admin/MemberDetailModal';
 import FeeSettingsCard from './admin/FeeSettingsCard';
 
-type TabId = 'review' | 'reports' | 'payouts' | 'refunds' | 'disputes' | 'transactions' | 'orders' | 'listings' | 'members' | 'bans' | 'audit';
-const TAB_IDS: TabId[] = ['review', 'reports', 'payouts', 'refunds', 'disputes', 'transactions', 'orders', 'listings', 'members', 'bans', 'audit'];
+type TabId = 'review' | 'reports' | 'reviews' | 'payouts' | 'refunds' | 'disputes' | 'transactions' | 'orders' | 'listings' | 'members' | 'bans' | 'audit';
+const TAB_IDS: TabId[] = ['review', 'reports', 'reviews', 'payouts', 'refunds', 'disputes', 'transactions', 'orders', 'listings', 'members', 'bans', 'audit'];
 
 export default function AdminDashboard() {
   useDocumentTitle('Quản trị hệ thống');
@@ -54,6 +55,7 @@ export default function AdminDashboard() {
   const tabs: { id: TabId; label: string; badge?: number }[] = [
     { id: 'review', label: 'Duyệt tin', badge: stats?.pending_review_count },
     { id: 'reports', label: 'Báo cáo', badge: stats?.open_reports_count },
+    { id: 'reviews', label: 'Đánh giá', badge: stats?.total_reviews_count },
     { id: 'payouts', label: 'Giải ngân', badge: stats?.payout_pending_count },
     { id: 'refunds', label: 'Hoàn tiền', badge: stats?.refund_pending_count },
     { id: 'disputes', label: 'Khiếu nại', badge: stats?.dispute_count },
@@ -96,6 +98,7 @@ export default function AdminDashboard() {
             onClick={() => setParams({ tab: t.id }, { replace: true })}
             className={`-mb-px flex shrink-0 items-center gap-2 border-b-2 px-3 py-2.5 text-sm font-medium transition-colors ${tab === t.id ? 'border-brand-700 dark:border-brand-500 text-brand-800 dark:text-brand-300' : 'border-transparent text-neutral-500 dark:text-neutral-400 hover:text-neutral-800 dark:hover:text-neutral-200'}`}>
             {t.id === 'reports' && <Flag className="h-4 w-4" />}
+            {t.id === 'reviews' && <Star className="h-4 w-4" />}
             {t.id === 'refunds' && <RotateCcw className="h-4 w-4" />}
             {t.id === 'transactions' && <Landmark className="h-4 w-4" />}
             {t.id === 'members' && <Users className="h-4 w-4" />}
@@ -104,7 +107,7 @@ export default function AdminDashboard() {
             {t.label}
             {t.badge !== undefined && t.badge > 0 && (
               <span className={`rounded-full px-1.5 text-[11px] font-semibold leading-5 ${
-                t.id === 'members'
+                t.id === 'members' || t.id === 'reviews'
                   ? 'bg-neutral-200 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300'
                   : 'bg-red-600 text-white'
               }`}>
@@ -117,6 +120,7 @@ export default function AdminDashboard() {
 
       {tab === 'review' && <ReviewTab onChanged={refreshStats} onInspectMember={setInspectUserId} />}
       {tab === 'reports' && <ReportsTab onChanged={refreshStats} onInspectMember={setInspectUserId} refreshSignal={refreshTick} />}
+      {tab === 'reviews' && <ReviewsTab onChanged={refreshStats} onInspectMember={setInspectUserId} refreshSignal={refreshTick} />}
       {tab === 'payouts' && <PayoutsTab onChanged={refreshStats} />}
       {tab === 'refunds' && <RefundsTab onChanged={refreshStats} />}
       {tab === 'disputes' && <DisputesTab onChanged={refreshStats} onInspectMember={setInspectUserId} />}

@@ -2,6 +2,20 @@
 
 Tài liệu ghi nhận các thay đổi chính của dự án **VAHA Market**.
 
+## [2.0.7]
+
+### Hệ thống đánh giá xác thực sau giao dịch (Verified Reviews)
+- **CSDL & Bảo mật** (`supabase/migrations/017_v207_verified_reviews.sql`):
+  - Bảng `order_reviews` gắn chặt với `orders` đã hoàn tất (`COMPLETED` hoặc `PAID_OUT`); mỗi bên gửi tối đa 1 đánh giá cho mỗi đơn và được chỉnh sửa trong vòng 7 ngày.
+  - Tự động kiểm duyệt nội dung chống dẫn dụ ngoài sàn (`listing_text_violation`) cho nhận xét và phản hồi; lưu nhật ký quản trị khi Admin ẩn/hiện đánh giá (`HIDE_REVIEW` / `SHOW_REVIEW`).
+  - Đồng bộ tự động điểm uy tín (`seller_rating_avg`, `seller_rating_count`) trên `profiles` thông qua trigger `SECURITY DEFINER`.
+- **Trải nghiệm đánh giá & Phản hồi** (`StarRating.tsx`, `OrderReviewSection.tsx`, `OrderDetail.tsx`, `Orders.tsx`):
+  - Người mua và người bán chấm 1–5 sao, chọn thẻ nhận xét nhanh và viết đánh giá chi tiết ngay trong chi tiết đơn hàng hoàn tất; gắn nhãn `Chờ đánh giá` trên trang Danh sách đơn.
+  - Người được đánh giá có thể gửi và chỉnh sửa phản hồi trong vòng 7 ngày.
+- **Hiển thị uy tín công khai & Kiểm duyệt** (`SellerProfile.tsx`, `ListingDetail.tsx`, `Home.tsx`, `ReviewsTab.tsx`, `AdminDashboard.tsx`):
+  - Hiển thị điểm sao uy tín trên thẻ sản phẩm ở trang chủ, trang chi tiết sản phẩm và phần đầu hồ sơ `/u/:id`.
+  - Bổ sung tab **Đánh giá** trên `/u/:id` (thống kê 5–1 sao, lọc theo vai trò người mua/người bán) và tab **Đánh giá** trong trang Quản trị để ẩn/hiện các đánh giá vi phạm quy định.
+
 ## [2.0.6]
 
 ### Tính năng cộng đồng & Tối ưu hiệu năng

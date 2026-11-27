@@ -11,6 +11,7 @@ const PAGE = 50;
 const CATEGORIES: { id: AdminAuditCategory; label: string }[] = [
   { id: 'all', label: 'Tất cả' },
   { id: 'listings', label: 'Tin đăng' },
+  { id: 'reviews', label: 'Đánh giá' },
   { id: 'bans', label: 'Cảnh báo & Khóa' },
   { id: 'orders', label: 'Đơn & Giao dịch' },
   { id: 'members', label: 'Thành viên' },
@@ -25,6 +26,8 @@ const ACTION_LABELS: Record<string, string> = {
   DELETE_LISTING: 'Xóa vĩnh viễn tin đăng',
   RESTORE_LISTING: 'Khôi phục tin đăng',
   RESOLVE_LISTING_REPORT: 'Xử lý báo cáo tin',
+  HIDE_REVIEW: 'Ẩn đánh giá',
+  SHOW_REVIEW: 'Hiện lại đánh giá',
   BAN_USER: 'Khóa tài khoản',
   UNBAN_USER: 'Gỡ khóa tài khoản',
   ISSUE_WARNING: 'Cảnh báo thành viên',

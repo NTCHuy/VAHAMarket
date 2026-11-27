@@ -7,11 +7,14 @@ import type {
   AdminMemberFilter,
   AdminMemberNote,
   AdminMemberSummary,
+  AdminReviewFilter,
+  AdminReviewsListResult,
   BannedEntity,
   BannedEntityType,
   Listing,
   ListingReportStatus,
   Order,
+  OrderReview,
   Profile,
   Transaction,
 } from '@/types';
@@ -35,6 +38,8 @@ export interface AdminStats {
   total_members?: number;
   active_listings_count?: number;
   open_reports_count?: number;
+  total_reviews_count?: number;
+  hidden_reviews_count?: number;
 }
 
 export type DisputeDecision = 'RELEASE_TO_SELLER' | 'REFUND_TO_BUYER';
@@ -379,4 +384,40 @@ export async function resolveListingReport(
   });
   if (error) throw new Error(error.message);
   return data as { updated_count: number; listing_id: string; status: string };
+}
+
+/** Lấy danh sách đánh giá sau giao dịch để kiểm duyệt (chỉ Admin). */
+export async function listAdminReviews(opts?: {
+  filter?: AdminReviewFilter;
+  search?: string;
+  limit?: number;
+  offset?: number;
+}): Promise<AdminReviewsListResult> {
+  const { data, error } = await supabase.rpc('admin_list_reviews', {
+    p_filter: opts?.filter ?? 'ALL',
+    p_search: opts?.search?.trim() || '',
+    p_limit: opts?.limit ?? 30,
+    p_offset: opts?.offset ?? 0,
+  });
+  if (error) throw new Error(error.message);
+  return (data ?? {
+    total: 0,
+    items: [],
+    counts: { all: 0, visible: 0, hidden: 0, low_rating: 0 },
+  }) as AdminReviewsListResult;
+}
+
+/** Ẩn hoặc hiện lại một đánh giá sau giao dịch kèm lý do lưu nhật ký (chỉ Admin). */
+export async function toggleReviewVisibility(
+  reviewId: string,
+  hidden: boolean,
+  reason?: string,
+): Promise<OrderReview> {
+  const { data, error } = await supabase.rpc('admin_set_review_visibility', {
+    p_review_id: reviewId,
+    p_hidden: hidden,
+    p_reason: reason?.trim() || null,
+  });
+  if (error) throw new Error(error.message);
+  return data as OrderReview;
 }

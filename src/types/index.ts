@@ -17,6 +17,8 @@ export interface Profile {
   banned_at: string | null;
   ban_reason: string | null;
   banned_by: string | null;
+  seller_rating_avg: number;   // điểm trung bình đánh giá người bán (cache DB)
+  seller_rating_count: number; // tổng lượt đánh giá người bán (cache DB)
   created_at: string;
   updated_at: string;
 }
@@ -260,7 +262,7 @@ export interface SharedDeviceUser {
   shared_visitor_ids: string[];
 }
 
-export type AdminAuditCategory = 'all' | 'listings' | 'bans' | 'orders' | 'members' | 'settings';
+export type AdminAuditCategory = 'all' | 'listings' | 'reviews' | 'bans' | 'orders' | 'members' | 'settings';
 
 export interface AdminAuditLogEntry {
   id: string;
@@ -374,6 +376,8 @@ export interface PublicSellerProfile {
     sold_count: number;
     bought_count: number;
     facebook_url: string | null;
+    seller_rating_avg: number;
+    seller_rating_count: number;
     created_at: string;
   };
   is_verified_seller: boolean;
@@ -442,4 +446,79 @@ export interface AdminListingReport {
   } | null;
   resolver_name: string | null;
   open_reports_count: number;
+}
+
+export type ReviewRole = 'BUYER' | 'SELLER';
+
+export interface ReviewAuthorSummary {
+  id: string;
+  display_name: string;
+  avatar_url: string | null;
+  is_mod: boolean;
+  is_banned?: boolean;
+}
+
+export interface OrderReview {
+  id: string;
+  order_id: string;
+  reviewer_id: string;
+  reviewee_id: string;
+  reviewer_role: ReviewRole;
+  rating: number;
+  comment: string;
+  tags: string[];
+  reply_text: string | null;
+  replied_at: string | null;
+  is_hidden: boolean;
+  hidden_reason?: string | null;
+  hidden_by?: string | null;
+  hidden_at?: string | null;
+  created_at: string;
+  updated_at: string;
+  reviewer?: ReviewAuthorSummary;
+  listing_id?: string | null;
+  listing_title_snapshot?: string;
+}
+
+export interface OrderReviewsBundle {
+  can_review: boolean;
+  my_review: OrderReview | null;
+  counterpart_review: OrderReview | null;
+}
+
+export interface UserReviewsSummary {
+  total_count: number;
+  avg_rating: number;
+  seller_count: number;
+  seller_avg: number;
+  buyer_count: number;
+  buyer_avg: number;
+  stars: Record<'5' | '4' | '3' | '2' | '1', number>;
+}
+
+export interface UserReviewsResult {
+  summary: UserReviewsSummary;
+  total_filtered: number;
+  items: OrderReview[];
+}
+
+export type AdminReviewFilter = 'ALL' | 'VISIBLE' | 'HIDDEN' | 'LOW_RATING';
+
+export interface AdminReviewItem extends OrderReview {
+  payment_code: string;
+  listing_id: string | null;
+  listing_title_snapshot: string;
+  reviewer: ReviewAuthorSummary;
+  reviewee: ReviewAuthorSummary;
+}
+
+export interface AdminReviewsListResult {
+  total: number;
+  items: AdminReviewItem[];
+  counts: {
+    all: number;
+    visible: number;
+    hidden: number;
+    low_rating: number;
+  };
 }
