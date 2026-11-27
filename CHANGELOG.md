@@ -2,6 +2,21 @@
 
 Tài liệu ghi nhận các thay đổi chính của dự án **VAHA Market**.
 
+## [2.0.9]
+
+### Hộp chuông thông báo DB, Vòng đời tin đăng, Săn kèo & PWA cơ bản
+- **Hộp chuông thông báo lưu trong DB** (`supabase/migrations/019_v209_notifications_lifecycle_alerts.sql`, `NotificationContext.tsx`, `NotificationBell.tsx`, `Notifications.tsx`):
+  - Lưu lịch sử thông báo (`user_notifications`) cho đơn hàng, duyệt/từ chối/gỡ/hết hạn tin, giảm giá tin đã lưu, đánh giá & phản hồi, đề nghị trả giá và từ khóa săn kèo.
+  - Bổ sung popover chuông thông báo ngay trên Navbar và trang `/notifications` kèm bộ lọc theo loại, chưa đọc và nút đánh dấu đã đọc.
+- **Vòng đời tin đăng** (`MyListings.tsx`, `Home.tsx`, `lifecycle.ts`):
+  - Bổ sung `bumped_at`, `bump_count`, `expires_at` (45 ngày) và `expired_at` cho `listings`; mặc định sắp xếp trang chủ theo `bumped_at` mới nhất.
+  - Người bán có thể bấm **Làm mới tin** (3 ngày/lần) và **Gia hạn & Mở bán lại** các tin bị tự ẩn sau 45 ngày (`expire_stale_listings()`).
+- **Theo dõi từ khóa / Săn kèo** (`SavedSearches.tsx`, `Home.tsx`):
+  - Tự động khớp tin mới được duyệt theo tiếng Việt không dấu (`search_text`), danh mục, khu vực và giá tối đa; gửi thông báo Realtime + DB ngay khi tin mở bán.
+  - Cho phép lưu nhanh từ khóa ngay trên kết quả tìm kiếm trang chủ và quản lý tối đa 15 từ khóa tại `/alerts`.
+- **PWA cơ bản** (`public/manifest.webmanifest`, `public/sw.js`, `index.html`, `vercel.json`, `pwa.ts`):
+  - Hỗ trợ cài đặt ứng dụng ra màn hình chính trên điện thoại và máy tính (`Cài ứng dụng` khi trình duyệt hỗ trợ), kèm Service Worker Network-First an toàn (không cache API/Supabase).
+
 ## [2.0.8]
 
 ### Hệ thống Chat nội bộ & Trả giá (Make an Offer)

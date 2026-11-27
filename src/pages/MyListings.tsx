@@ -1,9 +1,15 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Loader2, Pencil, Plus, Trash2 } from 'lucide-react';
+import { Clock, Loader2, Pencil, Plus, RefreshCw, RotateCcw, Trash2 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { cldUrl } from '@/lib/cloudinary';
+import {
+  bumpListing,
+  getBumpCooldownInfo,
+  getDaysUntilExpiry,
+  renewExpiredListing,
+} from '@/lib/lifecycle';
 import { getErrorMessage } from '@/lib/errors';
 import { Alert } from '@/components/ui';
 import { ListRowsSkeleton } from '@/components/Skeletons';
@@ -32,8 +38,10 @@ export default function MyListings() {
   const [items, setItems] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [confirmId, setConfirmId] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [lifecycleBusyId, setLifecycleBusyId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -64,6 +72,36 @@ export default function MyListings() {
     else setItems((prev) => prev.filter((i) => i.id !== id));
   };
 
+  const handleBump = async (id: string) => {
+    setLifecycleBusyId(id);
+    setError(null);
+    setNotice(null);
+    try {
+      const updated = await bumpListing(id);
+      setItems((prev) => prev.map((x) => (x.id === id ? updated : x)));
+      setNotice('Đã làm mới tin đăng lên đầu trang và gia hạn thêm 45 ngày.');
+    } catch (e) {
+      setError(getErrorMessage(e));
+    } finally {
+      setLifecycleBusyId(null);
+    }
+  };
+
+  const handleRenew = async (id: string) => {
+    setLifecycleBusyId(id);
+    setError(null);
+    setNotice(null);
+    try {
+      const updated = await renewExpiredListing(id);
+      setItems((prev) => prev.map((x) => (x.id === id ? updated : x)));
+      setNotice('Đã gia hạn và mở bán lại tin đăng.');
+    } catch (e) {
+      setError(getErrorMessage(e));
+    } finally {
+      setLifecycleBusyId(null);
+    }
+  };
+
   return (
     <div className="mx-auto max-w-3xl space-y-5">
       <div className="flex items-center justify-between gap-3">
@@ -73,6 +111,7 @@ export default function MyListings() {
 
       <NotificationHint prominent={items.some((i) => i.status === 'pending_review')} />
 
+      {notice && <Alert kind="success">{notice}</Alert>}
       {error && <Alert kind="error">{error}</Alert>}
 
       {loading ? (
@@ -84,6 +123,11 @@ export default function MyListings() {
           {items.map((l) => {
             const badge = STATUS_BADGE[l.status];
             const editable = EDITABLE.includes(l.status);
+            const daysLeft = l.status === 'active' ? getDaysUntilExpiry(l.expires_at) : null;
+            const cooldown = l.status === 'active' ? getBumpCooldownInfo(l.bumped_at) : null;
+            const isExpiredHidden = l.status === 'hidden' && Boolean(l.expired_at);
+            const lifecycleBusy = lifecycleBusyId === l.id;
+
             return (
               <li key={l.id} className="card flex gap-3 p-3 sm:gap-4 sm:p-4">
                 <div className="h-20 w-20 shrink-0 overflow-hidden rounded-lg bg-neutral-100 dark:bg-neutral-800 sm:h-24 sm:w-24">
@@ -92,7 +136,26 @@ export default function MyListings() {
                 <div className="min-w-0 flex-1">
                   <p className="line-clamp-2 text-sm font-medium text-neutral-900 dark:text-neutral-100">{l.title}</p>
                   <div className="mt-0.5"><PriceTag display={l.price} strike={l.original_price} percent={discountPercent(l.price, l.original_price)} /></div>
-                  <span className={`badge mt-1 ${badge.cls}`}>{badge.label}</span>
+                  <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                    <span className={`badge ${badge.cls}`}>{badge.label}</span>
+                    {l.status === 'active' && daysLeft !== null && (
+                      <span
+                        className={`badge gap-1 ${
+                          daysLeft <= 7
+                            ? 'bg-amber-50 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300'
+                            : 'bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-300'
+                        }`}
+                      >
+                        <Clock className="h-3 w-3" />
+                        {daysLeft > 0 ? `Còn ${daysLeft} ngày` : 'Sắp hết hạn'}
+                      </span>
+                    )}
+                    {isExpiredHidden && (
+                      <span className="badge bg-amber-50 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300">
+                        Hết hạn 45 ngày
+                      </span>
+                    )}
+                  </div>
                   {l.status === 'pending_review' && <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">Đang chờ duyệt.</p>}
                   {l.status === 'rejected' && l.rejection_reason && (
                     <p className="mt-1.5 rounded-lg bg-red-50 dark:bg-red-950/50 px-2.5 py-1.5 text-xs text-red-800 dark:text-red-300"><strong>Lý do:</strong> {l.rejection_reason}</p>
@@ -102,6 +165,35 @@ export default function MyListings() {
                   )}
                   {editable && (
                     <div className="mt-2 flex flex-wrap items-center gap-2">
+                      {l.status === 'active' && cooldown && (
+                        cooldown.canBump ? (
+                          <button
+                            type="button"
+                            disabled={lifecycleBusy}
+                            onClick={() => void handleBump(l.id)}
+                            className="btn-secondary px-3 py-1.5 text-blue-700 dark:text-blue-400"
+                          >
+                            {lifecycleBusy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
+                            Làm mới tin
+                          </button>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 rounded-md border border-neutral-200 px-2.5 py-1.5 text-xs text-neutral-500 dark:border-neutral-800 dark:text-neutral-400">
+                            <Clock className="h-3 w-3" />
+                            Làm mới sau {cooldown.daysLeft > 0 ? `${cooldown.daysLeft} ngày` : `${cooldown.hoursLeft} giờ`}
+                          </span>
+                        )
+                      )}
+                      {isExpiredHidden && (
+                        <button
+                          type="button"
+                          disabled={lifecycleBusy}
+                          onClick={() => void handleRenew(l.id)}
+                          className="btn-primary px-3 py-1.5"
+                        >
+                          {lifecycleBusy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RotateCcw className="h-3.5 w-3.5" />}
+                          Gia hạn &amp; Mở bán lại
+                        </button>
+                      )}
                       <Link to={`/sell/${l.id}/edit`} className="btn-secondary px-3 py-1.5"><Pencil className="h-3.5 w-3.5" /> {l.status === 'rejected' ? 'Sửa & gửi lại' : 'Sửa'}</Link>
                       {confirmId === l.id ? (
                         <>

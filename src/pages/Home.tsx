@@ -1,14 +1,16 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Bookmark, Check, Loader2, Search, SlidersHorizontal, X } from 'lucide-react';
+import { Bell, Bookmark, Check, Loader2, Search, SlidersHorizontal, X } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { cldUrl } from '@/lib/cloudinary';
+import { createSavedSearch } from '@/lib/lifecycle';
 import { getErrorMessage } from '@/lib/errors';
 import { BOX_STATUS_OPTIONS, CATEGORIES, CATEGORY_IDS, LISTING_CONDITIONS } from '@/constants/categories';
 import { PROVINCES } from '@/constants/provinces';
 import { Alert } from '@/components/ui';
 import { ListingGridSkeleton } from '@/components/Skeletons';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
+import { useAuth } from '@/context/AuthContext';
 import { usePlatformSettings } from '@/context/PlatformSettingsContext';
 import { useSavedListings } from '@/context/SavedListingsContext';
 import { formatVND, getDisplayPrice } from '@/lib/money';
@@ -81,6 +83,7 @@ const parsePositiveInt = (s: string): number | null => {
 
 export default function Home() {
   useDocumentTitle();
+  const { user, signIn } = useAuth();
   const { feeBp, feeCapVnd } = usePlatformSettings();
   const [params, setParams] = useSearchParams();
   const q = params.get('q') ?? '';
@@ -136,6 +139,11 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [alertState, setAlertState] = useState<{
+    key: string;
+    status: 'saving' | 'saved' | 'error';
+    msg?: string;
+  } | null>(null);
   const requestId = useRef(0);
 
   const fetchPage = useCallback(
@@ -157,7 +165,7 @@ export default function Home() {
 
       if (sort === 'price_asc') query = query.order('price', { ascending: true });
       else if (sort === 'price_desc') query = query.order('price', { ascending: false });
-      else query = query.order('created_at', { ascending: false });
+      else query = query.order('bumped_at', { ascending: false });
 
       return query.range(offset, offset + PAGE_SIZE - 1);
     },
@@ -418,6 +426,71 @@ export default function Home() {
           </div>
         )}
       </section>
+
+      {/* Thanh theo dõi từ khóa nhanh khi người dùng đang tìm kiếm */}
+      {q.trim().length >= 2 && (
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-blue-200/80 bg-blue-50/70 px-3.5 py-2 text-xs dark:border-blue-900/60 dark:bg-blue-950/30">
+          <span className="text-neutral-700 dark:text-neutral-200">
+            Muốn nhận thông báo tự động khi có tin mới khớp{' '}
+            <strong className="font-semibold">&ldquo;{q.trim()}&rdquo;</strong>?
+          </span>
+          {(() => {
+            const currentKey = `${q.trim()}|${category}|${province}|${max}`;
+            const savedHere = alertState?.key === currentKey && alertState.status === 'saved';
+            const savingHere = alertState?.key === currentKey && alertState.status === 'saving';
+            const errorHere = alertState?.key === currentKey && alertState.status === 'error';
+
+            if (savedHere) {
+              return (
+                <Link
+                  to="/alerts"
+                  className="inline-flex items-center gap-1 font-semibold text-emerald-700 hover:underline dark:text-emerald-400"
+                >
+                  <Check size={13} /> Đã lưu từ khóa · Quản lý
+                </Link>
+              );
+            }
+
+            return (
+              <div className="flex items-center gap-2">
+                {errorHere && alertState?.msg && (
+                  <span className="text-red-600 dark:text-red-400">{alertState.msg}</span>
+                )}
+                <button
+                  type="button"
+                  disabled={savingHere}
+                  onClick={async () => {
+                    if (!user) {
+                      void signIn();
+                      return;
+                    }
+                    setAlertState({ key: currentKey, status: 'saving' });
+                    try {
+                      await createSavedSearch({
+                        keyword: q.trim(),
+                        category: category || undefined,
+                        province: province || undefined,
+                        maxPrice: parsePositiveInt(max),
+                      });
+                      setAlertState({ key: currentKey, status: 'saved' });
+                    } catch (err) {
+                      setAlertState({
+                        key: currentKey,
+                        status: 'error',
+                        msg: getErrorMessage(err),
+                      });
+                    }
+                  }}
+                  className="btn-secondary h-7 px-2.5 text-xs font-medium"
+                >
+                  {savingHere ? <Loader2 size={12} className="animate-spin" /> : <Bell size={12} />}
+                  {user ? 'Theo dõi từ khóa này' : 'Đăng nhập để theo dõi'}
+                </button>
+              </div>
+            );
+          })()}
+        </div>
+      )}
 
       {/* Danh sách sản phẩm */}
       <section aria-label="Danh sách sản phẩm đang bán">

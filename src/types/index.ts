@@ -109,6 +109,10 @@ export interface Listing {
   approved_at: string | null;
   reviewed_by: string | null;
   reviewed_at: string | null;
+  bumped_at?: string;
+  bump_count?: number;
+  expires_at?: string | null;
+  expired_at?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -678,4 +682,40 @@ export interface AdminConversationSnapshot {
   seller: ConversationPartySummary;
   messages: ChatMessage[];
   offers: PriceOffer[];
+}
+
+export type NotificationKind =
+  | 'ORDER'
+  | 'LISTING'
+  | 'PRICE_DROP'
+  | 'REVIEW'
+  | 'OFFER'
+  | 'SAVED_SEARCH'
+  | 'SYSTEM';
+
+export interface UserNotification {
+  id: string;
+  user_id: string;
+  kind: NotificationKind;
+  title: string;
+  body: string;
+  href: string | null;
+  is_read: boolean;
+  read_at: string | null;
+  created_at: string;
+}
+
+export interface SavedSearch {
+  id: string;
+  user_id: string;
+  keyword: string;
+  normalized_keyword: string;
+  category: string | null;
+  province: string | null;
+  max_price: number | null;
+  is_active: boolean;
+  match_count: number;
+  last_matched_at: string | null;
+  created_at: string;
+  updated_at: string;
 }

@@ -3,8 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowRight, Bell, CheckCircle2, Package, ShieldAlert, Truck, Wallet, X } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { formatVND } from '@/lib/money';
+import { listMyNotifications, markNotificationsRead } from '@/lib/notifications';
 import { useAuth } from './AuthContext';
-import type { Listing, Order } from '@/types';
+import type { Listing, Order, UserNotification } from '@/types';
 
 type ToastKind = 'info' | 'success' | 'warning';
 
@@ -27,6 +28,11 @@ interface NotificationContextValue {
   toggleBrowserNotifications: () => Promise<void>;
   pushToast: (toast: Omit<AppToast, 'id'>, browserTag?: string) => void;
   dismissToast: (id: string) => void;
+  dbNotifications: UserNotification[];
+  dbUnreadCount: number;
+  dbLoading: boolean;
+  refreshDbNotifications: () => Promise<void>;
+  markRead: (notificationId?: string | null) => Promise<void>;
 }
 
 const STORAGE_KEY = 'vaha-browser-notifications';
@@ -59,6 +65,9 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   const [permission, setPermission] = useState<BrowserPermission>(getInitialPermission);
   const [prefEnabled, setPrefEnabled] = useState<boolean>(getSavedPreference);
   const [toasts, setToasts] = useState<AppToast[]>([]);
+  const [dbNotifications, setDbNotifications] = useState<UserNotification[]>([]);
+  const [dbUnreadCount, setDbUnreadCount] = useState(0);
+  const [dbLoading, setDbLoading] = useState(false);
 
   const timersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
   const dedupeRef = useRef<Map<string, number>>(new Map());
@@ -188,7 +197,52 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  // Lắng nghe Realtime trên `orders` và `listings` của user hiện tại
+  const refreshDbNotifications = useCallback(async () => {
+    if (!userId) {
+      setDbNotifications([]);
+      setDbUnreadCount(0);
+      return;
+    }
+    setDbLoading(true);
+    try {
+      const res = await listMyNotifications({ limit: 15, offset: 0 });
+      setDbNotifications(res.items ?? []);
+      setDbUnreadCount(res.unread_count ?? 0);
+    } catch {
+      // Giữ trạng thái an toàn nếu migration 019 chưa chạy
+    } finally {
+      setDbLoading(false);
+    }
+  }, [userId]);
+
+  const markRead = useCallback(
+    async (notificationId?: string | null) => {
+      if (!userId) return;
+      if (notificationId === undefined || notificationId === null) {
+        setDbNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
+        setDbUnreadCount(0);
+      } else {
+        setDbNotifications((prev) =>
+          prev.map((n) => (n.id === notificationId ? { ...n, is_read: true } : n)),
+        );
+        setDbUnreadCount((c) => Math.max(0, c - 1));
+      }
+      try {
+        const remaining = await markNotificationsRead(notificationId);
+        setDbUnreadCount(remaining);
+      } catch {
+        void refreshDbNotifications();
+      }
+    },
+    [userId, refreshDbNotifications],
+  );
+
+  // Tải hộp thông báo ban đầu khi đăng nhập
+  useEffect(() => {
+    void refreshDbNotifications();
+  }, [refreshDbNotifications]);
+
+  // Lắng nghe Realtime trên `orders`, `listings` và `user_notifications` (trên cùng 1 kênh)
   useEffect(() => {
     if (!userId) return;
 
@@ -325,6 +379,39 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         { event: 'UPDATE', schema: 'public', table: 'listings', filter: `seller_id=eq.${userId}` },
         (p) => handleListingUpdate(p as unknown as { new: Partial<Listing>; old: Partial<Listing> }),
       )
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'user_notifications', filter: `user_id=eq.${userId}` },
+        (p) => {
+          const item = (p as unknown as { new: UserNotification }).new;
+          if (!item?.id) return;
+          setDbNotifications((prev) => {
+            if (prev.some((x) => x.id === item.id)) return prev;
+            return [item, ...prev].slice(0, 15);
+          });
+          if (!item.is_read) setDbUnreadCount((c) => c + 1);
+
+          const shouldToast =
+            item.kind === 'REVIEW' ||
+            item.kind === 'OFFER' ||
+            item.kind === 'SAVED_SEARCH' ||
+            item.kind === 'SYSTEM' ||
+            (item.kind === 'LISTING' && item.title.includes('hết hạn'));
+
+          if (shouldToast) {
+            pushToast(
+              {
+                title: item.title,
+                body: item.body,
+                href: item.href ?? '/notifications',
+                actionLabel: item.href ? 'Xem ngay' : 'Mở thông báo',
+                kind: item.kind === 'SAVED_SEARCH' || item.kind === 'REVIEW' ? 'success' : 'info',
+              },
+              `db-notif-${item.id}`,
+            );
+          }
+        },
+      )
       .subscribe();
 
     return () => {
@@ -341,8 +428,26 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       toggleBrowserNotifications,
       pushToast,
       dismissToast,
+      dbNotifications,
+      dbUnreadCount,
+      dbLoading,
+      refreshDbNotifications,
+      markRead,
     }),
-    [browserSupported, permission, browserEnabled, requestBrowserPermission, toggleBrowserNotifications, pushToast, dismissToast],
+    [
+      browserSupported,
+      permission,
+      browserEnabled,
+      requestBrowserPermission,
+      toggleBrowserNotifications,
+      pushToast,
+      dismissToast,
+      dbNotifications,
+      dbUnreadCount,
+      dbLoading,
+      refreshDbNotifications,
+      markRead,
+    ],
   );
 
   return (

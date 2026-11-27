@@ -1,0 +1,26 @@
+{
+  "name": "VAHA Market — Sàn Trung Gian Âm Thanh 0% Phí",
+  "short_name": "VAHA Market",
+  "description": "Sàn trung gian đồ âm thanh 0% phí của Hội người Việt nghiện tai nghe. Giữ tiền an toàn, VietQR tự động.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0a0a0a",
+  "theme_color": "#1d4ed8",
+  "lang": "vi",
+  "icons": [
+    {
+      "src": "/logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

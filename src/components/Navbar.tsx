@@ -2,9 +2,9 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import {
   Bell,
-  BellOff,
   Bookmark,
   ChevronDown,
+  Download,
   Heart,
   LogIn,
   LogOut,
@@ -13,6 +13,7 @@ import {
   Monitor,
   Moon,
   Plus,
+  Search,
   Settings,
   Shield,
   Store,
@@ -26,7 +27,9 @@ import { useTheme, type ThemeMode } from '@/context/ThemeContext';
 import { useNotifications } from '@/context/NotificationContext';
 import { useSavedListings } from '@/context/SavedListingsContext';
 import { useChat } from '@/context/ChatContext';
+import { usePwaInstall } from '@/lib/pwa';
 import CountBadge from './CountBadge';
+import NotificationBell from './NotificationBell';
 import SellerTermsModal, { hasAcceptedSellerTerms } from './SellerTermsModal';
 import { Avatar } from './ui';
 
@@ -59,38 +62,14 @@ function ThemeToggleButton() {
   );
 }
 
-function NotificationToggleButton() {
-  const { browserSupported, browserEnabled, toggleBrowserNotifications } = useNotifications();
-  if (!browserSupported) return null;
-  const label = browserEnabled ? 'Tắt thông báo trình duyệt' : 'Bật thông báo trình duyệt';
-
-  return (
-    <button
-      type="button"
-      onClick={() => void toggleBrowserNotifications()}
-      title={label}
-      aria-label={label}
-      aria-pressed={browserEnabled}
-      className={`relative inline-flex h-8 w-8 items-center justify-center rounded-md border transition-colors ${
-        browserEnabled
-          ? 'border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100 dark:border-blue-800 dark:bg-blue-950/50 dark:text-blue-300'
-          : 'border-neutral-200 bg-white text-neutral-600 hover:bg-neutral-50 hover:text-neutral-950 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-neutral-100'
-      }`}
-    >
-      {browserEnabled ? <Bell size={16} strokeWidth={1.75} /> : <BellOff size={16} strokeWidth={1.75} />}
-      {browserEnabled && (
-        <span className="absolute right-1 top-1 h-1.5 w-1.5 rounded-full bg-emerald-500" aria-hidden="true" />
-      )}
-    </button>
-  );
-}
-
 export default function Navbar() {
   const { user, profile, isAdmin, isBanned, deviceBanned, loading, signIn, signOut } = useAuth();
   const blocked = (isBanned || deviceBanned) && !isAdmin;
   const alerts = useOrderAlerts();
+  const { dbUnreadCount } = useNotifications();
   const { unreadCount: chatUnread } = useChat();
   const { savedCount, priceDropCount } = useSavedListings();
+  const { canInstall, promptInstall } = usePwaInstall();
   const [menuOpen, setMenuOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [signingIn, setSigningIn] = useState(false);
@@ -203,7 +182,7 @@ export default function Navbar() {
                 )}
               </Link>
             )}
-            {user && <NotificationToggleButton />}
+            {user && <NotificationBell />}
             <ThemeToggleButton />
 
             {!blocked && (
@@ -262,6 +241,27 @@ export default function Navbar() {
                     </Link>
                     <Link
                       role="menuitem"
+                      to="/notifications"
+                      className="flex items-center justify-between gap-2 px-3 py-2 text-sm text-neutral-700 hover:bg-neutral-50 dark:text-neutral-200 dark:hover:bg-neutral-800"
+                    >
+                      <span className="flex items-center gap-2">
+                        <Bell size={15} strokeWidth={1.75} className="text-neutral-400" /> Thông báo
+                      </span>
+                      {dbUnreadCount > 0 && (
+                        <span className="rounded bg-blue-600 px-1.5 py-0.5 text-[11px] font-medium tabular-nums text-white">
+                          {dbUnreadCount}
+                        </span>
+                      )}
+                    </Link>
+                    <Link
+                      role="menuitem"
+                      to="/alerts"
+                      className="flex items-center gap-2 px-3 py-2 text-sm text-neutral-700 hover:bg-neutral-50 dark:text-neutral-200 dark:hover:bg-neutral-800"
+                    >
+                      <Search size={15} strokeWidth={1.75} className="text-neutral-400" /> Từ khóa săn kèo
+                    </Link>
+                    <Link
+                      role="menuitem"
                       to="/my-listings"
                       className="flex items-center gap-2 px-3 py-2 text-sm text-neutral-700 hover:bg-neutral-50 dark:text-neutral-200 dark:hover:bg-neutral-800"
                     >
@@ -274,6 +274,19 @@ export default function Navbar() {
                     >
                       <Settings size={15} strokeWidth={1.75} className="text-neutral-400" /> Cài đặt
                     </Link>
+                    {canInstall && (
+                      <button
+                        role="menuitem"
+                        type="button"
+                        onClick={() => {
+                          setMenuOpen(false);
+                          void promptInstall();
+                        }}
+                        className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-blue-700 hover:bg-neutral-50 dark:text-blue-400 dark:hover:bg-neutral-800"
+                      >
+                        <Download size={15} strokeWidth={1.75} /> Cài ứng dụng
+                      </button>
+                    )}
                     <button
                       role="menuitem"
                       type="button"
@@ -299,7 +312,7 @@ export default function Navbar() {
               className="btn-ghost relative h-8 w-8 px-0 md:hidden"
             >
               {mobileOpen ? <X size={18} strokeWidth={1.75} /> : <Menu size={18} strokeWidth={1.75} />}
-              {!mobileOpen && alerts.total + chatUnread > 0 && (
+              {!mobileOpen && alerts.total + chatUnread + dbUnreadCount > 0 && (
                 <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-red-600" aria-hidden="true" />
               )}
             </button>
@@ -332,6 +345,10 @@ export default function Navbar() {
                     Hộp thư <CountBadge count={chatUnread} />
                   </NavLink>
                   <NavLink to="/orders" className={navLinkClass}>Đơn hàng <CountBadge count={alerts.total} /></NavLink>
+                  <NavLink to="/notifications" className={navLinkClass}>
+                    Thông báo <CountBadge count={dbUnreadCount} />
+                  </NavLink>
+                  <NavLink to="/alerts" className={navLinkClass}>Từ khóa săn kèo</NavLink>
                   <NavLink to="/saved" className={navLinkClass}>
                     Tin đã lưu{savedCount > 0 ? ` (${savedCount})` : ''}
                   </NavLink>
@@ -339,6 +356,15 @@ export default function Navbar() {
                   <NavLink to={`/u/${user.id}`} className={navLinkClass}>Trang cá nhân</NavLink>
                   {isAdmin && <NavLink to="/admin" className={navLinkClass}><Shield size={15} strokeWidth={1.75} /> Quản trị</NavLink>}
                   <NavLink to="/settings" className={navLinkClass}>Cài đặt</NavLink>
+                  {canInstall && (
+                    <button
+                      type="button"
+                      onClick={() => void promptInstall()}
+                      className="inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-left text-sm font-medium text-blue-700 hover:bg-neutral-100 dark:text-blue-400 dark:hover:bg-neutral-800"
+                    >
+                      <Download size={15} strokeWidth={1.75} /> Cài ứng dụng
+                    </button>
+                  )}
                   <button
                     type="button"
                     onClick={handleSignOut}
