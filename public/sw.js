@@ -1,4 +1,4 @@
-const CACHE_NAME = 'vaha-market-shell-v210';
+const CACHE_NAME = 'vaha-market-shell-v211';
 const SHELL_ASSETS = ['/logo.png', '/favicon.svg', '/manifest.webmanifest', '/theme-init.js'];
 
 const OFFLINE_HTML = `<!doctype html>

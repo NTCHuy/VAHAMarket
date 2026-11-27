@@ -46,7 +46,7 @@ const THEME_LABEL: Record<ThemeMode, string> = {
   system: 'Theo hệ thống (chuyển sang Sáng)',
 };
 
-function ThemeToggleButton() {
+function ThemeToggleButton({ className = '' }: { className?: string }) {
   const { theme, cycleTheme } = useTheme();
   const Icon = theme === 'dark' ? Moon : theme === 'light' ? Sun : Monitor;
   return (
@@ -55,17 +55,24 @@ function ThemeToggleButton() {
       onClick={cycleTheme}
       title={THEME_LABEL[theme]}
       aria-label={THEME_LABEL[theme]}
-      className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-neutral-200 bg-white text-neutral-600 transition-colors hover:bg-neutral-50 hover:text-neutral-950 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-neutral-100"
+      className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-neutral-200 bg-white text-neutral-600 transition-colors hover:bg-neutral-50 hover:text-neutral-950 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-neutral-100 ${className}`}
     >
       <Icon size={16} strokeWidth={1.75} />
     </button>
   );
 }
 
+const THEME_SHORT_LABEL: Record<ThemeMode, string> = {
+  light: 'Sáng',
+  dark: 'Tối',
+  system: 'Theo hệ thống',
+};
+
 export default function Navbar() {
   const { user, profile, isAdmin, isBanned, deviceBanned, loading, signIn, signOut } = useAuth();
   const blocked = (isBanned || deviceBanned) && !isAdmin;
   const alerts = useOrderAlerts();
+  const { theme, cycleTheme } = useTheme();
   const { dbUnreadCount } = useNotifications();
   const { unreadCount: chatUnread } = useChat();
   const { savedCount, priceDropCount } = useSavedListings();
@@ -129,11 +136,11 @@ export default function Navbar() {
   return (
     <>
       <header className="sticky top-0 z-40 h-14 border-b border-neutral-200 bg-white/95 backdrop-blur dark:border-neutral-800 dark:bg-neutral-950/95">
-        <div className="mx-auto flex h-full max-w-6xl items-center gap-2 px-3 sm:gap-3 sm:px-6">
+        <div className="mx-auto flex h-full max-w-6xl items-center justify-between gap-2 px-3 sm:gap-3 sm:px-6">
           <Link to="/" className="flex min-w-0 shrink-0 items-center gap-2 tracking-tight text-neutral-950 dark:text-neutral-50">
-            <img src="/logo.png" alt="VAHA Market" className="h-7 w-7 rounded-md object-cover" />
-            <span className="text-sm font-bold tracking-wider">VAHA MARKET</span>
-            <span className="hidden rounded border border-emerald-200 bg-emerald-50 px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wider text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 sm:inline-block">
+            <img src="/logo.png" alt="VAHA Market" className="h-7 w-7 shrink-0 rounded-md object-cover" />
+            <span className="whitespace-nowrap text-sm font-bold tracking-wider">VAHA MARKET</span>
+            <span className="hidden rounded border border-emerald-200 bg-emerald-50 px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wider text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 xl:inline-block">
               0% PHÍ
             </span>
           </Link>
@@ -168,16 +175,20 @@ export default function Navbar() {
             )}
           </nav>
 
-          <div className="ml-auto flex items-center gap-1.5 sm:gap-2">
+          <div className="ml-auto flex shrink-0 items-center gap-1.5 sm:gap-2">
             {user && (
               <Link
                 to="/messages"
                 title={chatUnread > 0 ? `Hộp thư (${chatUnread} chưa đọc)` : 'Hộp thư'}
-                aria-label="Hộp thư"
-                className="relative inline-flex h-8 items-center justify-center gap-1 rounded-md border border-neutral-200 bg-white px-2 text-neutral-600 transition-colors hover:bg-neutral-50 hover:text-neutral-950 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-800 dark:hover:text-neutral-100 lg:hidden"
+                aria-label={chatUnread > 0 ? `Hộp thư (${chatUnread} chưa đọc)` : 'Hộp thư'}
+                className="relative inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-neutral-200 bg-white text-neutral-600 transition-colors hover:bg-neutral-50 hover:text-neutral-950 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-800 dark:hover:text-neutral-100 lg:hidden"
               >
                 <MessageSquare size={16} strokeWidth={1.75} />
-                <CountBadge count={chatUnread} />
+                {chatUnread > 0 && (
+                  <span className="absolute -right-1 -top-1 inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-semibold leading-none tabular-nums text-white">
+                    {chatUnread > 99 ? '99+' : chatUnread}
+                  </span>
+                )}
               </Link>
             )}
             {user && (
@@ -185,7 +196,7 @@ export default function Navbar() {
                 to="/saved"
                 title={priceDropCount > 0 ? `Tin đã lưu (${priceDropCount} tin giảm giá)` : `Tin đã lưu (${savedCount})`}
                 aria-label="Tin đã lưu"
-                className="relative inline-flex h-8 w-8 items-center justify-center rounded-md border border-neutral-200 bg-white text-neutral-600 transition-colors hover:bg-neutral-50 hover:text-neutral-950 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-neutral-100"
+                className="relative hidden h-8 w-8 shrink-0 items-center justify-center rounded-md border border-neutral-200 bg-white text-neutral-600 transition-colors hover:bg-neutral-50 hover:text-neutral-950 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-neutral-100 sm:inline-flex"
               >
                 <Bookmark size={16} strokeWidth={1.75} className={savedCount > 0 ? 'text-blue-600 dark:text-blue-400' : ''} />
                 {priceDropCount > 0 && (
@@ -194,15 +205,17 @@ export default function Navbar() {
               </Link>
             )}
             {user && <NotificationBell />}
-            <ThemeToggleButton />
+            <ThemeToggleButton className="hidden sm:inline-flex" />
 
             {!blocked && (
               <button
                 type="button"
                 onClick={handleSellClick}
-                className="btn-primary inline-flex h-8 px-2.5 text-xs sm:px-3"
+                aria-label="Đăng bán"
+                className="btn-primary inline-flex h-8 w-8 shrink-0 whitespace-nowrap px-0 text-xs sm:w-auto sm:px-3"
               >
-                <Plus size={15} strokeWidth={2} /> Đăng bán
+                <Plus size={15} strokeWidth={2} />
+                <span className="hidden sm:inline">Đăng bán</span>
               </button>
             )}
 
@@ -320,7 +333,7 @@ export default function Navbar() {
               onClick={() => setMobileOpen((v) => !v)}
               aria-label={mobileOpen ? 'Đóng danh mục' : 'Mở danh mục'}
               aria-expanded={mobileOpen}
-              className="btn-ghost relative h-8 w-8 px-0 lg:hidden"
+              className="btn-ghost relative h-8 w-8 shrink-0 px-0 lg:hidden"
             >
               {mobileOpen ? <X size={18} strokeWidth={1.75} /> : <Menu size={18} strokeWidth={1.75} />}
               {!mobileOpen && alerts.total + chatUnread + dbUnreadCount > 0 && (
@@ -331,7 +344,7 @@ export default function Navbar() {
         </div>
 
         {mobileOpen && (
-          <div className="border-b border-neutral-200 bg-white px-4 pb-4 pt-2 dark:border-neutral-800 dark:bg-neutral-950 lg:hidden">
+          <div className="max-h-[calc(100vh-3.5rem)] overflow-y-auto border-b border-neutral-200 bg-white px-4 pb-4 pt-2 dark:border-neutral-800 dark:bg-neutral-950 lg:hidden">
             {!blocked && (
               <button type="button" onClick={handleSellClick} className="btn-primary mb-2 w-full">
                 <Plus size={16} strokeWidth={1.75} /> Đăng bán
@@ -343,6 +356,20 @@ export default function Navbar() {
               <NavLink to="/support" className={navLinkClass}>
                 <Heart size={15} strokeWidth={1.9} className="text-rose-500" /> Ủng hộ
               </NavLink>
+              <button
+                type="button"
+                onClick={cycleTheme}
+                className="inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-left text-sm font-medium text-neutral-600 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:bg-neutral-800 sm:hidden"
+              >
+                {theme === 'dark' ? (
+                  <Moon size={15} strokeWidth={1.75} />
+                ) : theme === 'light' ? (
+                  <Sun size={15} strokeWidth={1.75} />
+                ) : (
+                  <Monitor size={15} strokeWidth={1.75} />
+                )}
+                Giao diện: {THEME_SHORT_LABEL[theme]}
+              </button>
               {user ? (
                 <>
                   <div className="my-1 flex items-center gap-2 border-y border-neutral-100 py-2 dark:border-neutral-800">

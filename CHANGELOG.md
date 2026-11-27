@@ -2,6 +2,14 @@
 
 Tài liệu ghi nhận các thay đổi chính của dự án **VAHA Market**.
 
+## [2.1.1]
+
+### Sửa lỗi giao diện Mobile
+- **Sửa lỗi mất nút menu (hamburger) trên điện thoại** (`Navbar.tsx`, `NotificationBell.tsx`):
+  - Giảm số phần tử thừa trên thanh đầu trang màn hình nhỏ (`< 640px`), đưa *Tin đã lưu* và *Chuyển giao diện Sáng/Tối* vào menu thả xuống trên mobile (vẫn hiển thị trực tiếp từ `sm` trở lên), thu gọn nút *Đăng bán* thành biểu tượng `+` ở `< 640px` để không vỡ 2 dòng.
+  - Cố định kích thước `32×32px` cho nút *Hộp thư* và *Chuông thông báo* (badge số chưa đọc đặt góc trên phải) nên không làm phình chiều rộng thanh đầu trang và luôn giữ nút menu hiển thị đầy đủ từ màn hình `320px`.
+  - Bổ sung cuộn dọc (`max-h-[calc(100vh-3.5rem)] overflow-y-auto`) cho menu mobile để không bị cắt các mục cuối trên màn hình ngắn.
+
 ## [2.1.0]
 
 ### Hoàn thiện trải nghiệm & Tối ưu chi tiết (Polish)

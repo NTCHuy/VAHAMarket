@@ -3,7 +3,6 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Bell, BellOff, CheckCheck, Loader2, Search } from 'lucide-react';
 import { useNotifications } from '@/context/NotificationContext';
 import { formatRelativeTime, NOTIFICATION_KIND_LABEL } from '@/lib/notifications';
-import CountBadge from './CountBadge';
 
 export default function NotificationBell() {
   const {
@@ -45,16 +44,19 @@ export default function NotificationBell() {
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        aria-label="Hộp thông báo"
+        aria-label={dbUnreadCount > 0 ? `Hộp thông báo (${dbUnreadCount} chưa đọc)` : 'Hộp thông báo'}
         aria-expanded={open}
         aria-haspopup="dialog"
-        className="relative inline-flex h-8 items-center justify-center gap-1 rounded-md border border-neutral-200 bg-white px-2 text-neutral-600 transition-colors hover:bg-neutral-50 hover:text-neutral-950 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-800 dark:hover:text-neutral-100"
+        className="relative inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-neutral-200 bg-white text-neutral-600 transition-colors hover:bg-neutral-50 hover:text-neutral-950 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-800 dark:hover:text-neutral-100"
       >
         <Bell size={16} strokeWidth={1.75} />
-        <CountBadge count={dbUnreadCount} />
-        {browserEnabled && dbUnreadCount === 0 && (
+        {dbUnreadCount > 0 ? (
+          <span className="absolute -right-1 -top-1 inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-semibold leading-none tabular-nums text-white">
+            {dbUnreadCount > 99 ? '99+' : dbUnreadCount}
+          </span>
+        ) : browserEnabled ? (
           <span className="absolute right-1 top-1 h-1.5 w-1.5 rounded-full bg-emerald-500" aria-hidden="true" />
-        )}
+        ) : null}
       </button>
 
       {open && (
