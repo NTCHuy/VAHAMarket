@@ -54,7 +54,11 @@ export default function AdminDashboard() {
 
   const tabs: { id: TabId; label: string; badge?: number }[] = [
     { id: 'review', label: 'Duyệt tin', badge: stats?.pending_review_count },
-    { id: 'reports', label: 'Báo cáo', badge: stats?.open_reports_count },
+    {
+      id: 'reports',
+      label: 'Báo cáo',
+      badge: (stats?.open_reports_count ?? 0) + (stats?.open_chat_reports_count ?? 0),
+    },
     { id: 'reviews', label: 'Đánh giá', badge: stats?.total_reviews_count },
     { id: 'payouts', label: 'Giải ngân', badge: stats?.payout_pending_count },
     { id: 'refunds', label: 'Hoàn tiền', badge: stats?.refund_pending_count },

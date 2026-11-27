@@ -1,13 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import {
-  AlertTriangle, ArrowLeft, CheckCircle2, Clock, ExternalLink, Facebook, Loader2, PackageCheck, ShieldAlert, Truck, Video, XCircle,
+  AlertTriangle, ArrowLeft, CheckCircle2, Clock, ExternalLink, Facebook, Loader2, MessageSquare, PackageCheck, ShieldAlert, Truck, Video, XCircle,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { cldUrl } from '@/lib/cloudinary';
 import { formatVND } from '@/lib/money';
 import { getEscrowTransferInfo, tryBuildEscrowQrUrl } from '@/lib/vietqr';
+import { startOrGetConversation } from '@/lib/chat';
 import {
   buyerCancelOverdueOrder, cancelOrder, confirmReceived, expireOrderIfDue, getSellerFacebook, markShipped, openDispute, sellerCancelPaidOrder, subscribeToOrder,
 } from '@/lib/orders';
@@ -384,6 +385,9 @@ function OrderDetailContent() {
               <Facebook className="h-4 w-4 text-[#1877F2]" /> Facebook người bán <ExternalLink className="h-3.5 w-3.5 text-neutral-400 dark:text-neutral-500" />
             </a>
           )}
+          {(isBuyer || isSeller) && order.listing_id && (
+            <OpenOrderChatButton listingId={order.listing_id} buyerId={order.buyer_id} />
+          )}
         </section>
       </div>
 
@@ -418,6 +422,34 @@ function Row({ label, value, strong = false }: { label: string; value: string; s
     <div className="flex justify-between gap-4 py-2">
       <dt className="shrink-0 text-neutral-500 dark:text-neutral-400">{label}</dt>
       <dd className={`text-right ${strong ? 'text-base font-semibold text-brand-800 dark:text-brand-300' : 'font-medium text-neutral-900 dark:text-neutral-100'}`}>{value}</dd>
+    </div>
+  );
+}
+
+function OpenOrderChatButton({ listingId, buyerId }: { listingId: string; buyerId: string }) {
+  const navigate = useNavigate();
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  const openChat = async () => {
+    setBusy(true);
+    setErr(null);
+    try {
+      const cid = await startOrGetConversation(listingId, buyerId);
+      navigate(`/messages/${cid}`);
+    } catch (e) {
+      setErr(getErrorMessage(e));
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="space-y-1.5">
+      <button type="button" disabled={busy} onClick={() => void openChat()} className="btn-secondary w-full">
+        {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <MessageSquare className="h-4 w-4" />}
+        Nhắn tin trong sàn
+      </button>
+      {err && <p className="text-xs text-red-600 dark:text-red-400">{err}</p>}
     </div>
   );
 }

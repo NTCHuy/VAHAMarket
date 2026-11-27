@@ -2,6 +2,20 @@
 
 Tài liệu ghi nhận các thay đổi chính của dự án **VAHA Market**.
 
+## [2.0.8]
+
+### Hệ thống Chat nội bộ & Trả giá (Make an Offer)
+- **CSDL, Bảo mật & Realtime** (`supabase/migrations/018_v208_chat_and_offers.sql`):
+  - Thêm các bảng `conversations`, `price_offers`, `chat_messages`, `chat_reports` cùng cột `orders.offer_id`; bật RLS và đồng bộ Realtime trên `conversations` và `chat_messages`.
+  - Áp dụng bộ lọc chống dẫn dụ giao dịch ngoài sàn (`listing_text_violation`), giới hạn tốc độ gửi tin (20 tin/phút) và gửi đề nghị trả giá (10 lần/giờ/hội thoại).
+  - Cập nhật `create_order` hỗ trợ `p_offer_id` để tạo đơn Escrow đúng theo mức giá đã chốt (hiệu lực 24 giờ) và tự động hủy các đề nghị giá còn mở khác trên cùng sản phẩm.
+- **Hộp thư & Thương lượng giá** (`ChatContext.tsx`, `Messages.tsx`, `BuyDialog.tsx`, `Navbar.tsx`, `ListingDetail.tsx`, `OrderDetail.tsx`):
+  - Tích hợp trang hộp thư 2 cột (`/messages`, `/messages/:conversationId`) kèm bộ lọc (`Tất cả`, `Chưa đọc`, `Đang trả giá`), đếm số tin chưa đọc trên Navbar và Toast Realtime tối ưu trên 1 kênh duy nhất.
+  - Hỗ trợ gửi đề nghị giá / đề xuất giá lại (tối thiểu 30% giá niêm yết), chấp nhận/từ chối/hủy trong 24 giờ và nút đặt mua ngay theo giá đã chốt cả trong hộp thư lẫn trang chi tiết sản phẩm.
+  - Hỗ trợ chặn/bỏ chặn, báo cáo hội thoại và mở nhanh phòng chat ngay từ chi tiết đơn hàng (`OrderDetail.tsx`).
+- **Kiểm duyệt hội thoại & Khiếu nại** (`AdminChatViewerModal.tsx`, `DisputesTab.tsx`, `ReportsTab.tsx`, `AuditLogTab.tsx`):
+  - Admin có thể xem lại hội thoại của các đơn hàng đang khiếu nại (`DISPUTED`) hoặc các hội thoại bị báo cáo vi phạm; mọi lượt xem và xử lý đều được ghi nhận trong nhật ký quản trị (`VIEW_DISPUTE_CHAT`, `VIEW_REPORTED_CHAT`, `RESOLVE_CHAT_REPORT`).
+
 ## [2.0.7]
 
 ### Hệ thống đánh giá xác thực sau giao dịch (Verified Reviews)

@@ -141,6 +141,7 @@ export interface Order {
   seller_fee: number;
   fee_cap_vnd?: number;      // trần phí áp dụng tại thời điểm tạo đơn (0 = không trần)
   fee_saved_amount?: number; // số tiền tiết kiệm được nhờ trần phí
+  offer_id?: string | null;  // ID đề nghị trả giá đã chốt (nếu đặt mua qua trả giá)
   status: OrderStatus;
   paid_amount: number;
   paid_at: string | null;
@@ -262,7 +263,7 @@ export interface SharedDeviceUser {
   shared_visitor_ids: string[];
 }
 
-export type AdminAuditCategory = 'all' | 'listings' | 'reviews' | 'bans' | 'orders' | 'members' | 'settings';
+export type AdminAuditCategory = 'all' | 'listings' | 'reviews' | 'chat' | 'bans' | 'orders' | 'members' | 'settings';
 
 export interface AdminAuditLogEntry {
   id: string;
@@ -521,4 +522,160 @@ export interface AdminReviewsListResult {
     hidden: number;
     low_rating: number;
   };
+}
+
+export type OfferStatus = 'PENDING' | 'ACCEPTED' | 'DECLINED' | 'CANCELLED' | 'EXPIRED' | 'ORDERED';
+export type ChatMessageType = 'TEXT' | 'OFFER' | 'SYSTEM';
+
+export interface PriceOffer {
+  id: string;
+  conversation_id: string;
+  listing_id: string;
+  buyer_id: string;
+  seller_id: string;
+  proposer_id: string;
+  original_price: number;
+  offered_price: number;
+  note: string | null;
+  status: OfferStatus;
+  order_id: string | null;
+  expires_at: string;
+  responded_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ChatMessage {
+  id: string;
+  conversation_id: string;
+  sender_id: string | null;
+  message_type: ChatMessageType;
+  body: string;
+  offer_id: string | null;
+  order_id: string | null;
+  created_at: string;
+}
+
+export interface ConversationListingPreview {
+  id: string;
+  title: string;
+  price: number;
+  status: ListingStatus;
+  ship_cod: boolean;
+  fee_payer: FeePayer;
+  image: string | null;
+}
+
+export interface ConversationPartySummary {
+  id: string;
+  display_name: string;
+  avatar_url: string | null;
+  is_mod: boolean;
+  is_banned: boolean;
+  sold_count?: number;
+  bought_count?: number;
+  seller_rating_avg?: number;
+  seller_rating_count?: number;
+}
+
+export interface ConversationSummary {
+  id: string;
+  listing_id: string;
+  buyer_id: string;
+  seller_id: string;
+  last_message_at: string;
+  last_message_preview: string;
+  last_sender_id: string | null;
+  my_unread_count: number;
+  is_blocked: boolean;
+  blocked_by: string | null;
+  created_at: string;
+  listing: ConversationListingPreview;
+  counterpart: ConversationPartySummary;
+  active_offer: PriceOffer | null;
+  latest_order_id: string | null;
+}
+
+export interface ConversationDetail {
+  conversation: {
+    id: string;
+    listing_id: string;
+    buyer_id: string;
+    seller_id: string;
+    last_message_at: string;
+    last_message_preview: string;
+    last_sender_id: string | null;
+    buyer_unread_count: number;
+    seller_unread_count: number;
+    is_blocked: boolean;
+    blocked_by: string | null;
+    created_at: string;
+  };
+  listing: Pick<
+    Listing,
+    'id' | 'seller_id' | 'title' | 'price' | 'original_price' | 'fee_payer' | 'condition' | 'category' | 'province' | 'ship_cod' | 'status' | 'images'
+  > & {
+    seller_is_mod: boolean;
+  };
+  counterpart: ConversationPartySummary;
+  messages: ChatMessage[];
+  offers: PriceOffer[];
+  active_offer: PriceOffer | null;
+  latest_order: {
+    id: string;
+    payment_code: string;
+    status: OrderStatus;
+    amount: number;
+    offer_id: string | null;
+    created_at: string;
+  } | null;
+  has_more: boolean;
+}
+
+export type ChatReportStatus = 'open' | 'resolved' | 'dismissed';
+
+export interface AdminChatReport {
+  id: string;
+  conversation_id: string;
+  reporter_id: string;
+  reason: string;
+  status: ChatReportStatus;
+  resolved_by: string | null;
+  resolved_at: string | null;
+  resolution_note: string | null;
+  created_at: string;
+  listing_id: string;
+  listing_title: string;
+  buyer_id: string;
+  seller_id: string;
+  last_message_preview: string;
+  last_message_at: string;
+  reporter: {
+    id: string;
+    display_name: string;
+    avatar_url: string | null;
+  };
+  buyer: {
+    id: string;
+    display_name: string;
+    avatar_url: string | null;
+    is_banned: boolean;
+  };
+  seller: {
+    id: string;
+    display_name: string;
+    avatar_url: string | null;
+    is_banned: boolean;
+  };
+  resolver_name: string | null;
+}
+
+export interface AdminConversationSnapshot {
+  conversation: ConversationDetail['conversation'];
+  listing_title: string;
+  payment_code: string | null;
+  buyer: ConversationPartySummary;
+  seller: ConversationPartySummary;
+  messages: ChatMessage[];
+  offers: PriceOffer[];
 }

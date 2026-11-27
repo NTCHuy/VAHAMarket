@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { AlertTriangle, ExternalLink, Eye, Facebook, Loader2, Phone, ShieldBan, ShieldCheck, Undo2, Video } from 'lucide-react';
+import { AlertTriangle, ExternalLink, Eye, Facebook, Loader2, MessageSquare, Phone, ShieldBan, ShieldCheck, Undo2, Video } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { issueWarning, resolveDispute, type DisputeDecision } from '@/lib/admin';
 import { cldUrl } from '@/lib/cloudinary';
@@ -8,6 +8,7 @@ import { getErrorMessage } from '@/lib/errors';
 import { safeHttpUrl } from '@/lib/url';
 import CopyButton from '@/components/CopyButton';
 import { Alert, Avatar, Field, PageLoader } from '@/components/ui';
+import AdminChatViewerModal from './AdminChatViewerModal';
 import type { Order, Profile, ProfileContact } from '@/types';
 
 export default function DisputesTab({
@@ -141,6 +142,7 @@ function DisputeCard({ order, buyer, seller, buyerContact, sellerContact, onInsp
 }) {
   const [note, setNote] = useState('');
   const [pending, setPending] = useState<DisputeDecision | null>(null);
+  const [chatOpen, setChatOpen] = useState(false);
   const [warnOpen, setWarnOpen] = useState(false);
   const [warnReason, setWarnReason] = useState('');
   const [warnNotice, setWarnNotice] = useState<string | null>(null);
@@ -258,6 +260,9 @@ function DisputeCard({ order, buyer, seller, buyerContact, sellerContact, onInsp
         </div>
       ) : (
         <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
+          <button type="button" className="btn-secondary" disabled={busy} onClick={() => setChatOpen(true)}>
+            <MessageSquare className="h-4 w-4" /> Xem hội thoại
+          </button>
           {!seller?.is_banned && (
             <button type="button" className="btn-secondary text-amber-800 dark:text-amber-300" disabled={busy} onClick={() => setWarnOpen((v) => !v)}>
               <AlertTriangle className="h-4 w-4" /> Cảnh báo người bán
@@ -270,6 +275,14 @@ function DisputeCard({ order, buyer, seller, buyerContact, sellerContact, onInsp
             <ShieldCheck className="h-4 w-4" /> Bác bỏ khiếu nại &amp; Giải ngân cho người bán
           </button>
         </div>
+      )}
+
+      {chatOpen && (
+        <AdminChatViewerModal
+          target={{ type: 'dispute', orderId: order.id }}
+          onClose={() => setChatOpen(false)}
+          onInspectMember={onInspectMember}
+        />
       )}
     </li>
   );

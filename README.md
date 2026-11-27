@@ -30,6 +30,7 @@
   - Tra cứu hồ sơ chi tiết từng thành viên (SĐT, Facebook, ngân hàng, thiết bị trùng, lịch sử tin/đơn, ghi chú nội bộ, sửa định danh khi bị khóa).
   - Gỡ, khôi phục hoặc xóa vĩnh viễn bài viết đã duyệt kèm nhật ký quản trị (`admin_audit_log`).
 - **Trải nghiệm sử dụng**:
+  - Hệ thống Chat nội bộ (Text-only) & Trả giá (Offer & Counter-offer) ngay trong ứng dụng (`/messages`), gắn trực tiếp vào quy trình tạo đơn hàng Escrow với mức giá đã chốt và lưu lịch sử phục vụ giải quyết tranh chấp.
   - Hệ thống đánh giá xác thực hai chiều sau giao dịch hoàn tất (`order_reviews`), hiển thị điểm sao uy tín trên trang chủ, chi tiết sản phẩm và tab Đánh giá trong hồ sơ công khai.
   - Trang hồ sơ công khai người bán (`/u/:id`) hiển thị sản phẩm đang bán, lịch sử đã bán và trạng thái đối chiếu.
   - Lưu tin yêu thích (`/saved`) kèm cảnh báo Realtime khi người bán hạ giá.
@@ -124,7 +125,7 @@ Mở `http://localhost:5173`. Sau khi sửa `.env`, cần dừng và chạy lạ
 
 ### Bước 2 — Thiết lập Supabase
 
-1. Vào **Supabase Dashboard → SQL Editor** và chạy lần lượt toàn bộ 17 file SQL theo đúng thứ tự:
+1. Vào **Supabase Dashboard → SQL Editor** và chạy lần lượt toàn bộ 18 file SQL theo đúng thứ tự:
    1. `supabase/schema.sql`
    2. `supabase/migrations/002_ui_fields.sql`
    3. `supabase/migrations/003_order_dispute_fields.sql`
@@ -142,6 +143,7 @@ Mở `http://localhost:5173`. Sau khi sửa `.env`, cần dừng và chạy lạ
    15. `supabase/migrations/015_admin_member_inspector_and_listing_moderation.sql`
    16. `supabase/migrations/016_v206_seller_profile_saved_and_reports.sql`
    17. `supabase/migrations/017_v207_verified_reviews.sql`
+   18. `supabase/migrations/018_v208_chat_and_offers.sql`
 
    *Lưu ý: nếu SQL Editor báo lỗi liên quan đến giá trị enum mới ở file `007`, hãy chạy riêng 2 câu lệnh `alter type public.listing_status add value ...` trước rồi chạy phần còn lại.*
 

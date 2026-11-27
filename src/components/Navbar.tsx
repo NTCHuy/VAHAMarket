@@ -9,6 +9,7 @@ import {
   LogIn,
   LogOut,
   Menu,
+  MessageSquare,
   Monitor,
   Moon,
   Plus,
@@ -24,6 +25,7 @@ import { useOrderAlerts } from '@/context/OrderAlertsContext';
 import { useTheme, type ThemeMode } from '@/context/ThemeContext';
 import { useNotifications } from '@/context/NotificationContext';
 import { useSavedListings } from '@/context/SavedListingsContext';
+import { useChat } from '@/context/ChatContext';
 import CountBadge from './CountBadge';
 import SellerTermsModal, { hasAcceptedSellerTerms } from './SellerTermsModal';
 import { Avatar } from './ui';
@@ -87,6 +89,7 @@ export default function Navbar() {
   const { user, profile, isAdmin, isBanned, deviceBanned, loading, signIn, signOut } = useAuth();
   const blocked = (isBanned || deviceBanned) && !isAdmin;
   const alerts = useOrderAlerts();
+  const { unreadCount: chatUnread } = useChat();
   const { savedCount, priceDropCount } = useSavedListings();
   const [menuOpen, setMenuOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -162,6 +165,9 @@ export default function Navbar() {
             </NavLink>
             {user && (
               <>
+                <NavLink to="/messages" className={navLinkClass}>
+                  <MessageSquare size={15} strokeWidth={1.75} /> Hộp thư <CountBadge count={chatUnread} />
+                </NavLink>
                 <NavLink to="/orders" className={navLinkClass}>
                   Đơn hàng <CountBadge count={alerts.total} />
                 </NavLink>
@@ -293,7 +299,7 @@ export default function Navbar() {
               className="btn-ghost relative h-8 w-8 px-0 md:hidden"
             >
               {mobileOpen ? <X size={18} strokeWidth={1.75} /> : <Menu size={18} strokeWidth={1.75} />}
-              {!mobileOpen && alerts.total > 0 && (
+              {!mobileOpen && alerts.total + chatUnread > 0 && (
                 <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-red-600" aria-hidden="true" />
               )}
             </button>
@@ -322,6 +328,9 @@ export default function Navbar() {
                       <p className="truncate text-xs text-neutral-500 dark:text-neutral-400">{user.email}</p>
                     </div>
                   </div>
+                  <NavLink to="/messages" className={navLinkClass}>
+                    Hộp thư <CountBadge count={chatUnread} />
+                  </NavLink>
                   <NavLink to="/orders" className={navLinkClass}>Đơn hàng <CountBadge count={alerts.total} /></NavLink>
                   <NavLink to="/saved" className={navLinkClass}>
                     Tin đã lưu{savedCount > 0 ? ` (${savedCount})` : ''}

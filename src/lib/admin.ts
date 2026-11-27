@@ -2,6 +2,8 @@ import { supabase } from './supabase';
 import type {
   AdminAuditCategory,
   AdminAuditLogEntry,
+  AdminChatReport,
+  AdminConversationSnapshot,
   AdminListingReport,
   AdminMemberDetail,
   AdminMemberFilter,
@@ -11,6 +13,7 @@ import type {
   AdminReviewsListResult,
   BannedEntity,
   BannedEntityType,
+  ChatReportStatus,
   Listing,
   ListingReportStatus,
   Order,
@@ -38,6 +41,7 @@ export interface AdminStats {
   total_members?: number;
   active_listings_count?: number;
   open_reports_count?: number;
+  open_chat_reports_count?: number;
   total_reviews_count?: number;
   hidden_reviews_count?: number;
 }
@@ -420,4 +424,56 @@ export async function toggleReviewVisibility(
   });
   if (error) throw new Error(error.message);
   return data as OrderReview;
+}
+
+export interface ChatReportListResult {
+  total: number;
+  items: AdminChatReport[];
+}
+
+/** Xem lịch sử hội thoại của đơn đang ở trạng thái DISPUTED (chỉ Admin, có ghi audit log). */
+export async function getDisputeConversation(orderId: string): Promise<AdminConversationSnapshot | null> {
+  const { data, error } = await supabase.rpc('admin_get_dispute_conversation', {
+    p_order_id: orderId,
+  });
+  if (error) throw new Error(error.message);
+  return (data as AdminConversationSnapshot | null) ?? null;
+}
+
+/** Lấy danh sách báo cáo hội thoại vi phạm (chỉ Admin). */
+export async function listChatReports(opts?: {
+  status?: ChatReportStatus | 'all';
+  limit?: number;
+  offset?: number;
+}): Promise<ChatReportListResult> {
+  const { data, error } = await supabase.rpc('admin_list_chat_reports', {
+    p_status: opts?.status ?? 'open',
+    p_limit: opts?.limit ?? 30,
+    p_offset: opts?.offset ?? 0,
+  });
+  if (error) throw new Error(error.message);
+  return (data ?? { total: 0, items: [] }) as ChatReportListResult;
+}
+
+/** Xem chi tiết hội thoại từ một báo cáo chat (chỉ Admin, có ghi audit log). */
+export async function getReportedConversation(reportId: string): Promise<AdminConversationSnapshot> {
+  const { data, error } = await supabase.rpc('admin_get_reported_conversation', {
+    p_report_id: reportId,
+  });
+  if (error) throw new Error(error.message);
+  return data as AdminConversationSnapshot;
+}
+
+/** Đánh dấu báo cáo hội thoại đã xử lý hoặc bỏ qua (chỉ Admin). */
+export async function resolveChatReport(
+  reportId: string,
+  status: 'resolved' | 'dismissed',
+  note?: string,
+): Promise<void> {
+  const { error } = await supabase.rpc('admin_resolve_chat_report', {
+    p_report_id: reportId,
+    p_status: status,
+    p_note: note?.trim() || null,
+  });
+  if (error) throw new Error(error.message);
 }

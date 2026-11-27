@@ -8,6 +8,7 @@ import ListingDetail from '@/pages/ListingDetail';
 
 const SellerProfile = lazy(() => import('@/pages/SellerProfile'));
 const SavedListings = lazy(() => import('@/pages/SavedListings'));
+const Messages = lazy(() => import('@/pages/Messages'));
 const AccountSettings = lazy(() => import('@/pages/AccountSettings'));
 const CreateListing = lazy(() => import('@/pages/CreateListing'));
 const MyListings = lazy(() => import('@/pages/MyListings'));
@@ -40,6 +41,8 @@ export default function App() {
           <Route path="terms" element={<Terms />} />
 
           <Route element={<RequireAuth />}>
+            <Route path="messages" element={<Messages />} />
+            <Route path="messages/:conversationId" element={<Messages />} />
             <Route path="saved" element={<SavedListings />} />
             <Route path="settings" element={<AccountSettings />} />
             <Route path="sell" element={<CreateListing />} />
