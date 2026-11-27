@@ -24,7 +24,7 @@ type ListingCardItem = Pick<
 
 const PAGE_SIZE = 24;
 const COLUMNS =
-  'id,title,price,original_price,fee_payer,condition,category,province,ship_cod,box_status,images,verification_image_url,profiles(display_name,is_mod,facebook_url)';
+  'id,title,price,original_price,fee_payer,condition,category,province,ship_cod,box_status,images,verification_image_url,profiles:profiles!listings_seller_id_fkey(display_name,is_mod,facebook_url)';
 
 type SortKey = 'new' | 'price_asc' | 'price_desc';
 const SORTS: { id: SortKey; label: string }[] = [
